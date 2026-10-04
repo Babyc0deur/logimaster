@@ -4,13 +4,17 @@ cd /var/www/html
 
 # Render fournit le port dans $PORT
 PORT="${PORT:-10000}"
+
+# base SQLite sur le disque persistant, meme si la variable n'a pas ete renseignee sur Render
+export DB_CONNECTION="${DB_CONNECTION:-sqlite}"
+export DB_DATABASE="${DB_DATABASE:-/var/www/html/storage/app/database.sqlite}"
 sed -ri "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
 sed -ri "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
 # derriere le proxy de Render : adresse reelle du visiteur
 printf 'RemoteIPHeader X-Forwarded-For\n' > /etc/apache2/conf-available/remoteip.conf && a2enconf remoteip >/dev/null
 
 chown -R www-data:www-data storage bootstrap/cache   # le disque persistant est monte en root
-mkdir -p storage/app/public && touch "${DB_DATABASE:-database/database.sqlite}"
+mkdir -p storage/app/public && touch "$DB_DATABASE"
 chown -R www-data:www-data storage
 php artisan storage:link --force >/dev/null 2>&1 || true
 php artisan migrate --force
