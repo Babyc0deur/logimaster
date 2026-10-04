@@ -27,9 +27,10 @@ class District extends Model implements HasCurrentTenantLabel
         ];
     }
 
+    /** Ligne du dessus dans le menu du haut ; le nom du district s'affiche en dessous. */
     public function getCurrentTenantLabel(): string
     {
-        return $this->name;
+        return 'Se connecter à';
     }
 
     public function region()
