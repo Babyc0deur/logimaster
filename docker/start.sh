@@ -17,6 +17,12 @@ php artisan migrate --force
 php artisan logimaster:install
 php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache
 
+# tout ce que les commandes ci-dessus (lancees en root) ont cree doit etre ecrivable par Apache (base SQLite, journal, caches, vues)
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R ug+rwX storage bootstrap/cache
+printf 'ServerName localhost
+' > /etc/apache2/conf-available/servername.conf && a2enconf servername >/dev/null
+
 # taches planifiees (alertes, rapports, indicateurs) : une fois par minute en arriere-plan
 ( while true; do php artisan schedule:run >/dev/null 2>&1; sleep 60; done ) &
 
