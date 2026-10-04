@@ -21,6 +21,8 @@
         table.data tr:nth-child(even) td { background: #f9fafb; }
         ul { margin: 4px 0 4px 16px; padding: 0; }
         li { margin-bottom: 3px; }
+        .chart { margin: 4px 0 10px; page-break-inside: avoid; }
+        .chart img { width: 100%; border: 1px solid #e5e7eb; }
         .def { color: #6b7280; font-size: 8.5px; font-style: italic; margin-bottom: 4px; }
         .footer { position: fixed; bottom: -30px; left: 0; right: 0; text-align: center; color: #9ca3af; font-size: 8px; }
     </style>
@@ -53,6 +55,13 @@
                 <ul>@foreach ($section['text'] as $line)<li>{{ $line }}</li>@endforeach</ul>
             @endif
         @endif
+
+        @foreach ($section['charts'] ?? [] as $chart)
+            <div class="chart">
+                <h3>{{ $chart['title'] }}</h3>
+                <img src="data:image/svg+xml;base64,{{ base64_encode($chart['svg']) }}" alt="{{ $chart['title'] }}">
+            </div>
+        @endforeach
 
         @foreach ($section['tables'] as $table)
             <h3>{{ $table['title'] }}</h3>
