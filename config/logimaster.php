@@ -8,8 +8,8 @@ return [
     | Laisser vide (LOGIMASTER_PERIOD_FROM= / LOGIMASTER_PERIOD_UNTIL=) pour revenir au mois en cours.
     */
     'default_period' => [
-        'from' => env('LOGIMASTER_PERIOD_FROM', '2025-05-01') ?: null,
-        'until' => env('LOGIMASTER_PERIOD_UNTIL', '2025-10-31') ?: null,
+        'from' => env('LOGIMASTER_PERIOD_FROM', '2025-06-11') ?: null,
+        'until' => env('LOGIMASTER_PERIOD_UNTIL', '2026-10-12') ?: null,
     ],
 
     /*

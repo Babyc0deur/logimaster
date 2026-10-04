@@ -77,9 +77,24 @@ class DashboardFilters
     }
 
     /** Mois proposé par défaut (Y-m) dans les sélecteurs : mois de la fin de période, sinon mois courant. */
+    /**
+     * Mois affiché par défaut : le dernier mois de la période qui contient de l'activité (sorties) pour le district courant,
+     * sinon pour les districts accessibles ; à défaut, le mois de la date de fin (ou le mois courant sans période).
+     * Évite d'ouvrir les indicateurs sur un mois vide quand la période dépasse la dernière activité.
+     */
     public static function defaultMonthKey(): string
     {
-        return config('logimaster.default_period.until') ? self::defaultUntil()->format('Y-m') : CarbonImmutable::now()->format('Y-m');
+        if (! config('logimaster.default_period.until')) {
+            return CarbonImmutable::now()->format('Y-m');
+        }
+        $until = self::defaultUntil();
+        $from = config('logimaster.default_period.from') ? self::defaultFrom() : $until->subYears(5);
+        $tenant = \Filament\Facades\Filament::getTenant();
+        $query = \App\Models\SortieVehicule::query()->whereBetween('date_sortie', [$from->startOfDay(), $until->endOfDay()]);
+        $tenant ? $query->where('district_id', $tenant->getKey()) : $query->whereIn('district_id', self::accessibleDistricts()->select('id'));
+        $last = $query->max('date_sortie');
+
+        return $last ? CarbonImmutable::parse($last)->format('Y-m') : $until->format('Y-m');
     }
 
     /**
