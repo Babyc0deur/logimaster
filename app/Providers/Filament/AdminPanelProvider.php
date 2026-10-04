@@ -34,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
                 'info'    => Color::Sky,
             ])
             ->brandName('LogiMaster Pro')
+            ->renderHook(\Filament\View\PanelsRenderHook::BODY_START, fn () => view('filament.preloader'))   // préchargeur au chargement des pages
             ->tenant(District::class, ownershipRelationship: 'districts')
             ->databaseNotifications()
             ->userMenuItems([

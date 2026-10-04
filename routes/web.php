@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DistrictSearchController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MobileAppController;
 use Illuminate\Support\Facades\Route;
@@ -14,3 +15,6 @@ Route::get('/m/installer', [MobileAppController::class, 'install']);
 Route::get('/m/qr.svg', [MobileAppController::class, 'qr']);
 Route::get('/m/manifest.webmanifest', [MobileAppController::class, 'manifest']);
 Route::get('/m/sw.js', [MobileAppController::class, 'serviceWorker']);
+
+// Sélecteur de district de l'administration : recherche à la frappe (utilisateur connecté, districts accessibles seulement)
+Route::get('/ui/districts/search', DistrictSearchController::class)->middleware(['web', 'auth'])->name('districts.search');
