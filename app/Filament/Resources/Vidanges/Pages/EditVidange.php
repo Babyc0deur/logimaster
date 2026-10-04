@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Vidanges\Pages; use App\Filament\Resources\Vidanges\VidangeResource; use Filament\Actions\DeleteAction; use Filament\Resources\Pages\EditRecord; class EditVidange extends EditRecord { protected static string $resource = VidangeResource::class; protected function getHeaderActions(): array { return [ DeleteAction::make() ]; } }

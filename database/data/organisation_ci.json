@@ -1,0 +1,622 @@
+{
+ "source": "Logimaster Mai 2026 vf v16062026 - template.xlsm (onglets Ali / LISTE)",
+ "regions": [
+  {
+   "name": "ABIDJAN 1",
+   "districts": [
+    {
+     "code": 4,
+     "name": "YOPOUGON-OUEST SONGON"
+    },
+    {
+     "code": 1,
+     "name": "ABOBO-EST"
+    },
+    {
+     "code": 3,
+     "name": "YOPOUGON-EST"
+    },
+    {
+     "code": 5,
+     "name": "ANYAMA"
+    },
+    {
+     "code": 2,
+     "name": "ABOBO-OUEST"
+    }
+   ]
+  },
+  {
+   "name": "ABIDJAN 2",
+   "districts": [
+    {
+     "code": 6,
+     "name": "ADJAME PLATEAU ATTECOUBE"
+    },
+    {
+     "code": 7,
+     "name": "COCODY BINGERVILLE"
+    },
+    {
+     "code": 10,
+     "name": "TREICHVILLE-MARCORY"
+    },
+    {
+     "code": 9,
+     "name": "PORT BOUET-VRIDI"
+    },
+    {
+     "code": 8,
+     "name": "KOUMASSI"
+    }
+   ]
+  },
+  {
+   "name": "AGNEBY TIASSA",
+   "districts": [
+    {
+     "code": 13,
+     "name": "TIASSALE"
+    },
+    {
+     "code": 11,
+     "name": "AGBOVILLE"
+    },
+    {
+     "code": 12,
+     "name": "SIKENSI"
+    }
+   ]
+  },
+  {
+   "name": "BAFING",
+   "districts": [
+    {
+     "code": 16,
+     "name": "TOUBA"
+    },
+    {
+     "code": 15,
+     "name": "OUANINOU"
+    },
+    {
+     "code": 14,
+     "name": "KORO"
+    }
+   ]
+  },
+  {
+   "name": "BAGOUE",
+   "districts": [
+    {
+     "code": 17,
+     "name": "BOUNDIALI"
+    },
+    {
+     "code": 19,
+     "name": "TENGRELA"
+    },
+    {
+     "code": 18,
+     "name": "KOUTO"
+    }
+   ]
+  },
+  {
+   "name": "BELIER",
+   "districts": [
+    {
+     "code": 22,
+     "name": "YAMOUSSOUKRO"
+    },
+    {
+     "code": 21,
+     "name": "TOUMODI"
+    },
+    {
+     "code": 23,
+     "name": "TIEBISSOU"
+    },
+    {
+     "code": 20,
+     "name": "DIDIEVI"
+    }
+   ]
+  },
+  {
+   "name": "BERE",
+   "districts": [
+    {
+     "code": 26,
+     "name": "MANKONO"
+    },
+    {
+     "code": 24,
+     "name": "DIANRA"
+    },
+    {
+     "code": 25,
+     "name": "KOUNAHIRI"
+    }
+   ]
+  },
+  {
+   "name": "BOUNKANI",
+   "districts": [
+    {
+     "code": 27,
+     "name": "BOUNA"
+    },
+    {
+     "code": 28,
+     "name": "DOROPO"
+    },
+    {
+     "code": 29,
+     "name": "NASSIAN"
+    },
+    {
+     "code": 30,
+     "name": "TEHINI"
+    }
+   ]
+  },
+  {
+   "name": "CAVALLY",
+   "districts": [
+    {
+     "code": 32,
+     "name": "GUIGLO"
+    },
+    {
+     "code": 34,
+     "name": "TOULEPLEU"
+    },
+    {
+     "code": 31,
+     "name": "BLOLEQUIN"
+    },
+    {
+     "code": 33,
+     "name": "TAI"
+    }
+   ]
+  },
+  {
+   "name": "FOLON",
+   "districts": [
+    {
+     "code": 35,
+     "name": "MINIGNAN"
+    },
+    {
+     "code": 36,
+     "name": "KANIASSO"
+    }
+   ]
+  },
+  {
+   "name": "GBEKE",
+   "districts": [
+    {
+     "code": 37,
+     "name": "BEOUMI"
+    },
+    {
+     "code": 41,
+     "name": "SAKASSOU"
+    },
+    {
+     "code": 42,
+     "name": "BOUAKE SUD"
+    },
+    {
+     "code": 40,
+     "name": "BOUAKE NORD-OUEST"
+    },
+    {
+     "code": 39,
+     "name": "BOUAKE NORD-EST"
+    },
+    {
+     "code": 38,
+     "name": "BOTRO"
+    }
+   ]
+  },
+  {
+   "name": "GBOKLE",
+   "districts": [
+    {
+     "code": 44,
+     "name": "SASSANDRA"
+    },
+    {
+     "code": 43,
+     "name": "FRESCO"
+    }
+   ]
+  },
+  {
+   "name": "GÔH",
+   "districts": [
+    {
+     "code": 45,
+     "name": "GAGNOA 1"
+    },
+    {
+     "code": 46,
+     "name": "GAGNOA 2"
+    },
+    {
+     "code": 47,
+     "name": "OUME"
+    }
+   ]
+  },
+  {
+   "name": "GONTOUGO",
+   "districts": [
+    {
+     "code": 48,
+     "name": "BONDOUKOU"
+    },
+    {
+     "code": 50,
+     "name": "SANDEGUE"
+    },
+    {
+     "code": 49,
+     "name": "KOUN-FAO"
+    },
+    {
+     "code": 51,
+     "name": "TANDA"
+    },
+    {
+     "code": 52,
+     "name": "TRANSUA"
+    }
+   ]
+  },
+  {
+   "name": "GRANDS PONTS",
+   "districts": [
+    {
+     "code": 53,
+     "name": "DABOU"
+    },
+    {
+     "code": 54,
+     "name": "GRAND LAHOU"
+    },
+    {
+     "code": 55,
+     "name": "JACQUEVILLE"
+    }
+   ]
+  },
+  {
+   "name": "GUEMON",
+   "districts": [
+    {
+     "code": 57,
+     "name": "DUEKOUE"
+    },
+    {
+     "code": 58,
+     "name": "KOUIBLY"
+    },
+    {
+     "code": 56,
+     "name": "BANGOLO"
+    }
+   ]
+  },
+  {
+   "name": "HAMBOL",
+   "districts": [
+    {
+     "code": 60,
+     "name": "DABAKALA"
+    },
+    {
+     "code": 61,
+     "name": "NIAKARA"
+    },
+    {
+     "code": 59,
+     "name": "KATIOLA"
+    }
+   ]
+  },
+  {
+   "name": "HAUT SASSANDRA",
+   "districts": [
+    {
+     "code": 62,
+     "name": "DALOA"
+    },
+    {
+     "code": 63,
+     "name": "ISSIA"
+    },
+    {
+     "code": 64,
+     "name": "VAVOUA"
+    },
+    {
+     "code": 65,
+     "name": "ZOUKOUGBEU"
+    }
+   ]
+  },
+  {
+   "name": "IFFOU",
+   "districts": [
+    {
+     "code": 66,
+     "name": "DAOUKRO"
+    },
+    {
+     "code": 67,
+     "name": "M'BAHIAKRO"
+    },
+    {
+     "code": 68,
+     "name": "PRIKRO"
+    }
+   ]
+  },
+  {
+   "name": "INDENIE DUABLIN",
+   "districts": [
+    {
+     "code": 69,
+     "name": "ABENGOUROU"
+    },
+    {
+     "code": 70,
+     "name": "AGNIBILEKROU"
+    },
+    {
+     "code": 71,
+     "name": "BETTIE"
+    }
+   ]
+  },
+  {
+   "name": "KABADOUGOU",
+   "districts": [
+    {
+     "code": 72,
+     "name": "ODIENNE"
+    },
+    {
+     "code": 73,
+     "name": "MADINANI"
+    }
+   ]
+  },
+  {
+   "name": "LÔH DJIBOUA",
+   "districts": [
+    {
+     "code": 74,
+     "name": "DIVO"
+    },
+    {
+     "code": 76,
+     "name": "LAKOTA"
+    },
+    {
+     "code": 75,
+     "name": "GUITRY"
+    }
+   ]
+  },
+  {
+   "name": "MARAHOUE",
+   "districts": [
+    {
+     "code": 77,
+     "name": "BOUAFLE"
+    },
+    {
+     "code": 79,
+     "name": "ZUENOULA"
+    },
+    {
+     "code": 78,
+     "name": "SINFRA"
+    }
+   ]
+  },
+  {
+   "name": "ME",
+   "districts": [
+    {
+     "code": 80,
+     "name": "ADZOPE"
+    },
+    {
+     "code": 82,
+     "name": "ALEPE"
+    },
+    {
+     "code": 81,
+     "name": "AKOUPE"
+    },
+    {
+     "code": 83,
+     "name": "YAKASSE-ATTOBROU"
+    }
+   ]
+  },
+  {
+   "name": "MORONOU",
+   "districts": [
+    {
+     "code": 86,
+     "name": "M'BATTO"
+    },
+    {
+     "code": 85,
+     "name": "BONGOUANOU"
+    },
+    {
+     "code": 84,
+     "name": "ARRAH"
+    }
+   ]
+  },
+  {
+   "name": "NAWA",
+   "districts": [
+    {
+     "code": 90,
+     "name": "SOUBRE"
+    },
+    {
+     "code": 89,
+     "name": "MEAGUI"
+    },
+    {
+     "code": 87,
+     "name": "BUYO"
+    },
+    {
+     "code": 88,
+     "name": "GUEYO"
+    }
+   ]
+  },
+  {
+   "name": "NZI",
+   "districts": [
+    {
+     "code": 91,
+     "name": "DIMBOKRO"
+    },
+    {
+     "code": 92,
+     "name": "BOCANDA"
+    },
+    {
+     "code": 93,
+     "name": "KOUASSI KOUASSIKRO"
+    }
+   ]
+  },
+  {
+   "name": "PORO",
+   "districts": [
+    {
+     "code": 95,
+     "name": "KORHOGO 1"
+    },
+    {
+     "code": 96,
+     "name": "KORHOGO 2"
+    },
+    {
+     "code": 97,
+     "name": "M'BENGUE"
+    },
+    {
+     "code": 98,
+     "name": "SINEMATIALI"
+    },
+    {
+     "code": 94,
+     "name": "DIKODOUGOU"
+    }
+   ]
+  },
+  {
+   "name": "SAN PEDRO",
+   "districts": [
+    {
+     "code": 99,
+     "name": "SAN PEDRO"
+    },
+    {
+     "code": 100,
+     "name": "TABOU"
+    }
+   ]
+  },
+  {
+   "name": "SUD COMOE",
+   "districts": [
+    {
+     "code": 101,
+     "name": "ABOISSO"
+    },
+    {
+     "code": 103,
+     "name": "GRAND BASSAM"
+    },
+    {
+     "code": 102,
+     "name": "ADIAKE"
+    },
+    {
+     "code": 104,
+     "name": "TIAPOUM"
+    }
+   ]
+  },
+  {
+   "name": "TCHOLOGO",
+   "districts": [
+    {
+     "code": 105,
+     "name": "FERKESSEDOUGOU"
+    },
+    {
+     "code": 107,
+     "name": "OUANGOLODOUGOU"
+    },
+    {
+     "code": 106,
+     "name": "KONG"
+    }
+   ]
+  },
+  {
+   "name": "TONKPI",
+   "districts": [
+    {
+     "code": 110,
+     "name": "MAN"
+    },
+    {
+     "code": 108,
+     "name": "BIANKOUMA"
+    },
+    {
+     "code": 109,
+     "name": "DANANE"
+    },
+    {
+     "code": 111,
+     "name": "ZOUAN-HOUNIEN"
+    }
+   ]
+  },
+  {
+   "name": "WORODOUGOU",
+   "districts": [
+    {
+     "code": 112,
+     "name": "SEGUELA"
+    },
+    {
+     "code": 113,
+     "name": "KANI"
+    }
+   ]
+  }
+ ]
+}

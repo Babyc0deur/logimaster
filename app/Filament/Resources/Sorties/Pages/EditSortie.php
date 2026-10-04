@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Sorties\Pages; use App\Filament\Resources\Sorties\SortieVehiculeResource; use Filament\Actions\DeleteAction; use Filament\Resources\Pages\EditRecord; class EditSortie extends EditRecord { protected static string $resource = SortieVehiculeResource::class; protected function getHeaderActions(): array { return [ DeleteAction::make() ]; } }

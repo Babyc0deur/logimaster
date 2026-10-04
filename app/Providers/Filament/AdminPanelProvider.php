@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Providers\Filament;
+
+use App\Models\District;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+class AdminPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->default()
+            ->id('admin')
+            ->path('admin')
+            ->login()
+            ->colors([
+                'primary' => Color::Blue,
+                'danger'  => Color::Red,
+                'success' => Color::Green,
+                'warning' => Color::Orange,
+                'info'    => Color::Sky,
+            ])
+            ->brandName('LogiMaster Pro')
+            ->tenant(District::class, ownershipRelationship: 'districts')
+            ->databaseNotifications()
+            ->userMenuItems([
+                \Filament\Actions\Action::make('espc')->label('Centres de santé (ESPC)')->icon('heroicon-o-building-office-2')
+                    ->url(fn () => \App\Filament\Resources\Espcs\EspcResource::getUrl())
+                    ->visible(fn () => \App\Filament\Resources\Espcs\EspcResource::canAccess()),
+                \Filament\Actions\Action::make('personnel')->label('Chefs de mission et passagers')->icon('heroicon-o-user-group')
+                    ->url(fn () => \App\Filament\Resources\Personnels\PersonnelResource::getUrl())
+                    ->visible(fn () => \App\Filament\Resources\Personnels\PersonnelResource::canAccess()),
+                \Filament\Actions\Action::make('districts')->label('Districts')->icon('heroicon-o-building-office')
+                    ->url(fn () => \App\Filament\Resources\Districts\DistrictResource::getUrl())
+                    ->visible(fn () => \App\Filament\Resources\Districts\DistrictResource::canAccess()),
+            ])
+            ->navigationGroups(['Finance', 'Carburant', 'Maintenance', 'Données', 'Administration'])
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->pages([
+                \App\Filament\Pages\Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->widgets([])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ]);
+    }
+}

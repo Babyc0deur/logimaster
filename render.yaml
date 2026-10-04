@@ -1,0 +1,53 @@
+# Blueprint Render : un service web (image Docker construite par Render) + SQLite sur disque persistant.
+# Render → New → Blueprint → choisir le dépôt Git contenant ce fichier.
+services:
+  - type: web
+    name: logimaster
+    runtime: docker
+    plan: starter            # un disque persistant (base SQLite + photos de factures) exige un plan payant
+    healthCheckPath: /
+    disk:
+      name: storage
+      mountPath: /var/www/html/storage/app
+      sizeGB: 2
+    envVars:
+      - key: APP_NAME
+        value: LogiMaster Pro
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false              # php artisan key:generate --show  (valeur « base64:... »)
+      - key: APP_URL
+        sync: false              # ex. https://logimaster.onrender.com
+      - key: APP_LOCALE
+        value: fr
+      - key: APP_FALLBACK_LOCALE
+        value: fr
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/storage/app/database.sqlite   # sur le disque persistant
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: LOGIMASTER_MOBILE_URL
+        sync: false              # ex. https://logimaster.onrender.com/m
+      - key: LOGIMASTER_TUNNEL_MODE
+        value: "false"
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false              # 12 caractères minimum
+      - key: VAPID_SUBJECT
+        sync: false              # ex. mailto:contact@votre-domaine.ci
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false

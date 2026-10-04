@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Sorties\Pages; use App\Filament\Resources\Sorties\SortieVehiculeResource; use Filament\Resources\Pages\CreateRecord; class CreateSortie extends CreateRecord { protected static string $resource = SortieVehiculeResource::class; }

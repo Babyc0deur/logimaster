@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Espcs\Pages; use App\Filament\Resources\Espcs\EspcResource; use Filament\Resources\Pages\CreateRecord; class CreateEspc extends CreateRecord { protected static string $resource = EspcResource::class; }

@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Vidanges\Pages; use App\Filament\Resources\Vidanges\VidangeResource; use Filament\Resources\Pages\CreateRecord; class CreateVidange extends CreateRecord { protected static string $resource = VidangeResource::class; }

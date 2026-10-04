@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Immobilisations\Pages; use App\Filament\Resources\Immobilisations\ImmobilisationResource; use Filament\Resources\Pages\CreateRecord; class CreateImmobilisation extends CreateRecord { protected static string $resource = ImmobilisationResource::class; }

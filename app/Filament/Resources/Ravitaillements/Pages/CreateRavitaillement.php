@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\Ravitaillements\Pages; use App\Filament\Resources\Ravitaillements\RavitaillementResource; use Filament\Resources\Pages\CreateRecord; class CreateRavitaillement extends CreateRecord { protected static string $resource = RavitaillementResource::class; }
