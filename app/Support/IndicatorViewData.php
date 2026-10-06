@@ -36,19 +36,58 @@ class IndicatorViewData
     }
 
     /**
-     * Mois jamais calculé pour certains districts (nouveau district, mois non encore passé par le calcul de nuit) :
-     * ses indicateurs sont calculés tout de suite, au plus 15 districts par affichage pour garder la page rapide.
-     * Les mois déjà calculés sont tenus à jour chaque nuit (01:00) et après chaque import.
+     * Indicateurs toujours à jour à l'affichage :
+     * - mois jamais calculé pour un district (nouveau district, mois pas encore passé par le calcul de nuit) : calculé ;
+     * - mois en cours : recalculé pour chaque district qui a une saisie plus récente que son dernier calcul (sortie,
+     *   livraison, plein, vidange, immobilisation, dépense, planning, véhicule). Un district sans changement n'est pas recalculé,
+     *   ce qui garde la page rapide même à l'échelle nationale.
+     * Les mois passés restent tenus à jour chaque nuit (01:00) et après chaque import.
      */
     private static function computeMissing(array $ids, \Carbon\CarbonImmutable $month): void
     {
         if ($ids === [] || $month->greaterThan(\Carbon\CarbonImmutable::now()->endOfMonth())) {
             return;
         }
-        $have = \App\Models\IndicatorSnapshot::whereDate('period', $month->startOfMonth()->toDateString())->whereIn('district_id', $ids)->distinct()->pluck('district_id')->all();
+        $computed = \App\Models\IndicatorSnapshot::whereDate('period', $month->startOfMonth()->toDateString())->whereIn('district_id', $ids)
+            ->selectRaw('district_id, min(computed_at) as at')->groupBy('district_id')->pluck('at', 'district_id');
+
+        $todo = array_slice(array_values(array_diff($ids, $computed->keys()->all())), 0, 15);   // jamais calculés
+        if ($month->isSameMonth(\Carbon\CarbonImmutable::now())) {
+            $changed = self::lastChanges($computed->keys()->all());
+            foreach ($computed as $districtId => $at) {
+                if (isset($changed[$districtId]) && $changed[$districtId] > $at) {
+                    $todo[] = $districtId;
+                }
+            }
+        }
         $service = app(IndicatorService::class);
-        foreach (array_slice(array_values(array_diff($ids, $have)), 0, 15) as $id) {
+        foreach (array_unique($todo) as $id) {
             $service->computeForDistrict($id, $month);
         }
+    }
+
+    /** Date de la dernière saisie par district (toutes les données qui entrent dans les indicateurs). @return array<string, string> */
+    private static function lastChanges(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $db = \Illuminate\Support\Facades\DB::connection();
+        $last = [];
+        $keep = function ($rows) use (&$last) {
+            foreach ($rows as $district => $at) {
+                if ($at !== null && (! isset($last[$district]) || $at > $last[$district])) {
+                    $last[$district] = (string) $at;
+                }
+            }
+        };
+        foreach (['sorties_vehicules', 'ravitaillements', 'chronogrammes', 'immobilisations', 'vidanges', 'expenses', 'vehicles'] as $table) {
+            $keep($db->table($table)->whereIn('district_id', $ids)->selectRaw('district_id, max(updated_at) as at')->groupBy('district_id')->pluck('at', 'district_id'));
+        }
+        $keep($db->table('livraisons_espc')->join('chronogrammes', 'chronogrammes.id', '=', 'livraisons_espc.chronogramme_id')
+            ->whereIn('chronogrammes.district_id', $ids)->selectRaw('chronogrammes.district_id as district_id, max(livraisons_espc.updated_at) as at')
+            ->groupBy('chronogrammes.district_id')->pluck('at', 'district_id'));
+
+        return $last;
     }
 }
