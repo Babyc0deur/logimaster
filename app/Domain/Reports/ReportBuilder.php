@@ -127,6 +127,12 @@ class ReportBuilder
             );
         }
 
+        // mêmes analyses et mêmes graphiques que le tableau de bord (véhicule × motif)
+        $analyse = app(\App\Domain\Fleet\FleetAnalytics::class)->compute($ids, $month->startOfMonth(), $month->endOfMonth());
+        $panels = \App\Domain\Fleet\FleetAnalytics::panels($analyse, 12);
+        $doc->section('Analyse par véhicule et par motif', [], [], array_values(array_filter(array_map(fn ($p) => $p['svg'] ? null : $p['title'].' : '.lcfirst($p['note'] ?? 'aucune donnée sur la période.'), $panels))),
+            array_values(array_filter(array_map(fn ($p) => $p['svg'] ? $this->chart($p['title'].($p['more'] ? ' (12 premiers véhicules)' : ''), $p['svg']) : null, $panels))));
+
         return $doc->section('Commentaires et recommandations', [], [], Recommendations::for($rows));
     }
 
@@ -145,7 +151,7 @@ class ReportBuilder
 
         $statutColors = ['disponible' => '#22c55e', 'en_mission' => '#2563eb', 'en_maintenance' => '#f59e0b', 'hors_service' => '#ef4444'];
         $topKm = $vehicles->sortByDesc('km_actuel')->take(10)->values();
-        $doc->section('État de la flotte', $kpis, [$this->table('Liste des véhicules', ['Immatriculation', 'Marque / modèle', 'Type', 'Carburant', 'Statut', 'District', 'Km actuel', 'Prochaine vidange', 'CT', 'Assurance'],
+        $doc->section('Immobilisation des véhicules', $kpis, [$this->table('Liste des véhicules', ['Immatriculation', 'Marque / modèle', 'Type', 'Carburant', 'Statut', 'District', 'Km actuel', 'Prochaine vidange', 'CT', 'Assurance'],
             $vehicles->map(fn (Vehicle $v) => [
                 $v->immatriculation, trim("{$v->marque} {$v->modele}"), $v->type_vehicule, FuelPrice::TYPES[$v->type_carburant] ?? $v->type_carburant,
                 $labels[$v->statut] ?? $v->statut, $v->district?->name, $this->fmt($v->km_actuel), $v->km_vidange ? $this->fmt($v->km_vidange).' km' : '—',
