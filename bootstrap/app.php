@@ -20,5 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Erreurs envoyées à Sentry si SENTRY_LARAVEL_DSN est défini (production) ; sans DSN, rien n'est envoyé
+        \Sentry\Laravel\Integration::handles($exceptions);
     })->create();

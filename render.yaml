@@ -49,6 +49,10 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false              # 12 caractères minimum
+      - key: SENTRY_LARAVEL_DSN
+        sync: false              # adresse du projet Sentry (sentry.io) : suivi des erreurs
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0"              # 0 = erreurs seulement, sans mesure de performance
       - key: VAPID_SUBJECT
         sync: false              # ex. mailto:contact@votre-domaine.ci
       - key: VAPID_PUBLIC_KEY
