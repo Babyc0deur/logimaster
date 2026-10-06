@@ -15,15 +15,18 @@ class RolesTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nom du Rôle')
+                    ->label('Rôle')
+                    ->formatStateUsing(fn (string $state) => \App\Support\PermissionCatalog::roleLabel($state))
+                    ->description(fn ($record) => $record->name)
+                    ->weight('bold')
                     ->searchable()
                     ->sortable(),
-                    
-                TextColumn::make('permissions.name')
+
+                TextColumn::make('permissions_count')
                     ->label('Permissions')
+                    ->counts('permissions')
                     ->badge()
-                    ->color('primary')
-                    ->searchable(),
+                    ->color('primary'),
                     
                 TextColumn::make('users_count')
                     ->label('Utilisateurs')
