@@ -16,7 +16,10 @@ class FuelChart extends ChartWidget
 
     protected ?string $heading = 'Dépenses carburant sur la période';
 
-    protected int|string|array $columnSpan = 'full';
+    // demi-largeur, à côté de « Immobilisation des véhicules »
+    protected int|string|array $columnSpan = 1;
+
+    protected ?string $maxHeight = '260px';
 
     protected function getData(): array
     {

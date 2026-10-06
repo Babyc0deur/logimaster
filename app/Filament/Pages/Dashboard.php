@@ -80,7 +80,8 @@ class Dashboard extends BaseDashboard
     {
         $indicators = self::canSeeIndicators() ? [IndicatorCards::class, IndicatorDetail::class, IndicatorHistory::class, \App\Filament\Widgets\FleetAnalysis::class] : [];
 
-        // pas de bandeau « Total véhicules / Distance / Carburant / Sorties » : déjà dans « État de la flotte » et les cartes DDKM
-        return [...$indicators, FleetStatusDonut::class, MaintenanceAlerts::class, FuelChart::class];
+        // pas de bandeau « Total véhicules / Distance / Carburant / Sorties » : déjà dans « Immobilisation des véhicules » et les cartes DDKM
+        // « Immobilisation des véhicules » et « Dépenses carburant » côte à côte, puis les alertes de maintenance
+        return [...$indicators, FleetStatusDonut::class, FuelChart::class, MaintenanceAlerts::class];
     }
 }

@@ -7,14 +7,16 @@ use App\Support\DashboardFilters;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
-/** État de la flotte : véhicules disponibles / en mission / immobilisés / hors service. */
+/** Immobilisation des véhicules (tableau de bord) : véhicules disponibles / en mission / immobilisés / hors service. */
 class FleetStatusDonut extends ChartWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;
 
-    protected ?string $heading = 'État de la flotte';
+    protected ?string $heading = 'Immobilisation des véhicules';
+
+    protected ?string $maxHeight = '260px';
 
     protected int|string|array $columnSpan = 1;
 
