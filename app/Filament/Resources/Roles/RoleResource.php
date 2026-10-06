@@ -16,6 +16,9 @@ use Filament\Tables\Table;
 
 class RoleResource extends Resource
 {
+    /** Dans le menu du district (en haut à gauche), avec les autres réglages. */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = Role::class;
 
     protected static ?string $navigationLabel = 'Rôles';

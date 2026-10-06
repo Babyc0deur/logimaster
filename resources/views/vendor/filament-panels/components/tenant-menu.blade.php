@@ -139,11 +139,11 @@
                     />
                 </div>
 
-                <p x-show="q.trim() === ''" class="fi-dropdown-list-item-label" style="padding: .5rem .75rem; opacity: .65; font-size: .85rem">
+                <p x-show="q.trim() === ''" style="padding: .5rem .75rem; opacity: .65; font-size: .85rem; white-space: normal; line-height: 1.35; margin: 0">
                     Commencez à taper pour afficher les districts.
                 </p>
-                <p x-show="busy" x-cloak class="fi-dropdown-list-item-label" style="padding: .5rem .75rem; opacity: .65; font-size: .85rem">Recherche…</p>
-                <p x-show="q.trim() !== '' && ! busy && results.length === 0" x-cloak class="fi-dropdown-list-item-label" style="padding: .5rem .75rem; opacity: .65; font-size: .85rem">Aucun district trouvé.</p>
+                <p x-show="busy" x-cloak style="padding: .5rem .75rem; opacity: .65; font-size: .85rem; white-space: normal; line-height: 1.35; margin: 0">Recherche…</p>
+                <p x-show="q.trim() !== '' && ! busy && results.length === 0" x-cloak style="padding: .5rem .75rem; opacity: .65; font-size: .85rem; white-space: normal; line-height: 1.35; margin: 0">Aucun district trouvé.</p>
 
                 <template x-for="d in results" :key="d.id">
                     <a x-bind:href="d.url" class="fi-dropdown-list-item">

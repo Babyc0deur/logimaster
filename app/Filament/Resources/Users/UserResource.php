@@ -16,6 +16,9 @@ use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
+    /** Dans le menu du district (en haut à gauche), avec les autres réglages. */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
