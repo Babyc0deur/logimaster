@@ -87,6 +87,7 @@ class DistrictResource extends Resource
         return $table
             ->defaultSort('name')
             ->columns([
+                TextColumn::make('numero')->label('N°')->rowIndex()->alignCenter()->color('gray')->width('3rem'),
                 TextColumn::make('name')->label('District')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('region.name')->label('Région')->sortable(),
                 TextColumn::make('region.pres.name')->label('PRES')->toggleable(),

@@ -25,6 +25,7 @@ class EspcsTable
             ->modifyQueryUsing(fn (Builder $query) => $query->with('circuits:id,nom'))
             ->recordUrl(fn (Espc $record) => EspcResource::getUrl('view', ['record' => $record]))
             ->columns([
+                TextColumn::make('numero')->label('N°')->rowIndex()->alignCenter()->color('gray')->width('3rem'),
                 TextColumn::make('nom')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('type')->badge()->formatStateUsing(fn ($state) => EspcForm::TYPES[$state] ?? $state)->placeholder('—')->sortable(),
                 TextColumn::make('circuits')->label('Circuit(s)')->state(fn (Espc $e) => $e->circuits->pluck('nom')->all())->badge()->separator(',')->placeholder('Aucun'),

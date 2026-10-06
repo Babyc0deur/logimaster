@@ -15,7 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-/** Organisation : PRES (pôles régionaux) et leurs régions (menu du district, en haut à gauche). Création et modification : national. */
+/** Organisation : PRES (pôles régionaux) et leurs régions (menu du profil, en haut à droite). Création et modification : national. */
 class PresResource extends Resource
 {
     protected static ?string $model = Pres::class;
@@ -74,6 +74,7 @@ class PresResource extends Resource
         return $table
             ->defaultSort('name')
             ->columns([
+                TextColumn::make('numero')->label('N°')->rowIndex()->alignCenter()->color('gray')->width('3rem'),
                 TextColumn::make('name')->label('PRES')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('regions_count')->label('Régions')->numeric()->sortable(),
                 TextColumn::make('districts')->label('Districts')->numeric()

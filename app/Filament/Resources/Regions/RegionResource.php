@@ -17,7 +17,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-/** Organisation : régions sanitaires et leur PRES (menu du district, en haut à gauche). Création et modification : national. */
+/** Organisation : régions sanitaires et leur PRES (menu du profil, en haut à droite). Création et modification : national. */
 class RegionResource extends Resource
 {
     protected static ?string $model = Region::class;
@@ -77,6 +77,7 @@ class RegionResource extends Resource
         return $table
             ->defaultSort('name')
             ->columns([
+                TextColumn::make('numero')->label('N°')->rowIndex()->alignCenter()->color('gray')->width('3rem'),
                 TextColumn::make('name')->label('Région')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('pres.name')->label('PRES')->sortable(),
                 TextColumn::make('districts_count')->label('Districts')->numeric()->sortable(),

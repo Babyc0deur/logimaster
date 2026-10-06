@@ -46,7 +46,7 @@ class UserMenuAndFiltersTest extends TestCase
         $this->as(User::ROLE_PRES_ADMIN);
         $sidebar = collect(Filament::getNavigation())->flatMap(fn ($g) => collect($g->getItems())->map(fn ($i) => $i->getLabel()))->all();
         foreach (['Centres de santé (ESPC)', 'Personnel', 'Districts', 'Régions', 'PRES', 'Rôles', 'Utilisateurs'] as $label) {
-            $this->assertNotContains($label, $sidebar);   // tous dans le menu du district (en haut à gauche)
+            $this->assertNotContains($label, $sidebar);   // tous dans le menu du profil (en haut à droite)
         }
         $page = $this->get("/admin/{$this->district->id}")->assertOk();
         foreach (['Centres de santé', 'Personnel', 'Districts', 'Régions', 'PRES', 'Utilisateurs', 'Rôles'] as $label) {

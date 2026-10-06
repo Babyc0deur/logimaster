@@ -37,8 +37,8 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(\Filament\View\PanelsRenderHook::BODY_START, fn () => view('filament.preloader'))   // préchargeur au chargement des pages
             ->tenant(District::class, ownershipRelationship: 'districts')
             ->databaseNotifications()
-            // Menu du district (en haut à gauche) : réglages et organisation, sous la recherche de district
-            ->tenantMenuItems([
+            // Menu du profil (en haut à droite) : réglages et organisation, puis outils techniques
+            ->userMenuItems([
                 \Filament\Actions\Action::make('espc')->label('Centres de santé')->icon('heroicon-o-building-office-2')
                     ->url(fn () => \App\Filament\Resources\Espcs\EspcResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Espcs\EspcResource::canAccess()),
@@ -60,23 +60,9 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\Actions\Action::make('roles')->label('Rôles')->icon('heroicon-o-shield-check')
                     ->url(fn () => \App\Filament\Resources\Roles\RoleResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Roles\RoleResource::canAccess()),
-            ])
-            // Menu du profil (en haut à droite) : outils techniques
-            ->userMenuItems([
                 \Filament\Actions\Action::make('sauvegardes')->label('Sauvegardes')->icon('heroicon-o-circle-stack')
                     ->url(fn () => \App\Filament\Pages\Backups::getUrl())
                     ->visible(fn () => \App\Filament\Pages\Backups::canAccess()),
-                \Filament\Actions\Action::make('sentryTest')->label('Tester le suivi des erreurs')->icon('heroicon-o-bug-ant')
-                    ->visible(fn () => (bool) auth()->user()?->isNational())
-                    ->requiresConfirmation()
-                    ->modalHeading('Envoyer une erreur de test à Sentry ?')
-                    ->modalDescription("Une erreur volontaire est enregistrée sur le serveur et transmise à Sentry. L'application continue de fonctionner normalement.")
-                    ->modalSubmitActionLabel('Envoyer le test')
-                    ->action(function () {
-                        $r = \App\Support\SentryCheck::send();
-                        $n = \Filament\Notifications\Notification::make()->title($r['ok'] ? 'Test envoyé' : 'Test non envoyé')->body($r['message'])->persistent();
-                        ($r['ok'] ? $n->success() : $n->warning())->send();
-                    }),
             ])
             ->navigationGroups(['Finance', 'Carburant', 'Maintenance', 'Données', 'Administration'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
