@@ -56,6 +56,21 @@ class DashboardFilters
         return $from ? CarbonImmutable::parse($from)->startOfDay() : CarbonImmutable::now()->startOfMonth();
     }
 
+    /** Début de la période du tableau de bord à l'arrivée (« logimaster.dashboard_period »), sinon la période par défaut. */
+    public static function dashboardFrom(): CarbonImmutable
+    {
+        $from = config('logimaster.dashboard_period.from');
+
+        return $from ? CarbonImmutable::parse($from)->startOfDay() : self::defaultFrom();
+    }
+
+    public static function dashboardUntil(): CarbonImmutable
+    {
+        $until = config('logimaster.dashboard_period.until');
+
+        return $until ? CarbonImmutable::parse($until)->endOfDay() : self::defaultUntil();
+    }
+
     /** Fin de la période par défaut, sinon aujourd'hui. */
     public static function defaultUntil(): CarbonImmutable
     {

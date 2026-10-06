@@ -45,7 +45,7 @@ class Dashboard extends BaseDashboard
 
                     DatePicker::make('date_from')
                         ->label('Du')
-                        ->default(DashboardFilters::defaultFrom())
+                        ->default(DashboardFilters::dashboardFrom())
                         ->native(false)
                         ->displayFormat('d/m/Y')
                         ->maxDate(fn (Get $get) => $get('date_until'))
@@ -53,7 +53,7 @@ class Dashboard extends BaseDashboard
 
                     DatePicker::make('date_until')
                         ->label('Au')
-                        ->default(DashboardFilters::defaultUntil())
+                        ->default(DashboardFilters::dashboardUntil())
                         ->native(false)
                         ->displayFormat('d/m/Y')
                         ->minDate(fn (Get $get) => $get('date_from'))
@@ -68,7 +68,7 @@ class Dashboard extends BaseDashboard
     /** Filtres mémorisés par district : changer de district ne reprend pas le mois (souvent vide) choisi pour un autre. */
     public function getFiltersSessionKey(): string
     {
-        return md5(static::class).'_v3_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
+        return md5(static::class).'_v4_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
     }
 
     public static function canSeeIndicators(): bool

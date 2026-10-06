@@ -43,6 +43,12 @@ services:
         value: "2025-06-11"      # période par défaut des filtres du tableau de bord
       - key: LOGIMASTER_PERIOD_UNTIL
         value: "2026-10-12"
+      - key: LOGIMASTER_DASHBOARD_FROM
+        value: "2025-10-01"      # tableau de bord à l'arrivée
+      - key: LOGIMASTER_DASHBOARD_UNTIL
+        value: "2025-10-31"
+      - key: LOGIMASTER_DEFAULT_DISTRICT
+        value: MEAGUI             # district ouvert après la connexion
       - key: LOGIMASTER_TUNNEL_MODE
         value: "false"
       - key: ADMIN_EMAIL

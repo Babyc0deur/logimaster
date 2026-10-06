@@ -24,6 +24,9 @@
         <env name="LOGIMASTER_MOBILE_URL" value=""/>
         <env name="SENTRY_LARAVEL_DSN" value=""/>
         <env name="BACKUP_S3_BUCKET" value=""/>
+        <env name="LOGIMASTER_DASHBOARD_FROM" value=""/>
+        <env name="LOGIMASTER_DASHBOARD_UNTIL" value=""/>
+        <env name="LOGIMASTER_DEFAULT_DISTRICT" value=""/>
         <env name="LOGIMASTER_PERIOD_FROM" value=""/>
         <env name="LOGIMASTER_PERIOD_UNTIL" value=""/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

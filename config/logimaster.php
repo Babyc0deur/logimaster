@@ -12,6 +12,15 @@ return [
         'until' => env('LOGIMASTER_PERIOD_UNTIL', '2026-10-12') ?: null,
     ],
 
+    // Tableau de bord à l'arrivée : période affichée (les listes gardent la période par défaut ci-dessus)
+    'dashboard_period' => [
+        'from' => env('LOGIMASTER_DASHBOARD_FROM', '2025-10-01') ?: null,
+        'until' => env('LOGIMASTER_DASHBOARD_UNTIL', '2025-10-31') ?: null,
+    ],
+
+    // District ouvert après la connexion (s'il fait partie des districts de l'utilisateur ; sinon le premier de sa liste)
+    'default_district' => env('LOGIMASTER_DEFAULT_DISTRICT', 'MEAGUI'),
+
     /*
     | Adresse que le téléphone ouvre pour installer l'application mobile (QR code). Doit être joignable depuis le téléphone
     | et en HTTPS (installation + notifications). Défaut : APP_URL/m.

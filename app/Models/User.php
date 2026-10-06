@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasDefaultTenant;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,7 +15,7 @@ use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants
 {
     use HasApiTokens, HasFactory, HasRoles, HasUuids, Notifiable;
 
@@ -110,6 +111,15 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         $ids = $this->accessibleDistrictIds();
 
         return $ids === null || in_array($districtId, $ids, true);
+    }
+
+    /** District ouvert après la connexion : celui de la configuration (MEAGUI) s'il est accessible, sinon le premier de la liste. */
+    public function getDefaultTenant(Panel $panel): ?Model
+    {
+        $name = config('logimaster.default_district');
+        $preferred = $name ? District::where('name', $name)->first() : null;
+
+        return $preferred && $this->canAccessDistrict($preferred->getKey()) ? $preferred : $this->getTenants($panel)->first();
     }
 
     public function getTenants(Panel $panel): Collection
