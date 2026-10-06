@@ -146,7 +146,7 @@ class DashboardFilters
     private static function lastActivity(array $districtIds, CarbonImmutable $from, CarbonImmutable $until): ?string
     {
         return \Illuminate\Support\Facades\DB::table('sorties_vehicules')->whereNull('deleted_at')->whereIn('district_id', $districtIds)
-            ->whereBetween('date_sortie', [$from->toDateTimeString(), $until->toDateTimeString()])->max('date_sortie');
+            ->whereBetween('date_sortie', [$from->toDateString(), $until->toDateString()])->max('date_sortie');
     }
 
     /**

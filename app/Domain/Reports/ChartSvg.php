@@ -170,6 +170,45 @@ final class ChartSvg
     }
 
     /**
+     * Barres horizontales empilées : une barre par ligne (véhicule), un segment par série (motif), total en bout de barre.
+     *
+     * @param  array<string, array<string, float|int>>  $matrix  ligne => [série => valeur]
+     * @param  array<int, string>  $series  ordre et couleurs des séries
+     */
+    public static function hstack(array $matrix, array $series, string $unit = ''): string
+    {
+        $rows = count($matrix);
+        $rowH = 24;
+        $legendH = 26;
+        $h = $legendH + 14 + $rows * $rowH + 10;
+        [$x0, $x1] = [150, self::W - 80];
+        $max = self::niceMax(max(array_map(fn ($r) => array_sum($r), $matrix) ?: [0]));
+        $svg = self::open($h);
+        $svg .= self::legend(array_map(fn ($s, $i) => ['name' => $s, 'color' => self::PALETTE[$i % 8]], $series, array_keys($series)), self::W - 16, 16);
+        $i = 0;
+        foreach ($matrix as $label => $values) {
+            $y = $legendH + 10 + $i * $rowH;
+            $x = $x0;
+            $svg .= '<text x="'.($x0 - 8).'" y="'.($y + 13).'" font-size="11" fill="#374151" text-anchor="end" '.self::FONT.'>'.self::e(self::cut((string) $label, 22)).'</text>'
+                .'<rect x="'.$x0.'" y="'.$y.'" width="'.($x1 - $x0).'" height="16" rx="3" fill="#f3f4f6"/>';
+            foreach ($series as $k => $name) {
+                $v = (float) ($values[$name] ?? 0);
+                if ($v <= 0) {
+                    continue;
+                }
+                $w = ($x1 - $x0) * $v / $max;
+                $svg .= '<rect x="'.round($x, 1).'" y="'.$y.'" width="'.round(max(1, $w), 1).'" height="16" fill="'.self::PALETTE[$k % 8].'"/>';
+                $x += $w;
+            }
+            $total = array_sum($values);
+            $svg .= '<text x="'.round(min($x + 6, $x1 + 6), 1).'" y="'.($y + 12.5).'" font-size="11" font-weight="bold" fill="#111827" '.self::FONT.'>'.self::e(self::num($total, $total < 10 ? 1 : 0).($unit ? ' '.$unit : '')).'</text>';
+            $i++;
+        }
+
+        return $svg.'</svg>';
+    }
+
+    /**
      * Courbes (évolution dans le temps).
      *
      * @param  array<int, string>  $labels

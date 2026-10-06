@@ -28,12 +28,12 @@ class ChronogrammeForm
                 ->relationship('vehicle', 'immatriculation')
                 ->searchable()->preload()->live()
                 ->helperText('Facultatif : peut être affecté plus tard, au démarrage de la sortie.')
-                ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('vehicle_id', $get, $record, 'Ce véhicule est déjà planifié ce jour-là.')]),
+                ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('vehicle_id', $get, $record, 'Ce véhicule a déjà une sortie à la même heure ce jour-là.')]),
             Select::make('driver_id')
                 ->label('Chauffeur')
                 ->relationship('driver', 'nom_complet')
                 ->searchable()->preload()->live()
-                ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('driver_id', $get, $record, 'Ce chauffeur est déjà planifié ce jour-là.')]),
+                ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('driver_id', $get, $record, 'Ce chauffeur a déjà une sortie à la même heure ce jour-là.')]),
             Select::make('circuit_id')
                 ->label('Circuit')
                 ->relationship('circuit', 'nom')
@@ -64,12 +64,15 @@ class ChronogrammeForm
     /** Refuse deux entrées non annulées pour le même véhicule (ou chauffeur) le même jour. */
     private static function noDoubleBooking(string $column, Get $get, ?Model $record, string $message): Closure
     {
+        // Un chauffeur (ou un véhicule) peut enchaîner plusieurs circuits dans la journée : seul un départ à la même heure est refusé.
         return function (string $attribute, $value, Closure $fail) use ($column, $get, $record, $message) {
             $date = $get('date_prevue');
-            if (! $value || ! $date) {
+            $heure = $get('heure_depart');
+            if (! $value || ! $date || ! $heure) {
                 return;
             }
             $conflict = Chronogramme::where($column, $value)->whereDate('date_prevue', $date)
+                ->where('heure_depart', 'like', substr((string) $heure, 0, 5).'%')
                 ->where('statut', '!=', 'annulee')
                 ->when($record, fn ($q) => $q->whereKeyNot($record->getKey()))->exists();
             if ($conflict && $get('statut') !== 'annulee') {
