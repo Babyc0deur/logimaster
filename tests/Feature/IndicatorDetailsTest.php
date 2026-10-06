@@ -228,7 +228,7 @@ class IndicatorDetailsTest extends TestCase
         foreach ([$t, "{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09"] as $url) {
             $this->assertSame(200, $this->get($url)->getStatusCode(), $url);
         }
-        $this->get("{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09")->assertSee('Recalculer les indicateurs du mois');
+        $this->get("{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09")->assertDontSee('Recalculer')->assertDontSee('Total Véhicules');   // calcul automatique, pas de doublons
         // l'ancienne adresse des indicateurs renvoie vers le tableau de bord, filtres conservés
         $this->get("{$t}/indicateurs?filters[indicateur]=respect_espc")->assertRedirectContains('respect_espc');
     }

@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 class FleetStatsOverview extends BaseWidget
 {
+    /** Retiré du tableau de bord (doublon des cartes DDKM et de « État de la flotte ») ; conservé pour d'autres pages éventuelles. */
+    protected static bool $isDiscovered = false;
+
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;

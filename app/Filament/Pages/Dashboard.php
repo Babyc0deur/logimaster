@@ -2,18 +2,13 @@
 
 namespace App\Filament\Pages;
 
-use App\Domain\Indicators\IndicatorService;
 use App\Filament\Concerns\ScopeFilters;
 use App\Filament\Pages\Indicators\Widgets\IndicatorDetail;
 use App\Filament\Pages\Indicators\Widgets\IndicatorHistory;
-use App\Filament\Widgets\FleetStatsOverview;
 use App\Filament\Widgets\FleetStatusDonut;
 use App\Filament\Widgets\FuelChart;
 use App\Filament\Widgets\IndicatorCards;
 use App\Filament\Widgets\MaintenanceAlerts;
-use App\Support\IndicatorViewData;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use App\Models\Region;
 use App\Support\DashboardFilters;
 use Filament\Facades\Filament;
@@ -27,7 +22,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 /**
- * Tableau de bord unique : chiffres de la flotte, les 9 indicateurs DDKM (cartes, détail et évolution de l'indicateur choisi),
+ * Tableau de bord unique : les 9 indicateurs DDKM (cartes, détail et évolution de l'indicateur choisi),
  * état du parc, alertes de maintenance et carburant, avec les mêmes filtres de périmètre et de période.
  */
 class Dashboard extends BaseDashboard
@@ -85,28 +80,7 @@ class Dashboard extends BaseDashboard
     {
         $indicators = self::canSeeIndicators() ? [IndicatorCards::class, IndicatorDetail::class, IndicatorHistory::class] : [];
 
-        return [FleetStatsOverview::class, ...$indicators, FleetStatusDonut::class, MaintenanceAlerts::class, FuelChart::class];
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('recalculer')
-                ->label('Recalculer les indicateurs du mois')->icon('heroicon-o-arrow-path')->color('gray')
-                ->visible(fn () => self::canSeeIndicators() && auth()->user()->can('create_reports'))
-                ->requiresConfirmation()
-                ->modalDescription('Recalcule les 9 indicateurs DDKM du mois choisi pour les districts du périmètre (les calculs sont normalement automatiques chaque nuit).')
-                ->action(function () {
-                    $ids = DashboardFilters::districtIds($this->filters);
-                    $month = DashboardFilters::indicatorMonth($this->filters);
-                    $service = app(IndicatorService::class);
-                    foreach ($ids as $id) {
-                        $service->computeForDistrict($id, $month);
-                    }
-                    IndicatorViewData::flush();
-                    Notification::make()->title(count($ids).' district(s) recalculé(s) — '.$month->translatedFormat('F Y'))->success()->send();
-                    $this->dispatch('$refresh');
-                }),
-        ];
+        // pas de bandeau « Total véhicules / Distance / Carburant / Sorties » : déjà dans « État de la flotte » et les cartes DDKM
+        return [...$indicators, FleetStatusDonut::class, MaintenanceAlerts::class, FuelChart::class];
     }
 }

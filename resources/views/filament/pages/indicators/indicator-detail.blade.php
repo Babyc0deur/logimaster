@@ -1,7 +1,7 @@
 <x-filament-widgets::widget id="indicateur-detail" style="scroll-margin-top:80px">
     <x-filament::section :heading="$meta['label'] . ' — ' . ucfirst($month->translatedFormat('F Y'))" :description="$meta['definition']">
         @if ($empty)
-            <p style="font-size:.9rem;color:#6b7280">Aucune donnée calculée pour ce mois et ce périmètre. Utilisez « Recalculer le mois » ou choisissez un autre mois.</p>
+            <p style="font-size:.9rem;color:#6b7280">Aucune activité enregistrée pour ce mois et ce périmètre : choisissez d'autres dates ou un autre district.</p>
         @else
             <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;margin-bottom:1rem">
                 @php $c = ['success' => '#059669', 'warning' => '#d97706', 'danger' => '#dc2626', 'gray' => '#111827'][$color]; @endphp
