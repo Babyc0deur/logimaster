@@ -67,15 +67,18 @@ class ChronogrammesTable
                         $record->demarrer();
                         Notification::make()->title('Sortie démarrée')->success()->send();
                     }),
-                Action::make('dupliquer')
-                    ->label('Dupliquer')
-                    ->icon('heroicon-o-document-duplicate')
-                    ->schema([DatePicker::make('date_prevue')->label('Nouvelle date')->required()->native(false)->displayFormat('d/m/Y')])
-                    ->action(function (Chronogramme $record, array $data) {
-                        $record->replicate(['statut', 'sortie_id'])->fill(['date_prevue' => $data['date_prevue'], 'statut' => 'planifiee'])->save();
-                        Notification::make()->title('Sortie dupliquée')->success()->send();
-                    }),
-                EditAction::make(),
+                // Modifier et dupliquer dans un menu « ⋮ » : une seule action visible par ligne (Démarrer, quand c'est possible)
+                \Filament\Actions\ActionGroup::make([
+                    EditAction::make(),
+                    Action::make('dupliquer')
+                        ->label('Dupliquer')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->schema([DatePicker::make('date_prevue')->label('Nouvelle date')->required()->native(false)->displayFormat('d/m/Y')])
+                        ->action(function (Chronogramme $record, array $data) {
+                            $record->replicate(['statut', 'sortie_id'])->fill(['date_prevue' => $data['date_prevue'], 'statut' => 'planifiee'])->save();
+                            Notification::make()->title('Sortie dupliquée')->success()->send();
+                        }),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -11,6 +11,7 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
@@ -29,8 +30,11 @@ class ListChronogrammes extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        // Trois boutons : créer, valider le mois, et le reste (génération automatique, import / export) dans « Plus »
         return [
-            ImportExportActions::group('chronogrammes', 'chronogramme', 'Chronogramme'),
+            CreateAction::make()->label('Nouvelle sortie'),
+            ActionGroup::make(self::workflowActions())->label('Validation du mois')->icon('heroicon-o-check-badge')->button()->color('info'),
+            ActionGroup::make([
             Action::make('generer')
                 ->label('Générer selon la fréquence')
                 ->icon('heroicon-o-sparkles')
@@ -58,8 +62,8 @@ class ListChronogrammes extends ListRecords
                     );
                     Notification::make()->title("{$count} sortie(s) planifiée(s)")->success()->send();
                 }),
-            ...self::workflowActions(),
-            CreateAction::make(),
+                ImportExportActions::group('chronogrammes', 'chronogramme', 'Chronogramme')->dropdown(false),
+            ])->label('Plus')->icon('heroicon-m-ellipsis-horizontal')->button()->color('gray'),
         ];
     }
 
