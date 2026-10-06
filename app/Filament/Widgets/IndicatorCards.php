@@ -43,7 +43,7 @@ class IndicatorCards extends Widget
                 'delta_good' => $delta === null || $meta['direction'] === null ? null : ($meta['direction'] === 'up' ? $delta >= 0 : $delta <= 0),
                 'sub' => $this->subtitle($key, $row, $has),
                 'definition' => $meta['definition'],
-                'url' => Dashboard::getUrl(['filters' => array_filter(['indicateur' => $key, 'periode' => $data['month']->format('Y-m')] + ($this->pageFilters ?? []))]).'#indicateur-detail',
+                'url' => Dashboard::getUrl(['filters' => array_filter(['indicateur' => $key] + ($this->pageFilters ?? []))]).'#indicateur-detail',
             ];
         }
 

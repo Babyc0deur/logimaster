@@ -90,9 +90,7 @@ class DashboardFilters
         $until = self::defaultUntil();
         $from = config('logimaster.default_period.from') ? self::defaultFrom() : $until->subYears(5);
         $tenant = \Filament\Facades\Filament::getTenant();
-        $query = \App\Models\SortieVehicule::query()->whereBetween('date_sortie', [$from->startOfDay(), $until->endOfDay()]);
-        $tenant ? $query->where('district_id', $tenant->getKey()) : $query->whereIn('district_id', self::accessibleDistricts()->select('id'));
-        $last = $query->max('date_sortie');
+        $last = self::lastActivity($tenant ? [$tenant->getKey()] : self::accessibleDistricts()->pluck('id')->all(), $from->startOfDay(), $until->endOfDay());
 
         return $last ? CarbonImmutable::parse($last)->format('Y-m') : $until->format('Y-m');
     }
@@ -142,6 +140,16 @@ class DashboardFilters
     }
 
     /**
+     * Date de la dernière sortie des districts donnés sur la période. Requête directe : la limitation automatique de Filament
+     * au district du menu (tenant) ne doit pas s'appliquer quand les filtres visent d'autres districts.
+     */
+    private static function lastActivity(array $districtIds, CarbonImmutable $from, CarbonImmutable $until): ?string
+    {
+        return \Illuminate\Support\Facades\DB::table('sorties_vehicules')->whereNull('deleted_at')->whereIn('district_id', $districtIds)
+            ->whereBetween('date_sortie', [$from->toDateTimeString(), $until->toDateTimeString()])->max('date_sortie');
+    }
+
+    /**
      * Mois des indicateurs DDKM : filtre « Mois des indicateurs » (« periode ») s'il est choisi, sinon le dernier mois de la
      * période qui a de l'activité (jamais un mois vide simplement parce que la date « Au » le contient).
      */
@@ -149,6 +157,14 @@ class DashboardFilters
     {
         if (! empty($filters['periode'])) {
             return CarbonImmutable::createFromFormat('Y-m', $filters['periode'])->startOfMonth();
+        }
+        if ($filters !== null && (array_key_exists('date_from', $filters) || array_key_exists('date_until', $filters) || ! empty($filters['district_id']) || ! empty($filters['region_id']) || ! empty($filters['pres_id']))) {
+            // automatique : dernier mois avec des sorties, dans la période Du/Au et pour les districts filtrés
+            $from = ! empty($filters['date_from']) ? CarbonImmutable::parse($filters['date_from'])->startOfDay() : self::defaultFrom();
+            $until = ! empty($filters['date_until']) ? CarbonImmutable::parse($filters['date_until'])->endOfDay() : self::defaultUntil();
+            $last = self::lastActivity(self::districtIds($filters), $from, $until);
+
+            return ($last ? CarbonImmutable::parse($last) : $until)->startOfMonth();
         }
 
         return CarbonImmutable::createFromFormat('Y-m', self::defaultMonthKey())->startOfMonth();

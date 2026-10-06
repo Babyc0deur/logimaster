@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Domain\Indicators\IndicatorCatalog;
 use App\Domain\Indicators\IndicatorService;
 use App\Filament\Concerns\ScopeFilters;
 use App\Filament\Pages\Indicators\Widgets\IndicatorDetail;
@@ -65,15 +64,8 @@ class Dashboard extends BaseDashboard
                         ->minDate(fn (Get $get) => $get('date_from'))
                         ->live(),
 
-                    Select::make('periode')->label('Mois des indicateurs DDKM')->native(false)->live()
-                        ->visible(fn () => self::canSeeIndicators())
-                        ->default(DashboardFilters::defaultMonthKey())
-                        ->options(DashboardFilters::monthOptions(24)),
-
-                    Select::make('indicateur')->label('Indicateur détaillé')->native(false)->live()
-                        ->visible(fn () => self::canSeeIndicators())
-                        ->default('distance_totale')
-                        ->options(collect(IndicatorCatalog::all())->map(fn ($m) => $m['label'])->all()),
+                    // indicateur détaillé : choisi en cliquant sur sa carte (le mois des indicateurs suit le district et les dates)
+                    \Filament\Forms\Components\Hidden::make('indicateur')->default('distance_totale'),
                 ]),
         ]);
     }
@@ -81,7 +73,7 @@ class Dashboard extends BaseDashboard
     /** Filtres mémorisés par district : changer de district ne reprend pas le mois (souvent vide) choisi pour un autre. */
     public function getFiltersSessionKey(): string
     {
-        return md5(static::class).'_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
+        return md5(static::class).'_v3_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
     }
 
     public static function canSeeIndicators(): bool
