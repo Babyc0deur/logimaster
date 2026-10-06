@@ -47,6 +47,17 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\Actions\Action::make('districts')->label('Districts')->icon('heroicon-o-building-office')
                     ->url(fn () => \App\Filament\Resources\Districts\DistrictResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Districts\DistrictResource::canAccess()),
+                \Filament\Actions\Action::make('sentryTest')->label('Tester le suivi des erreurs')->icon('heroicon-o-bug-ant')
+                    ->visible(fn () => (bool) auth()->user()?->isNational())
+                    ->requiresConfirmation()
+                    ->modalHeading('Envoyer une erreur de test à Sentry ?')
+                    ->modalDescription("Une erreur volontaire est enregistrée sur le serveur et transmise à Sentry. L'application continue de fonctionner normalement.")
+                    ->modalSubmitActionLabel('Envoyer le test')
+                    ->action(function () {
+                        $r = \App\Support\SentryCheck::send();
+                        $n = \Filament\Notifications\Notification::make()->title($r['ok'] ? 'Test envoyé' : 'Test non envoyé')->body($r['message'])->persistent();
+                        ($r['ok'] ? $n->success() : $n->warning())->send();
+                    }),
             ])
             ->navigationGroups(['Finance', 'Carburant', 'Maintenance', 'Données', 'Administration'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
