@@ -29,8 +29,27 @@ return [
     | Application mobile : tout chef de mission ou passager actif reçoit automatiquement un accès (identifiant + code
     | provisoire). Mettre LOGIMASTER_MOBILE_AUTO_ACCESS=false pour désactiver la création automatique.
     */
+    /*
+    | Sauvegardes : base de données + photos (factures, compteurs, bons de livraison) dans une archive zip, envoyée chaque nuit
+    | vers le disque « backups » (stockage externe S3) s'il est configuré, sinon dans storage/app/backups (même serveur : à éviter).
+    */
+    'backup' => [
+        'external' => filled(env('BACKUP_S3_BUCKET')),
+        'folder' => env('BACKUP_FOLDER', 'logimaster'),
+        'keep_daily' => (int) env('BACKUP_KEEP_DAYS', 30),       // une sauvegarde par jour sur 30 jours
+        'keep_monthly' => (int) env('BACKUP_KEEP_MONTHS', 12),   // puis la première de chaque mois sur 12 mois
+        'photos' => ['factures', 'compteurs', 'preuves', 'signalements'],
+        'restore_if_empty' => (bool) env('BACKUP_RESTORE_IF_EMPTY', true),   // au démarrage, base vide : reprendre la dernière sauvegarde
+    ],
+
+    // Vidange déclarée sans prochain kilométrage : échéance suivante = km de la vidange + cet intervalle
+    'vidange_interval_km' => (int) env('LOGIMASTER_VIDANGE_INTERVAL_KM', 5000),
+
     'mobile' => [
         'auto_access' => (bool) env('LOGIMASTER_MOBILE_AUTO_ACCESS', true),
+        // Position d'un centre relevée à la livraison : précision GPS maximale acceptée (m), écart signalé (m)
+        'gps_precision_max' => (int) env('LOGIMASTER_GPS_PRECISION_MAX', 150),
+        'gps_ecart_alerte' => (int) env('LOGIMASTER_GPS_ECART_ALERTE', 1000),
     ],
 
     /*

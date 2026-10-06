@@ -17,6 +17,7 @@ class SortieVehicule extends Model
         'circuit_id', 'km_depart', 'km_arrivee', 'motif', 'destination',
         'circuit_respecte', 'commentaires', 'statut', 'version',
         'date_sortie', 'chef_mission_id', 'point_depart', 'point_arrivee', 'etapes', 'validated_at', 'validated_by',
+        'photo_km_depart', 'photo_km_arrivee',
     ];
 
     protected function casts(): array

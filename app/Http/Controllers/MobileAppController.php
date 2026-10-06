@@ -67,7 +67,10 @@ class MobileAppController extends Controller
     /** Service worker servi depuis /m/sw.js : sa portée couvre l'application (/m). */
     public function serviceWorker(): Response
     {
-        return response(view('mobile.sw')->render(), 200, [
+        // version = empreinte de l'application mobile et du service worker (change à chaque modification déployée)
+        $version = substr(md5(implode('|', array_map(fn ($v) => @filemtime(resource_path("views/mobile/{$v}.blade.php")).'-'.@filesize(resource_path("views/mobile/{$v}.blade.php")), ['app', 'sw']))), 0, 10);
+
+        return response(view('mobile.sw', ['version' => $version])->render(), 200, [
             'Content-Type' => 'application/javascript; charset=utf-8',
             'Cache-Control' => 'no-cache',
             'Service-Worker-Allowed' => '/m',

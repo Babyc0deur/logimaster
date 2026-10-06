@@ -43,6 +43,12 @@ class District extends Model implements HasCurrentTenantLabel
         return $this->belongsToMany(User::class, 'district_user');
     }
 
+    /** Signalements terrain (application convoyeur) sur les véhicules du district. */
+    public function signalements()
+    {
+        return $this->hasMany(Signalement::class);
+    }
+
     public function vehicles()
     {
         return $this->hasMany(Vehicle::class);

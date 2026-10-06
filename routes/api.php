@@ -23,6 +23,10 @@ Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWri
         Route::post('sorties/{id}/finish', [Api\Mobile\MobileController::class, 'finish']);
         Route::post('sorties/{id}/ravitaillements', [Api\Mobile\MobileController::class, 'ravitaillement']);
         Route::post('livraisons/{id}', [Api\Mobile\MobileController::class, 'livraison']);
+        Route::get('planning', [Api\Mobile\FleetController::class, 'planning']);
+        Route::get('vehicules', [Api\Mobile\FleetController::class, 'vehicules']);
+        Route::post('vehicules/{id}/signalements', [Api\Mobile\FleetController::class, 'signalement']);
+        Route::post('push-test', [Api\Mobile\FleetController::class, 'pushTest']);
         Route::get('notifications', [Api\Mobile\MobileController::class, 'notifications']);
         Route::post('notifications/read', [Api\Mobile\MobileController::class, 'readNotifications']);
         Route::post('push-subscriptions', [Api\Mobile\MobileController::class, 'subscribe']);

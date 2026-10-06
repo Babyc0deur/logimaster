@@ -53,6 +53,16 @@ services:
         sync: false              # adresse du projet Sentry (sentry.io) : suivi des erreurs
       - key: SENTRY_TRACES_SAMPLE_RATE
         value: "0"              # 0 = erreurs seulement, sans mesure de performance
+      - key: BACKUP_S3_BUCKET
+        sync: false              # sauvegardes externes (Cloudflare R2, Backblaze B2…) : nom du bucket privé
+      - key: BACKUP_S3_ENDPOINT
+        sync: false              # ex. https://<compte>.r2.cloudflarestorage.com
+      - key: BACKUP_S3_KEY
+        sync: false
+      - key: BACKUP_S3_SECRET
+        sync: false
+      - key: BACKUP_S3_REGION
+        value: auto
       - key: VAPID_SUBJECT
         sync: false              # ex. mailto:contact@votre-domaine.ci
       - key: VAPID_PUBLIC_KEY

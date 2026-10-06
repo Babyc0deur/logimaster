@@ -19,6 +19,9 @@ use Filament\Tables\Table;
 
 class DriverResource extends Resource
 {
+    /** Les chauffeurs se gèrent dans la liste unique « Personnel » (fonction Chauffeur) ; cette fiche reste accessible depuis la personne. */
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = Driver::class;
 
     protected static ?string $tenantOwnershipRelationshipName = 'district';

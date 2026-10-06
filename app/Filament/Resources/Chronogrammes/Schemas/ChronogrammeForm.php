@@ -50,7 +50,7 @@ class ChronogrammeForm
                 ->default('distribution')->required(),
             Select::make('personnels')
                 ->label('Équipe (chef de mission, passagers)')
-                ->relationship('personnels', 'nom_complet', modifyQueryUsing: fn ($query) => $query->where('district_id', \Filament\Facades\Filament::getTenant()?->getKey())->where('statut', 'actif')->orderBy('nom_complet'))
+                ->relationship('personnels', 'nom_complet', modifyQueryUsing: fn ($query) => $query->where('district_id', \Filament\Facades\Filament::getTenant()?->getKey())->where('statut', 'actif')->where('fonction', '!=', 'chauffeur')->orderBy('nom_complet'))
                 ->multiple()->searchable()->preload()
                 ->helperText('Reçoivent la sortie sur leur téléphone (application mobile) une fois le planning validé par le superviseur.'),
             TextInput::make('destination')->maxLength(160),

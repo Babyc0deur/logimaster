@@ -41,12 +41,15 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\Actions\Action::make('espc')->label('Centres de santé (ESPC)')->icon('heroicon-o-building-office-2')
                     ->url(fn () => \App\Filament\Resources\Espcs\EspcResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Espcs\EspcResource::canAccess()),
-                \Filament\Actions\Action::make('personnel')->label('Chefs de mission et passagers')->icon('heroicon-o-user-group')
+                \Filament\Actions\Action::make('personnel')->label('Personnel (chauffeurs, chefs de mission, passagers)')->icon('heroicon-o-user-group')
                     ->url(fn () => \App\Filament\Resources\Personnels\PersonnelResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Personnels\PersonnelResource::canAccess()),
                 \Filament\Actions\Action::make('districts')->label('Districts')->icon('heroicon-o-building-office')
                     ->url(fn () => \App\Filament\Resources\Districts\DistrictResource::getUrl())
                     ->visible(fn () => \App\Filament\Resources\Districts\DistrictResource::canAccess()),
+                \Filament\Actions\Action::make('sauvegardes')->label('Sauvegardes')->icon('heroicon-o-circle-stack')
+                    ->url(fn () => \App\Filament\Pages\Backups::getUrl())
+                    ->visible(fn () => \App\Filament\Pages\Backups::canAccess()),
                 \Filament\Actions\Action::make('sentryTest')->label('Tester le suivi des erreurs')->icon('heroicon-o-bug-ant')
                     ->visible(fn () => (bool) auth()->user()?->isNational())
                     ->requiresConfirmation()

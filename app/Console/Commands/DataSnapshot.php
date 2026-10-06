@@ -23,7 +23,7 @@ class DataSnapshot extends Command
         'pres', 'regions', 'districts', 'vehicles', 'drivers', 'personnels', 'circuits', 'espc', 'circuit_espc',
         'chronogrammes', 'chronogramme_personnel', 'sorties_vehicules', 'sortie_personnel', 'livraisons_espc',
         'ravitaillements', 'vidanges', 'immobilisations', 'expenses', 'budgets', 'factures', 'fuel_prices',
-        'settings', 'district_devices', 'documents',
+        'settings', 'district_devices', 'documents', 'signalements',
     ];
 
     /** Colonnes qui pointent vers un compte utilisateur : remises à vide (les comptes ne sont pas transférés). */

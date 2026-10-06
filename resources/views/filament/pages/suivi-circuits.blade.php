@@ -97,6 +97,18 @@
                                         @if ($l->saisiPar) · <span style="opacity:.8">saisi par {{ $l->saisiPar->name }} depuis le téléphone</span> @endif
                                         @if ($l->retard_jours > 0) · <span style="color:#d97706">+{{ $l->retard_jours }} j de retard</span>@endif
                                     </div>
+                                    @if ($l->receptionnaire || $l->colis !== null || $l->preuve_photo)
+                                        <div style="font-size:.85rem;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                                            @if ($l->receptionnaire)<span>Reçu par <strong>{{ $l->receptionnaire }}</strong></span>@endif
+                                            @if ($l->colis !== null)<span style="opacity:.8">· {{ $l->colis }} colis</span>@endif
+                                            @if (\App\Support\PrivatePhoto::exists($l->preuve_photo)) <span>·</span> {{ ($this->preuveAction)(['id' => $l->id]) }} @endif
+                                        </div>
+                                    @endif
+                                    @if ($l->gps_ecart_m !== null && \App\Domain\Mobile\SiteGeolocation::isSuspicious($l))
+                                        <div style="font-size:.85rem;margin-top:2px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
+                                    @elseif ($l->lat !== null)
+                                        <div style="font-size:.8rem;margin-top:2px;opacity:.65">📍 Position relevée{{ $l->gps_precision_m ? ' (précision '.$l->gps_precision_m.' m)' : '' }}{{ $l->gps_ecart_m !== null ? ' · '.($l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km').' du centre' : '' }}</div>
+                                    @endif
                                 @endif
                                 @if ($l->raison_non_livraison)
                                     <div style="font-size:.85rem;margin-top:2px;{{ $l->statut === 'non_livre' ? 'color:#dc2626' : 'opacity:.8' }}">{{ $l->statut === 'non_livre' ? 'Raison : ' : 'Note : ' }}{{ $l->raison_non_livraison }}</div>

@@ -91,6 +91,16 @@ class LivraisonResource extends Resource
                 TextColumn::make('retard')->label('Retard')->state(fn (LivraisonEspc $l) => $l->statut === 'livre' ? ($l->retard_jours > 0 ? "{$l->retard_jours} j" : 'Aucun') : '—')
                     ->color(fn (LivraisonEspc $l) => $l->retard_jours > 0 ? 'danger' : null),
                 TextColumn::make('raison_non_livraison')->label('Raison / commentaire')->placeholder('—')->wrap()->limit(60),
+                TextColumn::make('receptionnaire')->label('Reçu par')->placeholder('—')->wrap()->toggleable(),
+                TextColumn::make('colis')->label('Colis')->numeric()->placeholder('—')->toggleable(),
+                TextColumn::make('gps_ecart_m')->label('Position')->toggleable()
+                    ->state(fn (LivraisonEspc $l) => match (true) {
+                        $l->gps_ecart_m !== null => $l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m du centre' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km du centre',
+                        $l->lat !== null => 'Relevée',
+                        default => null,
+                    })
+                    ->placeholder('—')->badge()
+                    ->color(fn (LivraisonEspc $l) => \App\Domain\Mobile\SiteGeolocation::isSuspicious($l) ? 'danger' : 'gray'),
             ])
             ->filters([
                 SelectFilter::make('statut')->options(LivraisonEspc::STATUTS)->multiple(),
@@ -106,6 +116,14 @@ class LivraisonResource extends Resource
                     ->query(fn (Builder $q) => $q->where('statut', 'planifie')->whereIn('chronogramme_id', Chronogramme::select('id')->whereDate('date_prevue', '<', today()))),
             ])
             ->recordActions([
+                Action::make('preuve')->label('Bon signé')->icon('heroicon-o-camera')->color('gray')
+                    ->visible(fn (LivraisonEspc $l) => \App\Support\PrivatePhoto::exists($l->preuve_photo))
+                    ->modalHeading(fn (LivraisonEspc $l) => 'Bon de livraison — '.($l->espc?->nom ?? 'site'))
+                    ->modalContent(fn (LivraisonEspc $l) => view('filament.modals.photos', ['photos' => [[
+                        'titre' => $l->receptionnaire ? 'Reçu par '.$l->receptionnaire.($l->colis !== null ? ' · '.$l->colis.' colis' : '') : 'Bon de livraison',
+                        'src' => \App\Support\PrivatePhoto::dataUri($l->preuve_photo),
+                    ]]]))
+                    ->modalSubmitAction(false)->modalCancelActionLabel('Fermer'),
                 Action::make('livre')->label('Marquer livrée')->icon('heroicon-o-check-circle')->color('success')
                     ->visible(fn (LivraisonEspc $l) => $can() && $l->statut !== 'livre')
                     ->fillForm(fn (LivraisonEspc $l) => ['date_livraison' => $l->chronogramme->date_prevue->toDateString(), 'lieu_livraison' => 'site'])

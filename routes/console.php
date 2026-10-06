@@ -21,3 +21,7 @@ Schedule::call(fn () => Artisan::call('indicators:compute', [
     '--period' => now()->subMonthNoOverflow()->format('Y-m'),
     '--queue' => true,
 ]))->monthlyOn(1, '02:00')->name('indicators-month-close')->withoutOverlapping();
+// Sauvegardes (base + photos) vers le stockage externe : toutes les heures, mais seulement si la dernière a plus de 20 h
+// (le serveur peut être en veille à heure fixe) ; test de restauration chaque dimanche.
+Schedule::command('backup:run --if-due')->hourly()->withoutOverlapping();
+Schedule::command('backup:verify')->weeklyOn(0, '04:30')->withoutOverlapping();

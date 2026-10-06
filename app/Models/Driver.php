@@ -26,6 +26,17 @@ class Driver extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saved(fn (Driver $driver) => \App\Domain\Personnel\DriverLink::fromDriver($driver));
+    }
+
+    /** Personne du personnel correspondant à ce chauffeur. */
+    public function personnel()
+    {
+        return $this->hasOne(Personnel::class);
+    }
+
     public function district()
     {
         return $this->belongsTo(District::class);

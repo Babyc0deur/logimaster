@@ -7,13 +7,13 @@ use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
- * Accès à l'application mobile : tout chef de mission ou passager actif est convoyeur d'office. Son compte est créé
+ * Accès à l'application mobile : tout chauffeur, chef de mission ou passager actif est convoyeur d'office. Son compte est créé
  * automatiquement avec sa fiche (identifiant généré + code d'accès provisoire), suspendu quand il devient inactif ou change
  * de fonction, et réactivé quand il redevient éligible.
  */
 class ConvoyeurAccess
 {
-    public const FONCTIONS = ['chef_mission', 'passager'];
+    public const FONCTIONS = ['chauffeur', 'chef_mission', 'passager'];
 
     public static function enabled(): bool
     {
@@ -46,6 +46,7 @@ class ConvoyeurAccess
                 'name' => $p->nom_complet, 'email' => $this->internalEmail($p), 'password' => $code,
                 'is_active' => true, 'personnel_id' => $p->getKey(), 'must_change_password' => true,
             ])->save();
+            \Spatie\Permission\Models\Role::findOrCreate(User::ROLE_CONVOYEUR, 'web');   // base pas encore initialisée (import, tests) : le rôle est créé, ses droits viennent du seeder
             $user->assignRole(User::ROLE_CONVOYEUR);
             $p->forceFill(['code_acces' => $code])->saveQuietly();
         } else {

@@ -15,6 +15,8 @@ class UsersTable
     public static function configure(Table $table): Table
     {
         return $table
+            // comptes du bureau seulement : les accès mobiles des chauffeurs, chefs de mission et passagers se gèrent dans « Personnel »
+            ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->whereNull('personnel_id'))
             ->columns([
                 TextColumn::make('name')
                     ->label('Nom')

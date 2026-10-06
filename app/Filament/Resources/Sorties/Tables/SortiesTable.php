@@ -55,6 +55,14 @@ class SortiesTable
                         ->when($data['au'] ?? null, fn ($q, $v) => $q->whereDate('date_sortie', '<=', $v))),
             ])
             ->recordActions([
+                Action::make('compteur')->label('Compteur')->icon('heroicon-o-camera')->color('gray')
+                    ->visible(fn (SortieVehicule $r) => \App\Support\PrivatePhoto::exists($r->photo_km_depart) || \App\Support\PrivatePhoto::exists($r->photo_km_arrivee))
+                    ->modalHeading(fn (SortieVehicule $r) => 'Photos du compteur — '.($r->vehicle?->immatriculation ?? 'véhicule'))
+                    ->modalContent(fn (SortieVehicule $r) => view('filament.modals.photos', ['photos' => [
+                        ['titre' => 'Départ'.($r->km_depart !== null ? ' : '.number_format($r->km_depart, 0, ',', ' ').' km déclarés' : ''), 'src' => \App\Support\PrivatePhoto::dataUri($r->photo_km_depart)],
+                        ['titre' => 'Retour'.($r->km_arrivee !== null ? ' : '.number_format($r->km_arrivee, 0, ',', ' ').' km déclarés' : ''), 'src' => \App\Support\PrivatePhoto::dataUri($r->photo_km_arrivee)],
+                    ]]))
+                    ->modalSubmitAction(false)->modalCancelActionLabel('Fermer'),
                 Action::make('valider')->label('Valider')->icon('heroicon-o-check-badge')->color('success')
                     ->visible(fn (SortieVehicule $r) => $r->statut === 'terminee' && auth()->user()->can('validate_sorties'))
                     ->requiresConfirmation()

@@ -1,6 +1,7 @@
-@verbatim
 // Service worker LogiMaster Convoyeur : coque de l'application hors réseau + notifications push.
-const CACHE = 'lm-shell-v1';
+// La version du cache change à chaque déploiement de l'application : les téléphones reprennent la nouvelle coque.
+const CACHE = 'lm-shell-{{ $version }}';
+@verbatim
 const SHELL = ['/m', '/m/manifest.webmanifest', '/pwa/icon-192.png', '/pwa/icon-512.png'];
 
 self.addEventListener('install', (event) => {

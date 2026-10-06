@@ -80,12 +80,12 @@ class ChronogrammeWorkflow
         return $plans->count();
     }
 
-    /** Prévient chaque convoyeur (chef de mission, passager) de l'équipe des sorties validées : dans l'application et sur son téléphone. */
+    /** Prévient chaque convoyeur (chauffeur, chef de mission, passager) des sorties validées : dans l'application et sur son téléphone. */
     private function notifyCrews(Collection $plans): void
     {
         $byPersonnel = [];
-        foreach ($plans->load('personnels:id', 'district:id,name') as $plan) {
-            foreach ($plan->personnels as $personnel) {
+        foreach ($plans->load('personnels:id', 'district:id,name', 'driver.personnel:id,driver_id') as $plan) {
+            foreach ($plan->personnels->push($plan->driver?->personnel)->filter()->unique('id') as $personnel) {
                 $byPersonnel[$personnel->getKey()]['dates'][] = $plan->date_prevue->toDateString();
                 $byPersonnel[$personnel->getKey()]['district'] = $plan->district?->name ?? '';
             }

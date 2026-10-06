@@ -18,6 +18,7 @@ mkdir -p storage/app/public && touch "$DB_DATABASE"
 chown -R www-data:www-data storage
 php artisan storage:link --force >/dev/null 2>&1 || true
 php artisan migrate --force
+php artisan backup:restore --if-empty   # base vide (redemarrage sans disque persistant) : reprend la derniere sauvegarde externe
 php artisan logimaster:install
 php artisan data:load --if-empty   # charge database/data/snapshot.json.gz une seule fois, si le fichier existe et que la base n'a pas encore de vehicules
 php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache

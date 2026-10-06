@@ -78,6 +78,21 @@
         .err { color:var(--bad); font-size:14px; margin:10px 2px 0; min-height:18px; }
         .empty { text-align:center; padding:40px 16px; color:var(--muted); }
         .tag { font-size:11px; padding:2px 8px; border-radius:8px; margin-left:6px; }
+        .tiles { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; }
+        .tile { position:relative; display:flex; flex-direction:column; gap:10px; min-height:118px; padding:16px; border-radius:18px; background:var(--surface); border:1px solid var(--border); color:inherit; text-decoration:none; -webkit-user-select:none; user-select:none; }
+        .tile:active { transform:scale(.97); }
+        .tile .ti { width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent-text); }
+        .tile .ti svg { width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+        .tile b { font-size:16px; } .tile small { display:block; color:var(--muted); font-size:12.5px; margin-top:2px; }
+        .tile .tb { position:absolute; top:12px; right:12px; min-width:22px; height:22px; padding:0 7px; border-radius:11px; background:var(--bad); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+        .tile.main { grid-column:span 2; flex-direction:row; align-items:center; min-height:0; background:var(--accent); border-color:var(--accent); color:#fff; }
+        .tile.main .ti { background:rgba(255,255,255,.18); color:#fff; } .tile.main small { color:rgba(255,255,255,.85); }
+        .chip { display:inline-block; font-size:12px; padding:3px 9px; border-radius:999px; background:var(--soft); color:var(--muted); margin:6px 6px 0 0; }
+        .chip.g { background:var(--ok-soft); color:var(--ok); } .chip.w { background:var(--warn-soft); color:var(--warn); } .chip.r { background:var(--bad-soft); color:var(--bad); } .chip.b { background:var(--accent-soft); color:var(--accent-text); }
+        .daybar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:4px 0 6px; }
+        .daybar button { border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:12px; padding:9px 14px; font-size:15px; font-family:inherit; }
+        .tile.wide { grid-column:span 2; flex-direction:row; align-items:center; min-height:0; }
+        .tile.ok .ti { background:var(--ok-soft); color:var(--ok); } .tile.warn .ti { background:var(--warn-soft); color:var(--warn); }
 @endverbatim
     </style>
 </head>
@@ -92,10 +107,12 @@
 'use strict';
 var CFG = window.LM_CONFIG;
 var KEY = 'lm_state_v1';
-var DEFAULTS = { token: null, user: null, mustChange: false, sorties: [], today: null, details: {}, queue: [], notifs: { unread: 0, data: [] }, syncedAt: null, push: false };
+var DEFAULTS = { token: null, user: null, mustChange: false, sorties: [], today: null, details: {}, queue: [], notifs: { unread: 0, data: [] }, syncedAt: null, push: false, recv: {}, planning: {}, vehicules: null, vehiculesAt: null };
 var S = load();
 var deferredInstall = null, flushing = false, refreshing = false, openStop = null, errorMsg = '';
 var fuelDraft = {}, fuelPhoto = null;   // saisie en cours : conservée si l'écran se rafraîchit pendant la frappe
+var sheetPhoto = null;
+var weekStart = null;                    // semaine affichée dans « Planning » (lundi, AAAA-MM-JJ)                  // photo prise dans une fenêtre du bas (compteur, bon de livraison)
 
 // ------------------------------------------------------------------ état local
 function load() { try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return Object.assign({}, DEFAULTS); } }
@@ -149,22 +166,32 @@ function isOnline() { return navigator.onLine !== false; }
 function enqueue(op) { op.id = op.id || uid(); op.at = new Date().toISOString(); S.queue.push(op); applyLocal(op); save(); render(); flush(); }
 function recount(p) { p.restants = p.stops.filter(function (s) { return s.etat === 'planifie'; }).length; p.traites = p.stops.length - p.restants; p.livres = p.stops.filter(function (s) { return s.etat === 'livre' || s.etat === 'transit'; }).length; }
 function applyLocal(op) {
-    var p = S.details[op.plan]; if (!p) return;
-    if (op.type === 'start') { p.demarree = true; p.sortie = p.sortie || { id: null, statut: 'en_cours', km_depart: (op.body && op.body.km_depart) || null, km_arrivee: null }; }
-    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { st.etat = op.body.statut; st.raison = op.body.raison || null; } recount(p); }
-    if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; } }
+    var p = op.plan ? S.details[op.plan] : null; if (!p) return;
+    if (op.type === 'start') { p.demarree = true; p.sortie = p.sortie || { id: null, statut: 'en_cours', km_depart: (op.body && op.body.km_depart) || null, km_arrivee: null }; p.sortie.photo_depart = !!op.photo; }
+    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.receptionnaire = ok ? (op.body.receptionnaire || null) : null; st.colis = ok && op.body.colis != null ? op.body.colis : null; st.preuve = ok && !!op.photo; } recount(p); }
+    if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; p.sortie.photo_arrivee = !!op.photo; } }
     if (op.type === 'fuel') { p.ravitaillements.unshift({ facture: !!op.photo, client_ref: op.body.client_ref, litres: +op.body.litres, prix_unitaire: +op.body.prix_unitaire || null, montant: null, km_compteur: op.body.km_compteur || null, station: op.body.station || null, date: op.at.slice(0, 10), pending: true }); }
     S.sorties.forEach(function (s) { if (s.id === op.plan) { s.demarree = p.demarree; s.terminee = p.terminee; s.traites = p.traites; s.livres = p.livres; } });
 }
+var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur', livraison: 'preuve_photo', signal: 'photo' };
 function send(op) {
-    if (op.type === 'start') return api('POST', '/sorties/' + op.plan + '/start', op.body);
-    if (op.type === 'finish') return api('POST', '/sorties/' + op.plan + '/finish', op.body);
-    if (op.type === 'livraison') return api('POST', '/livraisons/' + op.target, Object.assign({ done_at: op.at }, op.body));
     return (op.photo ? photoGet(op.id) : Promise.resolve(null)).then(function (photo) {
-        var body = Object.assign({ done_at: op.at }, op.body);
-        if (photo) body.facture_photo = photo;
+        var body = Object.assign({}, op.body);
+        if (op.type === 'livraison' || op.type === 'fuel' || op.type === 'signal') body.done_at = op.at;
+        if (photo) body[PHOTO_FIELD[op.type]] = photo;
+        if (op.type === 'signal') return api('POST', '/vehicules/' + op.target + '/signalements', body);
+        if (op.type === 'start') return api('POST', '/sorties/' + op.plan + '/start', body);
+        if (op.type === 'finish') return api('POST', '/sorties/' + op.plan + '/finish', body);
+        if (op.type === 'livraison') return api('POST', '/livraisons/' + op.target, body);
         return api('POST', '/sorties/' + op.plan + '/ravitaillements', body);
     });
+}
+// action avec photo : la photo est gardée dans le téléphone (IndexedDB) jusqu'à l'envoi
+function enqueueWithPhoto(op, photo, okMsg) {
+    var go = function () { enqueue(op); okMsg && toast(isOnline() ? okMsg : okMsg + ', envoi au retour du réseau'); };
+    if (!photo) return go();
+    op.id = uid(); op.photo = true;
+    photoPut(op.id, photo).then(go, function () { op.photo = false; toast('Photo non conservée : enregistré sans photo'); go(); });
 }
 function flush() {
     if (flushing || !S.token || !isOnline() || !S.queue.length) return Promise.resolve();
@@ -173,10 +200,10 @@ function flush() {
     function next() {
         if (!S.queue.length) return Promise.resolve(true);
         var op = S.queue[0];
-        return send(op).then(function () { touched[op.plan] = true; S.queue.shift(); save(); op.photo && photoDel(op.id); return next(); }, function (e) {
+        return send(op).then(function () { if (op.plan) touched[op.plan] = true; S.queue.shift(); save(); op.photo && photoDel(op.id); return next(); }, function (e) {
             if (e.offline || (e.status && e.status >= 500)) return false;               // on réessaiera plus tard
             if (onAuthError(e)) return false;
-            touched[op.plan] = true; S.queue.shift(); save(); op.photo && photoDel(op.id);   // refus du serveur : l'action est abandonnée et signalée
+            if (op.plan) touched[op.plan] = true; S.queue.shift(); save(); op.photo && photoDel(op.id);   // refus du serveur : l'action est abandonnée et signalée
             toast('Action refusée : ' + e.message); return next();
         });
     }
@@ -186,7 +213,7 @@ function flush() {
         return Promise.all(ids.map(function (id) { return api('GET', '/sorties/' + id).then(function (d) { if (!queued(id)) S.details[id] = d; }, function () {}); })).then(function () { save(); render(); });
     }, function () { flushing = false; });
 }
-function queued(plan) { return S.queue.some(function (o) { return o.plan === plan; }); }
+function queued(plan) { return S.queue.some(function (o) { return o.plan && o.plan === plan; }); }
 
 // ------------------------------------------------------------------ synchronisation
 function refresh() {
@@ -198,6 +225,7 @@ function refresh() {
         var ids = l.data.filter(function (p) { return !p.terminee || p.date_prevue >= recent; }).slice(0, 20).map(function (p) { return p.id; });
         return Promise.all(ids.map(function (id) { return api('GET', '/sorties/' + id).then(function (d) { if (!queued(id)) S.details[id] = d; }); }));
     }).then(function () { return api('GET', '/notifications'); }).then(function (n) {
+        loadVehicules(); weekStart && loadPlanning(weekStart);
         S.notifs = n; S.syncedAt = new Date().toISOString(); save(); render();
     }).catch(function (e) { if (!e.offline) onAuthError(e); }).then(function () { refreshing = false; });
 }
@@ -219,7 +247,10 @@ var ICON = {
     route: '<svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></svg>',
     fuel: '<svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2.5a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 0 3 0V8l-3-3M7 8h4"/></svg>',
     bell: '<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>',
-    user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
+    user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    cal: '<svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM16 3v4M8 3v4M4 10h16"/></svg>',
+    truck: '<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/></svg>',
+    sync: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.9-3.5M4 4v4h4M4 13a8 8 0 0 0 14.9 3.5M20 20v-4h-4"/></svg>'
 };
 
 // ------------------------------------------------------------------ rendu
@@ -245,6 +276,9 @@ function render() {
     else if (r.name === 'fuel') html = fuelView();
     else if (r.name === 'alerts') html = alertsView();
     else if (r.name === 'profile') html = profileView();
+    else if (r.name === 'sorties') html = sortiesView();
+    else if (r.name === 'planning') html = planningView();
+    else if (r.name === 'vehicules') html = vehiculesView();
     else if (r.name === 'password') { app.innerHTML = passwordView(false); bindPassword(false); return; }
     else html = homeView();
     app.innerHTML = html;
@@ -291,7 +325,7 @@ function bindPassword(forced) {
     if (forced && $('out')) $('out').onclick = function () { logout(); };
 }
 
-// ---- accueil
+// ---- accueil : la sortie du jour, puis une tuile par section
 function homeView() {
     var first = (S.user && S.user.name || '').split(' ')[0];
     var cp = currentPlan(), hero = '';
@@ -301,17 +335,137 @@ function homeView() {
             '<h2>' + esc(cp.circuit) + '</h2><small>' + esc(cp.district || '') + (cp.vehicule ? ' · ' + esc(cp.vehicule) : '') + ' · ' + cp.sites + ' site' + (cp.sites > 1 ? 's' : '') + (started ? ' · ' + cp.traites + '/' + cp.sites + ' traités' : '') + '</small>' +
             '<a class="btn" href="#/circuit">' + (started ? 'Reprendre le circuit' : 'Démarrer le circuit') + '</a></div>';
     } else {
-        hero = '<div class="card empty">Aucune sortie validée pour le moment.<br>Vous serez notifié dès que le chronogramme est validé.</div>';
+        hero = '<div class="card empty" style="padding:22px 16px">Aucune sortie validée pour le moment.<br>Vous serez notifié dès que le chronogramme est validé.</div>';
     }
-    var upcoming = S.sorties.filter(function (p) { return !p.terminee && (!cp || p.id !== cp.id); });
-    var done = S.sorties.filter(function (p) { return p.terminee; }).reverse().slice(0, 5);
-    function item(p, icon, cls) {
-        return '<a class="card row" href="#/sortie/' + p.id + '" style="text-decoration:none;color:inherit"><div class="dot ' + cls + '">' + icon + '</div><div class="grow"><b>' + esc(p.circuit) + '</b><div class="muted">' + esc(fmtDate(p.date_prevue, true)) + ' · ' + (p.terminee ? p.livres + '/' + p.sites + ' livrés' : p.sites + ' sites') + '</div></div></a>';
+    var upcoming = S.sorties.filter(function (p) { return !p.terminee && (!cp || p.id !== cp.id); }).length;
+    var fuelPlan = cp && cp.demarree ? cp : null, fuelCount = fuelPlan ? (fuelPlan.ravitaillements || []).length : 0;
+    function tile(href, icon, title, sub, badge, cls) {
+        return '<a class="tile ' + (cls || '') + '" href="' + href + '"><span class="ti">' + icon + '</span><span><b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' + (badge ? '<span class="tb">' + esc(badge) + '</span>' : '') + '</a>';
     }
-    return shell('Bonjour ' + first, hero +
-        (upcoming.length ? '<h3 class="section">À venir</h3>' + upcoming.map(function (p) { return item(p, '→', 'n'); }).join('') : '') +
-        (done.length ? '<h3 class="section">Terminées</h3>' + done.map(function (p) { return item(p, '✓', 'g'); }).join('') : '') +
+    var circuitSub = !cp ? 'Aucun circuit en cours' : (cp.demarree ? cp.traites + ' / ' + cp.sites + ' sites traités' : 'À démarrer · ' + cp.sites + ' sites');
+    var tiles = '<div class="tiles">' +
+        tile('#/circuit', ICON.route, 'Mon circuit', circuitSub, '', 'main') +
+        tile('#/fuel', ICON.fuel, 'Carburant', fuelPlan ? (fuelCount ? fuelCount + ' plein' + (fuelCount > 1 ? 's' : '') + ' déclaré' + (fuelCount > 1 ? 's' : '') : 'Déclarer un plein') : 'Après le départ', '') +
+        tile('#/sorties', ICON.cal, 'Mes sorties', upcoming ? upcoming + ' à venir' : 'Mes sorties et historique', '') +
+        tile('#/planning', ICON.cal, 'Planning', 'Sorties du district', '') +
+        tile('#/vehicules', ICON.truck, 'Véhicules', vehSummary(), vehAlerts() || '') +
+        tile('#/alerts', ICON.bell, 'Alertes', S.notifs.unread ? S.notifs.unread + ' non lue' + (S.notifs.unread > 1 ? 's' : '') : 'Notifications', S.notifs.unread || '') +
+        tile('#/profile', ICON.user, 'Profil', 'Compte, notifications', '') +
+        '<a class="tile wide ' + (S.queue.length ? 'warn' : 'ok') + '" href="#/" id="synctile"><span class="ti">' + ICON.sync + '</span><span><b>Synchroniser</b><small>' + esc(S.queue.length ? S.queue.length + ' en attente d\'envoi' : (isOnline() ? 'Tout est envoyé' : 'Hors réseau')) + '</small></span></a>' +
+        '</div>';
+    return shell('Bonjour ' + first, hero + tiles +
         '<p class="muted" style="text-align:center;margin:18px 0 0">' + (S.syncedAt ? 'Dernière mise à jour ' + new Date(S.syncedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '') + '</p>');
+}
+
+// ---- planning du district (lecture seule, semaine par semaine)
+function monday(d) { var x = new Date(d + 'T00:00:00'), k = (x.getDay() + 6) % 7; x.setDate(x.getDate() - k); return iso(x); }
+function iso(x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
+function addDays(d, n) { var x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + n); return iso(x); }
+function loadPlanning(start) {
+    if (!isOnline()) return;
+    api('GET', '/planning?debut=' + start + '&jours=7').then(function (r) { S.planning[start] = r.data; save(); if (route().name === 'planning') render(); }, function (e) { onAuthError(e); });
+}
+function planningView() {
+    weekStart = weekStart || monday(S.today || iso(new Date()));
+    var list = S.planning[weekStart];
+    if (!list) loadPlanning(weekStart);
+    var end = addDays(weekStart, 6), ETAT = { prevue: ['', 'Prévue'], en_cours: ['w', 'En cours'], terminee: ['g', 'Terminée'] };
+    var body = '<div class="daybar"><button id="wprev">‹</button><b>' + esc(fmtDate(weekStart, true)) + ' – ' + esc(fmtDate(end, true)) + '</b><button id="wnext">›</button></div>';
+    if (!list) body += '<div class="card empty">' + (isOnline() ? 'Chargement…' : 'Pas de réseau : ce planning n\'a pas encore été chargé.') + '</div>';
+    else if (!list.length) body += '<div class="card empty">Aucune sortie validée cette semaine.</div>';
+    else {
+        var day = null;
+        list.forEach(function (p) {
+            if (p.date !== day) { day = p.date; body += '<h3 class="section">' + esc(fmtDate(day)) + (day === S.today ? ' · aujourd\'hui' : '') + '</h3>'; }
+            var e = ETAT[p.etat] || ETAT.prevue;
+            body += '<div class="card"><div class="row"><div class="grow"><b>' + esc(p.circuit) + '</b>' + (p.moi ? '<span class="tag" style="background:var(--accent-soft);color:var(--accent-text)">Vous</span>' : '') +
+                '<div class="muted">' + (p.heure ? esc(p.heure) + ' · ' : '') + esc(p.vehicule || 'véhicule ?') + ' · ' + p.sites + ' site' + (p.sites > 1 ? 's' : '') + '</div></div>' + (p.etat !== 'prevue' ? '<span class="pill ' + (e[0] === 'w' ? 'off' : '') + '">' + e[1] + '</span>' : '') + '</div>' +
+                '<div class="muted" style="margin-top:4px">' + (p.chauffeur ? 'Chauffeur : ' + esc(p.chauffeur) : 'Chauffeur non désigné') + (p.chef ? ' · Chef : ' + esc(p.chef) : '') + '</div></div>';
+        });
+    }
+    return shell('Planning', body);
+}
+
+// ---- véhicules du district : disponibilité, vidange, échéances, signalements
+var DISPO = { disponible: ['g', 'Disponible'], reserve: ['b', 'Réservé aujourd\'hui'], en_mission: ['w', 'En mission'], immobilise: ['r', 'Immobilisé'], hors_service: ['r', 'Hors service'] };
+function loadVehicules() {
+    if (!isOnline()) return Promise.resolve();
+    return api('GET', '/vehicules').then(function (r) { S.vehicules = r.data; S.vehiculesAt = new Date().toISOString(); save(); if (route().name === 'vehicules' || route().name === 'home') render(); }, function (e) { onAuthError(e); });
+}
+function vehSummary() { if (!S.vehicules) return 'Disponibilité, vidanges'; var n = S.vehicules.filter(function (v) { return v.disponibilite === 'disponible'; }).length; return n + ' disponible' + (n > 1 ? 's' : '') + ' sur ' + S.vehicules.length; }
+function vehAlerts() { return (S.vehicules || []).filter(function (v) { return vehWarn(v).length; }).length; }
+function vehWarn(v) {
+    var w = [];
+    if (v.vidange_reste_km != null && v.vidange_reste_km <= 500) w.push(v.vidange_reste_km <= 0 ? 'Vidange dépassée' : 'Vidange dans ' + v.vidange_reste_km + ' km');
+    if (v.assurance_jours != null && v.assurance_jours <= 30) w.push(v.assurance_jours < 0 ? 'Assurance expirée' : 'Assurance : ' + v.assurance_jours + ' j');
+    if (v.ct_jours != null && v.ct_jours <= 30) w.push(v.ct_jours < 0 ? 'Contrôle technique expiré' : 'Contrôle technique : ' + v.ct_jours + ' j');
+    return w;
+}
+function vehiculesView() {
+    if (!S.vehicules) loadVehicules();
+    var list = S.vehicules;
+    if (!list) return shell('Véhicules', '<div class="card empty">' + (isOnline() ? 'Chargement…' : 'Pas de réseau : la liste des véhicules n\'a pas encore été chargée.') + '</div>');
+    var body = list.length ? '' : '<div class="card empty">Aucun véhicule dans votre district.</div>';
+    list.forEach(function (v) {
+        var d = DISPO[v.disponibilite] || DISPO.disponible, warn = vehWarn(v);
+        body += '<div class="card" data-veh="' + esc(v.id) + '" style="cursor:pointer"><div class="row"><div class="grow"><b>' + esc(v.immatriculation) + '</b><div class="muted">' + esc(v.modele || '') + (v.km_actuel != null ? ' · ' + Number(v.km_actuel).toLocaleString('fr-FR') + ' km' : '') + '</div></div><span class="chip ' + d[0] + '" style="margin:0">' + d[1] + '</span></div>' +
+            (v.immobilisation ? '<div class="muted" style="margin-top:4px">' + esc(v.immobilisation.motif) + ' depuis le ' + esc(fmtDate(v.immobilisation.depuis, true)) + '</div>' : '') +
+            (warn.length || v.signalements_en_attente ? '<div>' + warn.map(function (x) { return '<span class="chip ' + (/dépassée|expiré/.test(x) ? 'r' : 'w') + '">' + esc(x) + '</span>'; }).join('') + (v.signalements_en_attente ? '<span class="chip b">' + v.signalements_en_attente + ' signalement' + (v.signalements_en_attente > 1 ? 's' : '') + ' en attente</span>' : '') + '</div>' : '') + '</div>';
+    });
+    body += '<p class="muted" style="text-align:center">' + (S.vehiculesAt ? 'Mis à jour à ' + new Date(S.vehiculesAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '') + '</p>';
+    return shell('Véhicules', body);
+}
+function sheetVehicule(v) {
+    var d = DISPO[v.disponibilite] || DISPO.disponible, row = function (k, val) { return '<div class="row" style="padding:7px 0;border-bottom:1px solid var(--border)"><span class="grow muted">' + k + '</span><b>' + val + '</b></div>'; };
+    var j = function (n) { return n == null ? '' : (n < 0 ? ' (expiré)' : ' (' + n + ' j)'); };
+    sheet('<h3>' + esc(v.immatriculation) + '</h3><p class="muted" style="margin:0 0 8px">' + esc(v.modele || '') + ' · <span class="chip ' + d[0] + '" style="margin:0">' + d[1] + '</span></p>' +
+        row('Kilométrage', v.km_actuel != null ? Number(v.km_actuel).toLocaleString('fr-FR') + ' km' : '—') +
+        row('Prochaine vidange', v.vidange_km != null ? Number(v.vidange_km).toLocaleString('fr-FR') + ' km' + (v.vidange_reste_km != null ? ' (' + (v.vidange_reste_km <= 0 ? 'dépassée' : 'dans ' + v.vidange_reste_km + ' km') + ')' : '') : '—') +
+        row('Dernière vidange', v.derniere_vidange ? esc(fmtDate(v.derniere_vidange.date, true)) + (v.derniere_vidange.km ? ' · ' + Number(v.derniere_vidange.km).toLocaleString('fr-FR') + ' km' : '') : '—') +
+        row('Assurance', v.assurance ? esc(fmtDate(v.assurance, true)) + j(v.assurance_jours) : '—') +
+        row('Contrôle technique', v.ct ? esc(fmtDate(v.ct, true)) + j(v.ct_jours) : '—') +
+        '<button class="btn" id="sv-vid" style="margin-top:16px">Déclarer une vidange faite</button><button class="btn bad" id="sv-pan" style="margin-top:10px">Signaler une panne</button><button class="btn sec" data-close style="margin-top:10px">Fermer</button>', function () {
+        $('sv-vid').onclick = function () { sheetSignal(v, 'vidange'); };
+        $('sv-pan').onclick = function () { sheetSignal(v, 'panne'); };
+    });
+}
+function sheetSignal(v, type) {
+    var vid = type === 'vidange';
+    sheet('<h3>' + (vid ? 'Vidange faite' : 'Panne') + ' : ' + esc(v.immatriculation) + '</h3><p class="muted">Le bureau du district validera ce signalement.</p>' +
+        '<label for="sk">Kilométrage au compteur</label><input id="sk" type="number" inputmode="numeric" min="0" value="' + esc(v.km_actuel || '') + '">' +
+        (vid ? '<label for="st">Type de vidange</label><select id="st" style="width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:14px;font-size:16px"><option value="simple">Simple</option><option value="complete">Complète</option><option value="revision">Révision</option></select>' +
+            '<label for="sm">Montant payé (FCFA, facultatif)</label><input id="sm" type="number" inputmode="numeric" min="0"><label for="sp">Garage (facultatif)</label><input id="sp" type="text" maxlength="120">'
+            : '<label for="so">Nature</label><select id="so" style="width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:14px;font-size:16px"><option value="panne">Panne mécanique</option><option value="accident">Accident</option><option value="carrosserie">Carrosserie</option><option value="depannage">Dépannage / remorquage</option><option value="incident">Incident (vol, incendie…)</option><option value="autre">Autre</option></select>') +
+        '<label for="sd">' + (vid ? 'Remarque (facultatif)' : 'Que se passe-t-il ? (obligatoire)') + '</label><textarea id="sd" rows="3"></textarea>' +
+        photoField(vid ? 'Photo de la facture (facultatif)' : 'Photo (facultatif)', vid ? 'Photographier la facture' : 'Photographier') +
+        '<p class="err" id="err"></p><button class="btn ' + (vid ? '' : 'bad') + '" id="ok" style="margin-top:8px">Envoyer au bureau</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+        bindPhotoField();
+        $('ok').onclick = function () {
+            var desc = $('sd').value.trim();
+            if (!vid && !desc) { $('err').textContent = 'Décrivez la panne.'; return; }
+            var body = { client_ref: uid(), type: type };
+            if ($('sk').value) body.km = parseInt($('sk').value, 10);
+            if (desc) body.description = desc;
+            if (vid) { body.type_vidange = $('st').value; if ($('sm').value) body.montant = parseFloat($('sm').value); if ($('sp').value.trim()) body.prestataire = $('sp').value.trim(); }
+            else body.motif = $('so').value;
+            var photo = sheetPhoto; closeSheet();
+            v.signalements_en_attente = (v.signalements_en_attente || 0) + 1; save();
+            enqueueWithPhoto({ type: 'signal', plan: null, target: v.id, body: body }, photo, vid ? 'Vidange envoyée au bureau' : 'Panne signalée au bureau');
+        };
+    });
+}
+
+// ---- mes sorties : à venir et terminées
+function sortiesView() {
+    var cp = currentPlan();
+    var upcoming = S.sorties.filter(function (p) { return !p.terminee; });
+    var done = S.sorties.filter(function (p) { return p.terminee; }).reverse().slice(0, 10);
+    function item(p, icon, cls) {
+        return '<a class="card row" href="#/sortie/' + p.id + '" style="text-decoration:none;color:inherit"><div class="dot ' + cls + '">' + icon + '</div><div class="grow"><b>' + esc(p.circuit) + '</b><div class="muted">' + esc(fmtDate(p.date_prevue, true)) + (p.heure_depart ? ' · ' + esc(p.heure_depart) : '') + ' · ' + (p.terminee ? p.livres + '/' + p.sites + ' livrés' : p.sites + ' sites') + '</div></div>' + (cp && p.id === cp.id && !p.terminee ? '<span class="pill">' + (p.demarree ? 'En cours' : 'Prochaine') + '</span>' : '') + '</a>';
+    }
+    var body = (upcoming.length ? '<h3 class="section">À venir</h3>' + upcoming.map(function (p) { return item(p, p.demarree ? '▶' : '→', p.demarree ? 'b' : 'n'); }).join('') : '') +
+        (done.length ? '<h3 class="section">Terminées</h3>' + done.map(function (p) { return item(p, '✓', 'g'); }).join('') : '');
+    return shell('Mes sorties', body || '<div class="card empty">Aucune sortie validée pour le moment.</div>');
 }
 
 // ---- circuit
@@ -334,7 +488,8 @@ function circuitView(id) {
     p.stops.forEach(function (s) {
         var d = DOT[s.etat] || DOT.planifie, can = p.demarree && !p.terminee, active = can && (s === next || openStop === s.id);
         body += '<div class="stop"><div class="dot ' + d[0] + '">' + d[1] + '</div><h4>' + esc(s.espc) + (s.type ? '<span class="tag n" style="background:var(--soft);color:var(--muted)">' + esc(String(s.type).replace(/_/g, ' ')) + '</span>' : '') + '</h4>' +
-            '<div class="muted">' + LABEL[s.etat] + (s.raison ? ' · ' + esc(s.raison) : '') + '</div>';
+            '<div class="muted">' + LABEL[s.etat] + (s.raison ? ' · ' + esc(s.raison) : '') + '</div>' +
+            (s.receptionnaire || s.colis != null || s.preuve ? '<div class="muted">' + [s.receptionnaire ? 'Reçu par ' + esc(s.receptionnaire) : '', s.colis != null ? esc(s.colis) + ' colis' : '', s.preuve ? '📷 bon signé' : ''].filter(Boolean).join(' · ') + '</div>' : '');
         if (can && s.etat !== 'planifie' && openStop !== s.id) body += '<button class="muted" data-edit="' + s.id + '" style="background:none;border:none;padding:4px 0;text-decoration:underline;font-size:13px;color:var(--accent)">Modifier</button>';
         if (active) body += '<div class="acts"><button class="btn ok" data-do="livre" data-id="' + s.id + '">Livré</button><button class="btn warn" data-do="transit" data-id="' + s.id + '">Transit</button><button class="btn bad" data-do="non_livre" data-id="' + s.id + '">Non livré</button></div>';
         body += '</div>';
@@ -344,7 +499,7 @@ function circuitView(id) {
         body += '<button class="btn sec" id="fuelgo" style="margin-top:6px">Ajouter un plein</button>' +
             '<button class="btn ' + (p.restants ? 'sec' : '') + '" id="finish" style="margin-top:10px">Terminer la sortie</button>' + (p.restants ? '<p class="muted" style="text-align:center">' + p.restants + ' site' + (p.restants > 1 ? 's' : '') + ' non traité' + (p.restants > 1 ? 's' : '') + ' : ils resteront « à traiter » au bureau.</p>' : '');
     }
-    if (p.terminee && p.sortie) body += '<div class="card" style="margin-top:8px">Sortie terminée · ' + (p.sortie.km_arrivee - p.sortie.km_depart || 0) + ' km parcourus</div>';
+    if (p.terminee && p.sortie) body += '<div class="card" style="margin-top:8px">Sortie terminée · ' + (p.sortie.km_arrivee - p.sortie.km_depart || 0) + ' km parcourus' + (p.sortie.photo_depart || p.sortie.photo_arrivee ? '<div class="muted">📷 compteur : ' + (p.sortie.photo_depart ? 'départ' : '') + (p.sortie.photo_depart && p.sortie.photo_arrivee ? ' et ' : '') + (p.sortie.photo_arrivee ? 'retour' : '') + '</div>' : '') + '</div>';
     return shell(p.terminee ? 'Sortie' : 'Circuit en cours', body);
 }
 function bindCommon() {
@@ -352,23 +507,51 @@ function bindCommon() {
     var el = $('start'); if (el) el.onclick = function () { sheetStart(p); };
     el = $('finish'); if (el) el.onclick = function () { sheetFinish(p); };
     el = $('fuelgo'); if (el) el.onclick = function () { nav('#/fuel'); };
+    [].forEach.call(document.querySelectorAll('[data-veh]'), function (c) { c.onclick = function () { var v = (S.vehicules || []).filter(function (x) { return x.id === c.getAttribute('data-veh'); })[0]; v && sheetVehicule(v); }; });
+    el = $('wprev'); if (el) el.onclick = function () { weekStart = addDays(weekStart, -7); render(); };
+    el = $('wnext'); if (el) el.onclick = function () { weekStart = addDays(weekStart, 7); render(); };
+    el = $('synctile'); if (el) el.onclick = function (e) { e.preventDefault(); toast(isOnline() ? 'Synchronisation…' : 'Pas de réseau : envoi au retour du réseau'); refresh(); };
     [].forEach.call(document.querySelectorAll('[data-do]'), function (b) { b.onclick = function () { stopAction(p, b.getAttribute('data-id'), b.getAttribute('data-do')); }; });
     [].forEach.call(document.querySelectorAll('[data-edit]'), function (b) { b.onclick = function () { openStop = b.getAttribute('data-edit'); render(); }; });
     if (route().name === 'fuel') bindFuel();
     if (route().name === 'alerts') bindAlerts();
     if (route().name === 'profile') bindProfile();
 }
-function getPos() {
+function getPos(wait) {
+    wait = wait || 2500;
     return new Promise(function (resolve) {
         if (!navigator.geolocation) return resolve(null);
-        var done = false, t = setTimeout(function () { done = true; resolve(null); }, 2500);
-        navigator.geolocation.getCurrentPosition(function (g) { if (!done) { clearTimeout(t); resolve({ lat: +g.coords.latitude.toFixed(6), lon: +g.coords.longitude.toFixed(6) }); } }, function () { if (!done) { clearTimeout(t); resolve(null); } }, { maximumAge: 60000, timeout: 2400 });
+        var done = false, t = setTimeout(function () { done = true; resolve(null); }, wait);
+        navigator.geolocation.getCurrentPosition(function (g) {
+            if (!done) { clearTimeout(t); resolve({ lat: +g.coords.latitude.toFixed(6), lon: +g.coords.longitude.toFixed(6), precision: Math.round(g.coords.accuracy || 0) || null }); }
+        }, function () { if (!done) { clearTimeout(t); resolve(null); } }, { enableHighAccuracy: true, maximumAge: 30000, timeout: wait - 100 });
     });
 }
 function stopAction(p, stopId, statut) {
     if (statut === 'non_livre') return sheetReason(p, stopId);
-    openStop = null;
-    getPos().then(function (pos) { enqueue({ type: 'livraison', plan: p.id, target: stopId, body: Object.assign({ statut: statut }, pos || {}) }); });
+    sheetDeliver(p, stopId, statut);
+}
+// ---- photo prise dans une fenêtre du bas (compteur, bon de livraison) : aperçu sur place, sans redessiner la fenêtre
+function photoField(label, hint) {
+    sheetPhoto = null;
+    return '<label>' + esc(label) + '</label><input id="sp-file" type="file" accept="image/*" capture="environment" style="display:none">' +
+        '<div id="sp-box"><button type="button" class="btn sec" id="sp-btn">📷 ' + esc(hint) + '</button></div>';
+}
+function bindPhotoField() {
+    var file = $('sp-file'), box = $('sp-box');
+    if (!file) return;
+    var draw = function () {
+        box.innerHTML = sheetPhoto
+            ? '<div class="card row" style="margin:0"><img src="' + sheetPhoto + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><div class="grow"><b>Photo jointe</b><div class="muted">Envoyée avec l\'enregistrement</div></div><button type="button" class="btn sec small" id="sp-x" style="width:auto;padding:8px 12px">Retirer</button></div>'
+            : '<button type="button" class="btn sec" id="sp-btn">📷 Prendre la photo</button>';
+        if ($('sp-btn')) $('sp-btn').onclick = function () { file.click(); };
+        if ($('sp-x')) $('sp-x').onclick = function () { sheetPhoto = null; draw(); };
+    };
+    $('sp-btn').onclick = function () { file.click(); };
+    file.onchange = function () {
+        if (!file.files[0]) return;
+        compressPhoto(file.files[0]).then(function (d) { sheetPhoto = d; draw(); }, function () { toast('Photo illisible, réessayez'); });
+    };
 }
 
 // ---- feuilles (fenêtres du bas)
@@ -379,19 +562,57 @@ function sheet(html, onBind) {
     onBind && onBind();
 }
 function closeSheet() { $('sheet-root').innerHTML = ''; }
+function sheetInfo(title, text) { sheet('<h3>' + esc(title) + '</h3><p class="muted" style="font-size:15px;line-height:1.5">' + esc(text) + '</p><button class="btn" data-close style="margin-top:10px">Compris</button>'); }
 function sheetStart(p) {
-    sheet('<h3>Démarrer ' + esc(p.circuit) + '</h3><p class="muted">Kilométrage de départ (facultatif : sinon celui du véhicule).</p><label for="kmd">Kilométrage au compteur</label><input id="kmd" type="number" inputmode="numeric" min="0" placeholder="ex. 42310"><button class="btn" id="ok" style="margin-top:16px">Démarrer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
-        $('ok').onclick = function () { var v = $('kmd').value; closeSheet(); enqueue({ type: 'start', plan: p.id, body: v ? { km_depart: parseInt(v, 10) } : {} }); };
+    sheet('<h3>Démarrer ' + esc(p.circuit) + '</h3><p class="muted">Relevez le compteur du véhicule avant de partir.</p><label for="kmd">Kilométrage au compteur</label><input id="kmd" type="number" inputmode="numeric" min="0" placeholder="ex. 42310">' +
+        photoField('Photo du compteur (recommandée)', 'Photographier le compteur') +
+        '<button class="btn" id="ok" style="margin-top:16px">Démarrer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+        bindPhotoField();
+        $('ok').onclick = function () {
+            var v = $('kmd').value, photo = sheetPhoto; closeSheet();
+            enqueueWithPhoto({ type: 'start', plan: p.id, body: v ? { km_depart: parseInt(v, 10) } : {} }, photo);
+        };
     });
 }
 function sheetFinish(p) {
     var kd = p.sortie && p.sortie.km_depart;
-    sheet('<h3>Terminer la sortie</h3><p class="muted">' + (p.restants ? p.restants + ' site(s) non traité(s) resteront à traiter.' : 'Tous les sites sont traités.') + '</p><label for="kma">Kilométrage d\'arrivée' + (kd ? ' (départ : ' + esc(kd) + ' km)' : '') + '</label><input id="kma" type="number" inputmode="numeric" min="' + esc(kd || 0) + '" required><p class="err" id="err"></p><button class="btn" id="ok" style="margin-top:8px">Terminer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+    sheet('<h3>Terminer la sortie</h3><p class="muted">' + (p.restants ? p.restants + ' site(s) non traité(s) resteront à traiter.' : 'Tous les sites sont traités.') + '</p><label for="kma">Kilométrage d\'arrivée' + (kd ? ' (départ : ' + esc(kd) + ' km)' : '') + '</label><input id="kma" type="number" inputmode="numeric" min="' + esc(kd || 0) + '" required>' +
+        photoField('Photo du compteur (recommandée)', 'Photographier le compteur') +
+        '<p class="err" id="err"></p><button class="btn" id="ok" style="margin-top:8px">Terminer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+        bindPhotoField();
         $('ok').onclick = function () {
             var v = parseInt($('kma').value, 10);
             if (isNaN(v)) { $('err').textContent = 'Indiquez le kilométrage d\'arrivée.'; return; }
             if (kd && v < kd) { $('err').textContent = 'Inférieur au kilométrage de départ (' + kd + ' km).'; return; }
-            closeSheet(); enqueue({ type: 'finish', plan: p.id, body: { km_arrivee: v } });
+            var photo = sheetPhoto; closeSheet(); enqueueWithPhoto({ type: 'finish', plan: p.id, body: { km_arrivee: v } }, photo);
+        };
+    });
+}
+function sheetDeliver(p, stopId, statut) {
+    var st = p.stops.filter(function (s) { return s.id === stopId; })[0] || {};
+    var pos = null, posDone = false;
+    sheet('<h3>' + (statut === 'transit' ? 'Livré en transit' : 'Livré') + ' : ' + esc(st.espc || '') + '</h3>' +
+        '<div class="muted" id="gps">📍 Recherche de la position…</div>' +
+        '<label for="rc">Reçu par (nom et fonction)</label><input id="rc" type="text" maxlength="120" autocomplete="off" placeholder="ex. Mme Koffi, major" value="' + esc((S.recv || {})[st.espc] || '') + '">' +
+        '<label for="cl">Nombre de colis (facultatif)</label><input id="cl" type="number" inputmode="numeric" min="0" placeholder="ex. 6">' +
+        photoField('Bon de livraison signé (facultatif)', 'Photographier le bon signé') +
+        '<p class="err" id="err"></p><button class="btn ok" id="ok" style="margin-top:8px">Confirmer la livraison</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+        bindPhotoField();
+        $('rc').oninput = function () { $('err').textContent = ''; };
+        getPos(10000).then(function (g) {
+            pos = g; posDone = true; var el = $('gps'); if (!el) return;
+            el.textContent = g ? '📍 Position relevée' + (g.precision ? ' (précision ' + g.precision + ' m)' : '') : '📍 Position indisponible : la livraison sera enregistrée sans position';
+        });
+        $('ok').onclick = function () {
+            var who = $('rc').value.trim(), n = $('cl').value;
+            if (!who) { $('err').textContent = 'Indiquez qui a reçu la livraison.'; return; }
+            var body = { statut: statut, receptionnaire: who };
+            if (n !== '') body.colis = parseInt(n, 10);
+            if (pos) Object.assign(body, pos);
+            S.recv = S.recv || {}; if (st.espc) S.recv[st.espc] = who;
+            var photo = sheetPhoto; closeSheet(); openStop = null;
+            if (!posDone) toast('Position non reçue à temps : livraison enregistrée sans position');
+            enqueueWithPhoto({ type: 'livraison', plan: p.id, target: stopId, body: body }, photo);
         };
     });
 }
@@ -435,10 +656,9 @@ function bindFuel() {
         if ($('pu').value) body.prix_unitaire = parseFloat($('pu').value);
         if ($('km').value) body.km_compteur = parseInt($('km').value, 10);
         if ($('st').value.trim()) body.station = $('st').value.trim();
-        var op = { type: 'fuel', plan: p.id, body: body, photo: !!fuelPhoto }, photo = fuelPhoto;
+        var photo = fuelPhoto;
         fuelDraft = {}; fuelPhoto = null;
-        var go = function () { enqueue(op); toast(isOnline() ? 'Plein enregistré' : 'Plein enregistré, envoi au retour du réseau'); };
-        if (photo) { op.id = uid(); photoPut(op.id, photo).then(go, function () { op.photo = false; toast('Photo non conservée : plein enregistré sans photo'); go(); }); } else go();
+        enqueueWithPhoto({ type: 'fuel', plan: p.id, body: body }, photo, 'Plein enregistré');
     };
     // le brouillon survit aux rafraîchissements de l'écran (synchronisation en arrière-plan)
     [].forEach.call(f.querySelectorAll('input[id]:not([type=file])'), function (i) { i.oninput = function () { fuelDraft[i.id] = i.value; }; });
@@ -477,6 +697,7 @@ function profileView() {
         (perm === 'denied' ? '<p class="muted">Autorisez les notifications dans les réglages du navigateur pour ce site.</p>' : '') +
         (!standalone && deferredInstall ? '<button class="btn sec" id="inst" style="margin-bottom:12px">Installer l\'application</button>' : '') +
         (!standalone && ios ? '<div class="card muted">iPhone : touchez <b>Partager</b> puis <b>Sur l\'écran d\'accueil</b> pour installer l\'application et recevoir les notifications.</div>' : '') +
+        '<button class="btn sec" id="pushtest" style="margin-bottom:12px">Recevoir une notification de test</button>' +
         '<a class="btn sec" href="#/password" style="margin-bottom:10px">Changer le mot de passe</a><button class="btn sec" id="sync" style="margin-bottom:10px">Synchroniser maintenant</button><button class="btn bad" id="out">Se déconnecter</button>' +
         '<p class="muted" style="text-align:center;margin-top:16px">LogiMaster Convoyeur</p>');
 }
@@ -486,6 +707,16 @@ function bindProfile() {
     if ((e = $('sync'))) e.onclick = function () { toast(isOnline() ? 'Synchronisation…' : 'Pas de réseau'); refresh(); };
     if ((e = $('pushon'))) e.onclick = registerPush;
     if ((e = $('pushoff'))) e.onclick = unregisterPush;
+    if ((e = $('pushtest'))) e.onclick = function () {
+        if (!isOnline()) return toast('Pas de réseau');
+        var perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+        if (perm === 'unsupported' || !('serviceWorker' in navigator)) return sheetInfo('Notifications non prises en charge', /iphone|ipad|ipod/i.test(navigator.userAgent) ? 'Sur iPhone, installez d\'abord l\'application sur l\'écran d\'accueil (Partager → Sur l\'écran d\'accueil), ouvrez-la depuis l\'icône, puis activez les notifications.' : 'Ce navigateur ne gère pas les notifications. Utilisez Chrome sur Android.');
+        if (perm === 'denied') return sheetInfo('Notifications bloquées', 'Elles ont été refusées pour ce site : autorisez-les dans les réglages du navigateur (Paramètres du site → Notifications), puis réessayez.');
+        if (perm !== 'granted' || !S.push) return sheetInfo('Notifications pas encore activées', 'Touchez « Activer » ci-dessus et acceptez, puis relancez le test.');
+        e.disabled = true; e.textContent = 'Envoi…';
+        api('POST', '/push-test').then(function (r) { e.disabled = false; e.textContent = 'Recevoir une notification de test'; r.ok ? toast(r.message) : sheetInfo('Test non envoyé', r.message); },
+            function (x) { e.disabled = false; e.textContent = 'Recevoir une notification de test'; toast(x.offline ? 'Pas de réseau' : x.message); });
+    };
     if ((e = $('inst'))) e.onclick = installApp;
 }
 

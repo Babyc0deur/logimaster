@@ -28,7 +28,7 @@ class LivraisonEspc extends Pivot
 
     protected function casts(): array
     {
-        return ['date_livraison' => 'date:Y-m-d', 'ordre' => 'integer', 'saisi_at' => 'datetime'];
+        return ['date_livraison' => 'date:Y-m-d', 'ordre' => 'integer', 'saisi_at' => 'datetime', 'colis' => 'integer', 'gps_precision_m' => 'integer', 'gps_ecart_m' => 'integer', 'lat' => 'float', 'lon' => 'float'];
     }
 
     public function chronogramme()

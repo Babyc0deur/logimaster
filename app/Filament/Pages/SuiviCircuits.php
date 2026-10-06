@@ -113,6 +113,22 @@ class SuiviCircuits extends Page implements HasActions
             });
     }
 
+    /** Photo du bon de livraison signé, prise par le convoyeur sur le site. */
+    public function preuveAction(): Action
+    {
+        return Action::make('preuve')->label('Voir le bon signé')->icon('heroicon-o-camera')->color('gray')->size('sm')->link()
+            ->modalHeading(fn (array $arguments) => 'Bon de livraison — '.($this->livraison($arguments)->espc?->nom ?? 'site'))
+            ->modalContent(function (array $arguments) {
+                $l = $this->livraison($arguments);
+
+                return view('filament.modals.photos', ['photos' => [[
+                    'titre' => trim(($l->receptionnaire ? 'Reçu par '.$l->receptionnaire : '').($l->colis !== null ? ' · '.$l->colis.' colis' : ''), ' ·') ?: 'Bon de livraison',
+                    'src' => \App\Support\PrivatePhoto::dataUri($l->preuve_photo),
+                ]]]);
+            })
+            ->modalSubmitAction(false)->modalCancelActionLabel('Fermer');
+    }
+
     public function reinitAction(): Action
     {
         return Action::make('reinit')->label('Remettre en planifiée')->icon('heroicon-o-arrow-uturn-left')->color('gray')->size('sm')->link()

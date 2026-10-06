@@ -49,7 +49,7 @@ class UserMenuAndFiltersTest extends TestCase
             $this->assertNotContains($label, $sidebar);
         }
         $page = $this->get("/admin/{$this->district->id}")->assertOk();
-        foreach (['Centres de santé (ESPC)', 'Chefs de mission et passagers', 'Districts'] as $label) {
+        foreach (['Centres de santé (ESPC)', 'Personnel (chauffeurs, chefs de mission, passagers)', 'Districts'] as $label) {
             $page->assertSee(e($label), false);
         }
         $page->assertSee("/admin/{$this->district->id}/espcs", false);

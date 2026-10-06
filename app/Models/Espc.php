@@ -11,11 +11,11 @@ class Espc extends Model
 
     protected $table = 'espc';
 
-    protected $fillable = ['district_id', 'nom', 'type', 'gps_lat', 'gps_lon', 'responsable', 'telephone', 'statut', 'adresse', 'email'];
+    protected $fillable = ['district_id', 'nom', 'type', 'gps_lat', 'gps_lon', 'responsable', 'telephone', 'statut', 'adresse', 'email', 'gps_source', 'gps_releve_at'];
 
     protected function casts(): array
     {
-        return ['gps_lat' => 'float', 'gps_lon' => 'float'];
+        return ['gps_lat' => 'float', 'gps_lon' => 'float', 'gps_releve_at' => 'datetime'];
     }
 
     public function district()
