@@ -16,6 +16,11 @@ class IndicatorHistory extends ChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return (bool) auth()->user()?->can('view_indicators');
+    }
+
     protected ?string $maxHeight = '280px';
 
     public function getHeading(): ?string

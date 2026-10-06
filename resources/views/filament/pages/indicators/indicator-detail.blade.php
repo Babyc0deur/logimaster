@@ -1,4 +1,4 @@
-<x-filament-widgets::widget>
+<x-filament-widgets::widget id="indicateur-detail" style="scroll-margin-top:80px">
     <x-filament::section :heading="$meta['label'] . ' — ' . ucfirst($month->translatedFormat('F Y'))" :description="$meta['definition']">
         @if ($empty)
             <p style="font-size:.9rem;color:#6b7280">Aucune donnée calculée pour ce mois et ce périmètre. Utilisez « Recalculer le mois » ou choisissez un autre mois.</p>

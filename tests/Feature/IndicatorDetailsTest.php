@@ -224,8 +224,12 @@ class IndicatorDetailsTest extends TestCase
         $this->run_($this->d1);
 
         $t = "/admin/{$this->d1->id}";
-        foreach ([$t, "{$t}/indicateurs", "{$t}/indicateurs?filters[indicateur]=respect_espc&filters[periode]=2026-09"] as $url) {
+        // tableau de bord unique : flotte + 9 indicateurs DDKM, détail de l'indicateur choisi
+        foreach ([$t, "{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09"] as $url) {
             $this->assertSame(200, $this->get($url)->getStatusCode(), $url);
         }
+        $this->get("{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09")->assertSee('Recalculer les indicateurs du mois');
+        // l'ancienne adresse des indicateurs renvoie vers le tableau de bord, filtres conservés
+        $this->get("{$t}/indicateurs?filters[indicateur]=respect_espc")->assertRedirectContains('respect_espc');
     }
 }

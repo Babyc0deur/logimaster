@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Domain\Indicators\IndicatorCatalog;
-use App\Filament\Pages\Indicators;
+use App\Filament\Pages\Dashboard;
 use App\Support\IndicatorViewData;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\Widget;
@@ -16,6 +16,11 @@ class IndicatorCards extends Widget
     protected static ?int $sort = 0;
 
     protected int|string|array $columnSpan = 'full';
+
+    public static function canView(): bool
+    {
+        return (bool) auth()->user()?->can('view_indicators');
+    }
 
     protected string $view = 'filament.widgets.indicator-cards';
 
@@ -38,7 +43,7 @@ class IndicatorCards extends Widget
                 'delta_good' => $delta === null || $meta['direction'] === null ? null : ($meta['direction'] === 'up' ? $delta >= 0 : $delta <= 0),
                 'sub' => $this->subtitle($key, $row, $has),
                 'definition' => $meta['definition'],
-                'url' => Indicators::getUrl(['filters' => array_filter(($this->pageFilters ?? []) + ['periode' => $data['month']->format('Y-m')]) + ['indicateur' => $key]]),
+                'url' => Dashboard::getUrl(['filters' => array_filter(['indicateur' => $key, 'periode' => $data['month']->format('Y-m')] + ($this->pageFilters ?? []))]).'#indicateur-detail',
             ];
         }
 

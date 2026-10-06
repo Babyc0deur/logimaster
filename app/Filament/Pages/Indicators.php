@@ -20,9 +20,16 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
-/** Module 9 : tableau de bord des 9 indicateurs DDKM avec détail, évolution et écarts. */
+/** Ancienne page des indicateurs DDKM : fusionnée dans le tableau de bord ; l'adresse reste valable et y renvoie (filtres conservés). */
 class Indicators extends BaseDashboard
 {
+    protected static bool $shouldRegisterNavigation = false;
+
+    public function mount(): void
+    {
+        $this->redirect(Dashboard::getUrl(['filters' => (array) request()->query('filters', [])]).'#indicateur-detail');
+    }
+
     use HasFiltersForm, ScopeFilters;
 
     protected static string $routePath = 'indicateurs';

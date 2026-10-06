@@ -141,14 +141,14 @@ class DashboardFilters
         return [$month, $month->endOfMonth()];
     }
 
-    /** Mois des indicateurs : filtre « periode » (page Indicateurs), sinon mois de la date de fin du dashboard, sinon mois courant. */
+    /**
+     * Mois des indicateurs DDKM : filtre « Mois des indicateurs » (« periode ») s'il est choisi, sinon le dernier mois de la
+     * période qui a de l'activité (jamais un mois vide simplement parce que la date « Au » le contient).
+     */
     public static function indicatorMonth(?array $filters): CarbonImmutable
     {
         if (! empty($filters['periode'])) {
             return CarbonImmutable::createFromFormat('Y-m', $filters['periode'])->startOfMonth();
-        }
-        if (! empty($filters['date_until'])) {
-            return CarbonImmutable::parse($filters['date_until'])->startOfMonth();
         }
 
         return CarbonImmutable::createFromFormat('Y-m', self::defaultMonthKey())->startOfMonth();

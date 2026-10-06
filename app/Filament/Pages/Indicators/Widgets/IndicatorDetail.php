@@ -15,6 +15,11 @@ class IndicatorDetail extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return (bool) auth()->user()?->can('view_indicators');
+    }
+
     protected string $view = 'filament.pages.indicators.indicator-detail';
 
     protected function getViewData(): array

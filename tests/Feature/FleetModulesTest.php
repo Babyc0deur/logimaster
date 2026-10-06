@@ -312,7 +312,7 @@ class FleetModulesTest extends TestCase
             '/circuits', '/circuits/create', "/circuits/{$circuit->id}", "/circuits/{$circuit->id}/edit",
             '/espcs', '/espcs/create', "/espcs/{$espc->id}", "/espcs/{$espc->id}/edit", '/livraisons',
             '/personnels', '/personnels/create', "/personnels/{$personnel->id}", "/personnels/{$personnel->id}/edit",
-            '/indicateurs', '/finance', '/budgets', '/factures', '/factures/create', "/factures/{$facture->id}", '/reports', '/report-schedules', '/import-classeur', '/chronogrammes', '/chronogrammes/create', "/chronogrammes/{$plan->id}/edit",
+            '/finance', '/budgets', '/factures', '/factures/create', "/factures/{$facture->id}", '/reports', '/report-schedules', '/import-classeur', '/chronogrammes', '/chronogrammes/create', "/chronogrammes/{$plan->id}/edit",
             '/sorties/sortie-vehicules', '/sorties/sortie-vehicules/create', "/sorties/sortie-vehicules/{$sortie->id}/edit",
             '/ravitaillements', '/ravitaillements/create', '/vidanges', '/vidanges/create',
             '/immobilisations', '/immobilisations/create', "/immobilisations/{$immo->id}/edit",
