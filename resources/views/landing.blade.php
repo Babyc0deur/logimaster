@@ -195,15 +195,15 @@
         </div>
         <div class="facts up" style="animation-delay:.25s">
             <div><b>{{ $stats['districts'] }}</b><span>districts sanitaires</span></div>
-            <div><b>9</b><span>indicateurs DDKM par mois</span></div>
+            <div><b>8</b><span>indicateurs DDKM par mois</span></div>
             <div><b>Hors réseau</b><span>saisie sur la route, envoi au retour</span></div>
         </div>
         <figure class="up" style="animation-delay:.35s">
             <div class="shot">
                 <div class="cap"><span>Tableau de bord · district de Méagui</span><span>Octobre 2025</span></div>
-                <img src="/landing/tableau-de-bord.jpg" width="2160" height="1350" alt="Tableau de bord de LogiMaster : filtres par PRES, région, district et période, puis les neuf indicateurs DDKM du mois d'octobre 2025 pour le district de Méagui.">
+                <img src="/landing/tableau-de-bord.jpg" width="2160" height="1350" alt="Tableau de bord de LogiMaster : filtres par PRES, région, district et période, puis les huit indicateurs DDKM du mois d'octobre 2025 pour le district de Méagui.">
             </div>
-            <figcaption><b>Capture de l'application.</b> Les neuf indicateurs du mois, comparés au mois précédent, pour le district choisi. Un clic sur un indicateur ouvre son détail et son évolution.</figcaption>
+            <figcaption><b>Capture de l'application.</b> Les huit indicateurs du mois, comparés au mois précédent, pour le district choisi. Un clic sur un indicateur ouvre son détail et son évolution.</figcaption>
         </figure>
     </div>
 </div>
@@ -242,19 +242,18 @@
 
 <section id="indicateurs">
     <div class="wrap">
-        <div class="sh"><span class="mono">03 — Indicateurs</span><div><h2>Les neuf indicateurs DDKM, calculés chaque mois</h2><p>Par district, région ou PRES, avec l'objectif de référence. Les objectifs se règlent dans l'administration.</p></div></div>
+        <div class="sh"><span class="mono">03 — Indicateurs</span><div><h2>Les huit indicateurs DDKM, calculés chaque mois</h2><p>Par district, région ou PRES, avec l'objectif de référence. Les objectifs se règlent dans l'administration.</p></div></div>
         <table class="ind">
             <thead><tr><th>N°</th><th>Indicateur</th><th class="u">Unité</th><th style="text-align:right">Objectif</th></tr></thead>
             <tbody>
-                <tr><td>01</td><td>Distance totale parcourue</td><td class="u">km</td><td class="t">—</td></tr>
-                <tr><td>02</td><td>Taux de respect du chronogramme</td><td class="u">%</td><td class="t">≥ 90 %</td></tr>
+                <tr><td>01</td><td>Coût global de prise en charge</td><td class="u">FCFA</td><td class="t">—</td></tr>
+                <tr><td>02</td><td>Taux d'utilisation des véhicules</td><td class="u">%</td><td class="t">≥ 60 %</td></tr>
                 <tr><td>03</td><td>Taux d'immobilisation</td><td class="u">%</td><td class="t">≤ 10 %</td></tr>
-                <tr><td>04</td><td>Taux d'utilisation des véhicules</td><td class="u">%</td><td class="t">≥ 60 %</td></tr>
-                <tr><td>05</td><td>Coût global de prise en charge</td><td class="u">FCFA</td><td class="t">—</td></tr>
-                <tr><td>06</td><td>Utilisation rationnelle du carburant</td><td class="u">%</td><td class="t">≥ 85 %</td></tr>
-                <tr><td>07</td><td>Carburant par motif de déplacement</td><td class="u">L</td><td class="t">—</td></tr>
-                <tr><td>08</td><td>Taux de respect des circuits</td><td class="u">%</td><td class="t">≥ 90 %</td></tr>
-                <tr><td>09</td><td>Taux de respect de la livraison ESPC sur site</td><td class="u">%</td><td class="t">≥ 95 %</td></tr>
+                <tr><td>04</td><td>Taux de respect du chronogramme</td><td class="u">%</td><td class="t">≥ 90 %</td></tr>
+                <tr><td>05</td><td>Taux d'utilisation rationnelle du carburant</td><td class="u">%</td><td class="t">≥ 85 %</td></tr>
+                <tr><td>06</td><td>Carburant par motif de déplacement</td><td class="u">L</td><td class="t">—</td></tr>
+                <tr><td>07</td><td>Taux de respect des circuits</td><td class="u">%</td><td class="t">≥ 90 %</td></tr>
+                <tr><td>08</td><td>Distance totale parcourue</td><td class="u">km</td><td class="t">—</td></tr>
             </tbody>
         </table>
     </div>

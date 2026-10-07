@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organisation;
 
+use App\Models\District;
 use App\Models\Pres;
 use App\Models\Region;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,9 @@ class PresMapping
     /** Noms de régions corrigés dans la base (ancien nom exact => nom officiel). */
     public const RENAMES = ['INDENIE DUABLIN' => 'INDENIE-DJUABLIN', 'HAUT SASSANDRA' => 'HAUT-SASSANDRA', 'SAN PEDRO' => 'SAN-PEDRO'];
 
+    /** Noms de districts corrigés dans la base (ancien nom exact => nom officiel). */
+    public const DISTRICT_RENAMES = ['SAN PEDRO' => 'SAN-PEDRO'];
+
     /** Ancien PRES unique, remplacé par les 10 pôles. */
     public const LEGACY = "PRES Côte d'Ivoire";
 
@@ -59,7 +63,7 @@ class PresMapping
     }
 
     /**
-     * Corrige les noms de régions, crée les PRES manquants, rattache chaque région à son PRES, supprime l'ancien PRES unique s'il n'a plus de région.
+     * Corrige les noms de régions et de districts, crée les PRES manquants, rattache chaque région à son PRES, supprime l'ancien PRES unique s'il n'a plus de région.
      *
      * @return array{moved: int, unknown: array<int, string>}
      */
@@ -73,6 +77,11 @@ class PresMapping
             foreach (self::RENAMES as $from => $to) {
                 if (! Region::where('name', $to)->exists()) {
                     Region::where('name', $from)->update(['name' => $to]);
+                }
+            }
+            foreach (self::DISTRICT_RENAMES as $from => $to) {
+                if (! District::where('name', $to)->exists()) {
+                    District::where('name', $from)->update(['name' => $to]);
                 }
             }
             $moved = 0;

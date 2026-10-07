@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\Organisation\PresMapping;
+use App\Models\District;
 use App\Models\Pres;
 use App\Models\Region;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +21,9 @@ class PresMappingTest extends TestCase
             Region::create(['pres_id' => $legacy->id, 'name' => $name]);
         }
 
+        $sp = District::create(['region_id' => Region::where('name', 'SAN PEDRO')->value('id'), 'name' => 'SAN PEDRO', 'sync_id' => 'SP', 'sync_password_hash' => 'x']);
         $r = PresMapping::apply();
+        $this->assertSame('SAN-PEDRO', $sp->fresh()->name);   // district renommé
         $this->assertSame(7, $r['moved']);
         $this->assertSame([], $r['unknown']);
         $pres = fn (string $region) => Region::where('name', $region)->first()->pres->name;
