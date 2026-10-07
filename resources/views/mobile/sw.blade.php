@@ -17,6 +17,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const req = event.request;
     const url = new URL(req.url);
+    if (req.method === 'GET' && (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com')) {
+        event.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+            return res;
+        })));
+        return;
+    }
     if (req.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) {
         return; // l'API n'est jamais mise en cache : les données hors réseau sont gérées par l'application
     }

@@ -54,8 +54,8 @@ class MobileAppController extends Controller
             'scope' => '/m',
             'display' => 'standalone',
             'orientation' => 'portrait',
-            'background_color' => '#ffffff',
-            'theme_color' => '#2563eb',
+            'background_color' => '#f3efe6',
+            'theme_color' => '#f3efe6',
             'icons' => [
                 ['src' => '/pwa/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => '/pwa/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
@@ -67,8 +67,9 @@ class MobileAppController extends Controller
     /** Service worker servi depuis /m/sw.js : sa portée couvre l'application (/m). */
     public function serviceWorker(): Response
     {
-        // version = empreinte de l'application mobile et du service worker (change à chaque modification déployée)
-        $version = substr(md5(implode('|', array_map(fn ($v) => @filemtime(resource_path("views/mobile/{$v}.blade.php")).'-'.@filesize(resource_path("views/mobile/{$v}.blade.php")), ['app', 'sw']))), 0, 10);
+        // version = empreinte de l'application mobile, du service worker et des icônes (change à chaque modification déployée)
+        $files = [resource_path('views/mobile/app.blade.php'), resource_path('views/mobile/sw.blade.php'), ...glob(public_path('pwa/*.png'))];   // icônes comprises
+        $version = substr(md5(implode('|', array_map(fn ($f) => @filemtime($f).'-'.@filesize($f), $files))), 0, 10);
 
         return response(view('mobile.sw', ['version' => $version])->render(), 200, [
             'Content-Type' => 'application/javascript; charset=utf-8',
