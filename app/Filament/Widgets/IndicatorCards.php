@@ -31,17 +31,18 @@ class IndicatorCards extends Widget
         foreach (IndicatorCatalog::all() as $key => $meta) {
             $row = $data['rows'][$key];
             $has = $row['districts'] > 0;
+            $evaluated = $row['evaluated'] ?? true;
             $delta = $row['delta'];
             $cards[] = [
                 'key' => $key,
                 'label' => $meta['short'],
                 'title' => $meta['label'],
                 'icon' => $meta['icon'],
-                'value' => $has ? IndicatorCatalog::format($key, $row['value']) : '—',
-                'color' => $has ? IndicatorCatalog::color($key, $row['value']) : 'gray',
+                'value' => $has ? IndicatorCatalog::display($key, $row) : '—',
+                'color' => $has ? IndicatorCatalog::rowColor($key, $row) : 'gray',
                 'delta' => $has && $delta !== null ? sprintf('%+.1f %s', $delta, $meta['unit'] === '%' ? 'pt' : ($meta['unit'] === 'FCFA' ? 'FCFA' : $meta['unit'])) : null,
                 'delta_good' => $delta === null || $meta['direction'] === null ? null : ($meta['direction'] === 'up' ? $delta >= 0 : $delta <= 0),
-                'sub' => $this->subtitle($key, $row, $has),
+                'sub' => $has && ! $evaluated ? 'Consommation théorique non renseignée' : $this->subtitle($key, $row, $has),
                 'definition' => $meta['definition'],
                 'url' => Dashboard::getUrl(['filters' => array_filter(['indicateur' => $key] + ($this->pageFilters ?? []))]).'#indicateur-detail',
             ];

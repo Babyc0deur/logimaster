@@ -14,7 +14,7 @@ final class Recommendations
     public static function for(array $rows): array
     {
         $out = [];
-        $off = fn (string $key) => $rows[$key]['districts'] > 0 && IndicatorCatalog::color($key, $rows[$key]['value']) !== 'success' && IndicatorCatalog::color($key, $rows[$key]['value']) !== 'gray';
+        $off = fn (string $key) => $rows[$key]['districts'] > 0 && ! in_array(IndicatorCatalog::rowColor($key, $rows[$key]), ['success', 'gray'], true);
         $fmt = fn (string $key) => IndicatorCatalog::format($key, $rows[$key]['value']);
         $target = fn (string $key) => IndicatorCatalog::format($key, IndicatorCatalog::get($key)['target']);
 
@@ -37,6 +37,11 @@ final class Recommendations
         if ($off('utilisation_rationnelle_carburant')) {
             $over = collect($rows['utilisation_rationnelle_carburant']['breakdown']['par_vehicule'] ?? [])->filter(fn ($v) => $v['theorique'] > 0 && $v['reel'] > $v['theorique'] * 1.15)->keys()->take(5)->join(', ');
             $out[] = "Carburant : utilisation rationnelle à {$fmt('utilisation_rationnelle_carburant')} (objectif {$target('utilisation_rationnelle_carburant')})".($over ? " — surconsommation constatée : {$over}" : '').'. Contrôler les pleins, les trajets non planifiés et l\'état mécanique.';
+        }
+        $fuel = $rows['utilisation_rationnelle_carburant'];
+        if ($fuel['districts'] > 0 && ! ($fuel['evaluated'] ?? true)) {
+            $out[] = 'Carburant : utilisation rationnelle non évaluée. '.IndicatorCatalog::notEvaluatedReason('utilisation_rationnelle_carburant', $fuel['breakdown'])
+                .' Renseigner la consommation théorique sur la fiche de chaque véhicule.';
         }
         if ($off('respect_circuits')) {
             $km = $rows['respect_circuits']['breakdown']['km_supplementaires'] ?? 0;

@@ -51,6 +51,11 @@ class UtilisationRationnelleCarburantCalculator implements IndicatorCalculator
             }
         }
 
-        return IndicatorResult::ratio(round(array_sum($theorique), 2), (float) $reel->sum(), ['unite' => 'litres', 'par_vehicule' => $perVehicle]);
+        // véhicules actifs sur la période mais sans consommation théorique : non pris en compte (signalés)
+        $active = SortieVehicule::where('district_id', $districtId)->whereDateBetween('date_sortie', $start, $end)->distinct()->pluck('vehicle_id')
+            ->merge(Ravitaillement::where('district_id', $districtId)->whereDateBetween('date_ravitaillement', $start, $end)->distinct()->pluck('vehicle_id'))->unique();
+        $sans = Vehicle::where('district_id', $districtId)->whereNull('consommation_theorique')->whereIn('id', $active)->orderBy('immatriculation')->pluck('immatriculation')->map(fn ($i) => ['immatriculation' => $i])->all();   // liste d'objets : fusionnée entre districts
+
+        return IndicatorResult::ratio(round(array_sum($theorique), 2), (float) $reel->sum(), ['unite' => 'litres', 'par_vehicule' => $perVehicle, 'sans_consommation' => $sans]);
     }
 }

@@ -16,7 +16,7 @@
                 const latlngs = [];
                 points.forEach(p => {
                     latlngs.push([p.lat, p.lon]);
-                    const color = p.type === 'depart' ? '#10b981' : '#2563eb';
+                    const color = p.type === 'depart' ? '#10b981' : '#c2410c';
                     const icon = L.divIcon({
                         className: '',
                         html: '<div style=&quot;background:' + color + ';color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 12px sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)&quot;>' + p.n + '</div>',
@@ -24,7 +24,7 @@
                     });
                     L.marker([p.lat, p.lon], { icon }).addTo(map).bindPopup('<strong>' + p.label + '</strong>');
                 });
-                if (withLine && latlngs.length > 1) { L.polyline(latlngs, { color: '#2563eb', weight: 3, opacity: .8, dashArray: '6 6' }).addTo(map); }
+                if (withLine && latlngs.length > 1) { L.polyline(latlngs, { color: '#c2410c', weight: 3, opacity: .8, dashArray: '6 6' }).addTo(map); }
                 latlngs.length > 1 ? map.fitBounds(latlngs, { padding: [30, 30] }) : map.setView(latlngs[0], 13);
             };
             if (window.L) { boot(); }

@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <x-filament::section :heading="'Analyse par véhicule et par motif — ' . ucfirst($month->translatedFormat('F Y'))"
+    <x-filament::section heading="Analyse par véhicule et par motif"
         description="Même période et même périmètre que les indicateurs DDKM ci-dessus.">
         <div style="display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(520px,1fr))">
             @foreach ($panels as $p)

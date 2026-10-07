@@ -61,7 +61,7 @@
                         <td>{{ number_format($motif['litres'], 1, ',', ' ') }} L</td>
                         <td>{{ number_format($motif['cout'], 0, ',', ' ') }} FCFA</td>
                         <td style="width:35%">
-                            <div style="background:#e5e7eb;border-radius:4px;height:10px"><div style="background:#2563eb;height:10px;border-radius:4px;width:{{ round($motif['litres'] / $totalLitres * 100) }}%"></div></div>
+                            <div style="background:#e5e7eb;border-radius:4px;height:10px"><div style="background:#c2410c;height:10px;border-radius:4px;width:{{ round($motif['litres'] / $totalLitres * 100) }}%"></div></div>
                             {{ round($motif['litres'] / $totalLitres * 100) }} %
                         </td>
                     </tr>
@@ -91,7 +91,7 @@
                         <td>{{ $s['theorique'] ?? '—' }}</td>
                         <td>
                             @if ($s['reelle'] !== null)
-                                <div style="background:#2563eb;height:7px;border-radius:4px;width:{{ round($s['reelle'] / $maxConso * 100) }}%"></div>
+                                <div style="background:#c2410c;height:7px;border-radius:4px;width:{{ round($s['reelle'] / $maxConso * 100) }}%"></div>
                                 @if ($s['theorique'])<div style="background:#10b981;height:7px;border-radius:4px;margin-top:2px;width:{{ round($s['theorique'] / $maxConso * 100) }}%"></div>@endif
                             @endif
                         </td>

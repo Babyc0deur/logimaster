@@ -20,7 +20,7 @@
     @forelse ($rows as $r)
         <div style="display:flex;gap:14px">
             <div style="display:flex;flex-direction:column;align-items:center;width:28px;flex:none">
-                <div style="{{ $node }}border:2px solid #2563eb;background:rgba(37,99,235,.12);color:#2563eb;font-size:.75rem;font-weight:600">{{ $r['ordre'] }}</div>
+                <div style="{{ $node }}border:2px solid #c2410c;background:rgba(194,65,12,.12);color:#c2410c;font-size:.75rem;font-weight:600">{{ $r['ordre'] }}</div>
                 <div style="{{ $rail }}"></div>
             </div>
             <div style="flex:1;min-width:0;padding-bottom:14px">

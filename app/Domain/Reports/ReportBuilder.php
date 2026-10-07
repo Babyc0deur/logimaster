@@ -92,16 +92,17 @@ class ReportBuilder
         $summary = [];
         foreach (IndicatorCatalog::all() as $key => $meta) {
             $r = $rows[$key];
-            $color = IndicatorCatalog::color($key, $r['value']);
+            $color = IndicatorCatalog::rowColor($key, $r);
             $summary[] = [
-                $meta['label'], IndicatorCatalog::format($key, $r['value']),
+                $meta['label'], IndicatorCatalog::display($key, $r),
                 $r['previous'] !== null ? IndicatorCatalog::format($key, $r['previous']) : '—',
                 $r['delta_pct'] !== null ? sprintf('%+.1f %%', $r['delta_pct']) : '—',
                 $meta['target'] !== null ? ($meta['direction'] === 'down' ? '≤ ' : '≥ ').IndicatorCatalog::format($key, $meta['target']) : '—',
-                ['success' => 'Conforme', 'warning' => 'À surveiller', 'danger' => 'Hors objectif', 'gray' => '—'][$color],
+                ($r['evaluated'] ?? true) ? ['success' => 'Conforme', 'warning' => 'À surveiller', 'danger' => 'Hors objectif', 'gray' => '—'][$color] : 'Non évalué',
             ];
         }
         $pctKeys = array_keys(array_filter(IndicatorCatalog::all(), fn ($m) => $m['unit'] === '%'));
+        $pctKeys = array_values(array_filter($pctKeys, fn ($k) => $rows[$k]['evaluated'] ?? true));   // indicateur non évalué : pas de barre à 0 %
         $palette = ['success' => '#22c55e', 'warning' => '#f59e0b', 'danger' => '#ef4444', 'gray' => '#94a3b8'];
         $doc->section('Synthèse des indicateurs DDKM', [], [['title' => 'Les 9 indicateurs', 'headers' => ['Indicateur', 'Valeur', 'Mois précédent', 'Évolution', 'Objectif', 'Situation'], 'rows' => $summary]], [], [
             $this->chart('Indicateurs en pourcentage (vert : conforme · orange : à surveiller · rouge : hors objectif)', ChartSvg::hbars(
@@ -119,7 +120,7 @@ class ReportBuilder
                 [['name' => $meta['short'], 'values' => $history->pluck('value')->all()]], $meta['unit'], $meta['target']
             ))] : [];
             $doc->section(
-                $meta['label'].' : '.IndicatorCatalog::format($key, $rows[$key]['value']),
+                $meta['label'].' : '.IndicatorCatalog::display($key, $rows[$key]),
                 $detail['kpis'],
                 array_map(fn ($t) => $this->table($t['title'], $t['headers'], $t['rows']), array_filter($detail['tables'], fn ($t) => count($t['rows']))),
                 [$meta['definition']],

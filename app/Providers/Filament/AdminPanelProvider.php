@@ -27,12 +27,15 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::hex('#c2410c'),   // orange signalisation (site, application mobile)
+                'gray'    => Color::Stone,             // gris chauds, accordés au fond papier
                 'danger'  => Color::Red,
                 'success' => Color::Green,
-                'warning' => Color::Orange,
+                'warning' => Color::Amber,
                 'info'    => Color::Sky,
             ])
+            ->font('Public Sans')
+            ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.theme'))   // fond papier, titres à empattement
             ->brandName('LogiMaster')
             ->brandLogo(fn () => view('filament.brand'))   // icône LogiMaster + nom
             ->brandLogoHeight('2rem')

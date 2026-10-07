@@ -29,7 +29,7 @@ class FinanceTrendChart extends ChartWidget
 
         return ['labels' => $labels, 'datasets' => [
             ['label' => 'Dépenses', 'data' => $spent, 'borderColor' => '#f59e0b', 'backgroundColor' => 'rgba(245,158,11,.15)', 'fill' => true],
-            ['label' => 'Budget alloué', 'data' => $alloue, 'borderColor' => '#2563eb', 'borderDash' => [6, 4], 'spanGaps' => true, 'fill' => false],
+            ['label' => 'Budget alloué', 'data' => $alloue, 'borderColor' => '#c2410c', 'borderDash' => [6, 4], 'spanGaps' => true, 'fill' => false],
         ]];
     }
 

@@ -29,7 +29,7 @@
                         <tr>
                             <th style="text-align:left;padding:.7rem;border-bottom:1px solid #e5e7eb">Véhicule</th>
                             @foreach ($days as $day)
-                                <th style="padding:.7rem;border-bottom:1px solid #e5e7eb;font-size:1rem;{{ $day->isToday() ? 'background:#eff6ff' : '' }}">{{ $day->translatedFormat('D d/m') }}</th>
+                                <th style="padding:.7rem;border-bottom:1px solid #e5e7eb;font-size:1rem;{{ $day->isToday() ? 'background:#fbeee6' : '' }}">{{ $day->translatedFormat('D d/m') }}</th>
                             @endforeach
                         </tr>
                     </thead>
@@ -40,7 +40,7 @@
                                 @foreach ($days as $day)
                                     @php $cellKey = $vehicle->id.'|'.$day->toDateString(); @endphp
                                     <td style="padding:.4rem;height:96px;border-bottom:1px solid #f3f4f6;vertical-align:top;min-width:150px;{{ $day->isToday() ? 'background:#f8fafc;' : '' }}"
-                                        :style="over === '{{ $cellKey }}' ? 'outline:2px dashed #2563eb;outline-offset:-2px;background:#eff6ff' : ''"
+                                        :style="over === '{{ $cellKey }}' ? 'outline:2px dashed #c2410c;outline-offset:-2px;background:#fbeee6' : ''"
                                         @if ($canEdit)
                                             x-on:dragover.prevent="over = '{{ $cellKey }}'"
                                             x-on:dragleave="over === '{{ $cellKey }}' && (over = null)"
@@ -71,8 +71,8 @@
                             <tr>
                                 @foreach ($week as $day)
                                     @php $cellKey = $day->toDateString(); @endphp
-                                    <td style="height:170px;vertical-align:top;padding:8px;border:1px solid #f3f4f6;{{ $day->month !== $month->month ? 'opacity:.45;' : '' }}{{ $day->isToday() ? 'background:#eff6ff;' : '' }}"
-                                        :style="over === '{{ $cellKey }}' ? 'outline:2px dashed #2563eb;outline-offset:-2px;background:#eff6ff' : ''"
+                                    <td style="height:170px;vertical-align:top;padding:8px;border:1px solid #f3f4f6;{{ $day->month !== $month->month ? 'opacity:.45;' : '' }}{{ $day->isToday() ? 'background:#fbeee6;' : '' }}"
+                                        :style="over === '{{ $cellKey }}' ? 'outline:2px dashed #c2410c;outline-offset:-2px;background:#fbeee6' : ''"
                                         @if ($canEdit)
                                             x-on:dragover.prevent="over = '{{ $cellKey }}'"
                                             x-on:dragleave="over === '{{ $cellKey }}' && (over = null)"
@@ -81,7 +81,7 @@
                                         <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:600;margin-bottom:4px">
                                             <span>{{ $day->day }}</span>
                                             @if ($canEdit && ! $day->isBefore(today()))
-                                                <a href="{{ $createUrl }}?date={{ $cellKey }}" title="Planifier une sortie ce jour" style="text-decoration:none;color:#2563eb;font-size:1.2rem;line-height:1">＋</a>
+                                                <a href="{{ $createUrl }}?date={{ $cellKey }}" title="Planifier une sortie ce jour" style="text-decoration:none;color:#c2410c;font-size:1.2rem;line-height:1">＋</a>
                                             @endif
                                         </div>
                                         @foreach ($plansByDay->get($cellKey, collect()) as $plan)

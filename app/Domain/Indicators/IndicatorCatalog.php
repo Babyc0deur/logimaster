@@ -84,6 +84,42 @@ final class IndicatorCatalog
         return $ok ? 'success' : ($near ? 'warning' : 'danger');
     }
 
+    public const NON_EVALUE = 'Non évalué';
+
+    /**
+     * Faux quand l'indicateur ne peut pas être calculé faute de données de référence. Carburant rationnel :
+     * aucun véhicule avec une consommation théorique (L/100 km) n'a roulé et fait le plein sur la période.
+     */
+    public static function evaluated(string $key, array $breakdown): bool
+    {
+        if ($key === 'utilisation_rationnelle_carburant') {
+            return (float) ($breakdown['numerator'] ?? 0) > 0 && (float) ($breakdown['denominator'] ?? 0) > 0;
+        }
+
+        return true;
+    }
+
+    /** Pourquoi l'indicateur n'est pas évalué (texte pour l'utilisateur). */
+    public static function notEvaluatedReason(string $key, array $breakdown): string
+    {
+        $sans = array_column($breakdown['sans_consommation'] ?? [], 'immatriculation');
+
+        return 'Consommation théorique (L/100 km) non renseignée'.($sans ? ' pour '.implode(', ', array_slice($sans, 0, 5)) : ' sur les fiches des véhicules')
+            .', ou aucun plein déclaré sur la période.';
+    }
+
+    /** Valeur affichée d'une ligne de synthèse ({value, breakdown, evaluated}). */
+    public static function display(string $key, array $row): string
+    {
+        return ($row['evaluated'] ?? true) ? self::format($key, (float) $row['value']) : self::NON_EVALUE;
+    }
+
+    /** Couleur d'une ligne de synthèse : grise quand l'indicateur n'est pas évalué. */
+    public static function rowColor(string $key, array $row): string
+    {
+        return ($row['evaluated'] ?? true) ? self::color($key, (float) $row['value']) : 'gray';
+    }
+
     public static function format(string $key, float $value): string
     {
         $unit = self::get($key)['unit'];

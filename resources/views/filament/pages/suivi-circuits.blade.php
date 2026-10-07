@@ -38,7 +38,7 @@
                     </p>
                 </div>
                 @php $validation = $plan->validation_statut ?? 'brouillon'; @endphp
-                <span style="font-size:.75rem;padding:2px 10px;border-radius:8px;background:{{ $validation === 'valide' ? 'rgba(37,99,235,.14)' : 'rgba(127,127,127,.15)' }};color:{{ $validation === 'valide' ? '#2563eb' : $neutral }}">
+                <span style="font-size:.75rem;padding:2px 10px;border-radius:8px;background:{{ $validation === 'valide' ? 'rgba(194,65,12,.14)' : 'rgba(127,127,127,.15)' }};color:{{ $validation === 'valide' ? '#c2410c' : $neutral }}">
                     {{ \App\Models\Chronogramme::VALIDATIONS[$validation] ?? 'Brouillon' }}{{ $validation === 'valide' ? ' 🔒' : '' }}
                 </span>
             </div>

@@ -21,7 +21,7 @@ class VehicleMonthlyChart extends ChartWidget
         return [
             'labels' => array_column($rows, 'label'),
             'datasets' => [
-                ['type' => 'bar', 'label' => 'Distance (km)', 'data' => array_column($rows, 'km'), 'backgroundColor' => 'rgba(37,99,235,.6)', 'yAxisID' => 'y'],
+                ['type' => 'bar', 'label' => 'Distance (km)', 'data' => array_column($rows, 'km'), 'backgroundColor' => 'rgba(194,65,12,.6)', 'yAxisID' => 'y'],
                 ['type' => 'line', 'label' => 'Coûts (FCFA)', 'data' => array_column($rows, 'cout'), 'borderColor' => '#f59e0b', 'yAxisID' => 'y1'],
             ],
         ];

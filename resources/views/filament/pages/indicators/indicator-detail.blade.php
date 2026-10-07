@@ -1,5 +1,5 @@
 <x-filament-widgets::widget id="indicateur-detail" style="scroll-margin-top:80px">
-    <x-filament::section :heading="$meta['label'] . ' — ' . ucfirst($month->translatedFormat('F Y'))" :description="$meta['definition']">
+    <x-filament::section :heading="$meta['label']" :description="$meta['definition']">
         @if ($empty)
             <p style="font-size:.9rem;color:#6b7280">Aucune activité enregistrée pour ce mois et ce périmètre : choisissez d'autres dates ou un autre district.</p>
         @else
@@ -7,6 +7,7 @@
                 @php $c = ['success' => '#059669', 'warning' => '#d97706', 'danger' => '#dc2626', 'gray' => '#111827'][$color]; @endphp
                 <div>
                     <div style="font-size:2.1rem;font-weight:800;color:{{ $c }};line-height:1.1">{{ $value }}</div>
+                    @if ($reason)<div style="font-size:.8rem;color:#6b7280;max-width:28rem;margin:4px 0">{{ $reason }}</div>@endif
                     <div style="font-size:.75rem;color:#6b7280">
                         @if ($previous !== null) Mois précédent : {{ $previous }}@if ($delta_pct !== null) ({{ sprintf('%+.1f', $delta_pct) }} %)@endif @endif
                         @if ($target) · Objectif : {{ $target }} @endif

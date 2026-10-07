@@ -20,7 +20,7 @@ class FuelMonthlyChart extends ChartWidget
         return [
             'labels' => array_column($series, 'label'),
             'datasets' => [
-                ['label' => 'Litres', 'data' => array_column($series, 'litres'), 'borderColor' => '#2563eb', 'yAxisID' => 'y'],
+                ['label' => 'Litres', 'data' => array_column($series, 'litres'), 'borderColor' => '#c2410c', 'yAxisID' => 'y'],
                 ['label' => 'Coût (FCFA)', 'data' => array_column($series, 'cout'), 'borderColor' => '#f59e0b', 'yAxisID' => 'y1'],
             ],
         ];

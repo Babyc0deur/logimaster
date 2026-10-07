@@ -45,7 +45,7 @@ class IndicatorHistory extends ChartWidget
             $values[] = $history[$m->format('Y-m')]['value'] ?? null;
         }
 
-        $datasets = [['label' => $meta['label'].' ('.$meta['unit'].')', 'data' => $values, 'borderColor' => '#2563eb', 'backgroundColor' => 'rgba(37,99,235,.15)', 'fill' => true, 'spanGaps' => true, 'tension' => .25]];
+        $datasets = [['label' => $meta['label'].' ('.$meta['unit'].')', 'data' => $values, 'borderColor' => '#c2410c', 'backgroundColor' => 'rgba(194,65,12,.15)', 'fill' => true, 'spanGaps' => true, 'tension' => .25]];
         if ($meta['target'] !== null) {
             $datasets[] = ['label' => 'Objectif', 'data' => array_fill(0, 12, $meta['target']), 'borderColor' => '#10b981', 'borderDash' => [6, 4], 'pointRadius' => 0, 'fill' => false];
         }

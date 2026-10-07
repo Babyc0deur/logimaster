@@ -76,7 +76,7 @@ class IndicatorService
             } else {
                 $value = round((float) $group->sum('value'), 4);
             }
-            $out[$calculator->key()] = ['value' => $value, 'breakdown' => $breakdown, 'districts' => $group->count()];
+            $out[$calculator->key()] = ['value' => $value, 'breakdown' => $breakdown, 'districts' => $group->count(), 'evaluated' => IndicatorCatalog::evaluated($calculator->key(), $breakdown)];
         }
 
         return $out;
@@ -93,11 +93,12 @@ class IndicatorService
         $before = $this->summary($districtIds, $month->subMonthNoOverflow());
 
         foreach ($now as $key => &$row) {
-            $had = ($before[$key]['districts'] ?? 0) > 0;
+            $had = ($before[$key]['districts'] ?? 0) > 0 && ($before[$key]['evaluated'] ?? true);
             $prev = $had ? $before[$key]['value'] : null;
             $row['previous'] = $prev;
-            $row['delta'] = $prev !== null ? round($row['value'] - $prev, 2) : null;
-            $row['delta_pct'] = ($prev !== null && $prev != 0) ? round(($row['value'] - $prev) / abs($prev) * 100, 1) : null;
+            $comparable = $prev !== null && $row['evaluated'];
+            $row['delta'] = $comparable ? round($row['value'] - $prev, 2) : null;
+            $row['delta_pct'] = ($comparable && $prev != 0) ? round(($row['value'] - $prev) / abs($prev) * 100, 1) : null;
         }
 
         return $now;
@@ -123,6 +124,9 @@ class IndicatorService
             }
             $b = $this->mergeBreakdowns($g->pluck('breakdown')->filter()->all());
             $den = (float) ($b['denominator'] ?? 0);
+            if (! IndicatorCatalog::evaluated($calculator->key(), $b)) {
+                return ['period' => $period, 'value' => null];   // non évalué : pas de point sur la courbe
+            }
 
             return ['period' => $period, 'value' => $den > 0 ? round((float) ($b['numerator'] ?? 0) / $den * 100, 4) : 0.0];
         })->values()->all();

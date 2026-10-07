@@ -22,7 +22,7 @@ class FinanceBudgetChart extends ChartWidget
         return [
             'labels' => array_values($labels),
             'datasets' => [
-                ['label' => 'Alloué', 'data' => array_map(fn ($k) => $s['postes'][$k]['alloue'], array_keys($labels)), 'backgroundColor' => 'rgba(37,99,235,.55)'],
+                ['label' => 'Alloué', 'data' => array_map(fn ($k) => $s['postes'][$k]['alloue'], array_keys($labels)), 'backgroundColor' => 'rgba(194,65,12,.55)'],
                 ['label' => 'Dépensé', 'data' => array_map(fn ($k) => round($s['postes'][$k]['depense']), array_keys($labels)), 'backgroundColor' => 'rgba(245,158,11,.75)'],
             ],
         ];

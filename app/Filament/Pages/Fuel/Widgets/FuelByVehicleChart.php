@@ -20,7 +20,7 @@ class FuelByVehicleChart extends ChartWidget
 
         return [
             'labels' => $rows->map(fn ($r) => $r['vehicle']->immatriculation)->values()->all(),
-            'datasets' => [['label' => 'Litres', 'data' => $rows->pluck('litres')->values()->all(), 'backgroundColor' => 'rgba(37,99,235,.65)']],
+            'datasets' => [['label' => 'Litres', 'data' => $rows->pluck('litres')->values()->all(), 'backgroundColor' => 'rgba(194,65,12,.65)']],
         ];
     }
 
