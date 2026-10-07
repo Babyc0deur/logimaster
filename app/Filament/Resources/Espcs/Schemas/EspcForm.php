@@ -28,11 +28,6 @@ class EspcForm
                 TextInput::make('gps_lat')->label('Latitude')->numeric()->minValue(-90)->maxValue(90)->helperText('Ex. 7.0611'),
                 TextInput::make('gps_lon')->label('Longitude')->numeric()->minValue(-180)->maxValue(180)->helperText('Ex. -4.5042'),
             ]),
-            Section::make('Contact')->columns(3)->schema([
-                TextInput::make('responsable')->maxLength(120),
-                TextInput::make('telephone')->label('Téléphone')->tel()->maxLength(30),
-                TextInput::make('email')->email()->maxLength(160),
-            ]),
         ]);
     }
 }

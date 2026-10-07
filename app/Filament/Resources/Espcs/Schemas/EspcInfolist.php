@@ -27,11 +27,6 @@ class EspcInfolist
                 TextEntry::make('gps_lon')->label('Longitude')->placeholder('—'),
                 ViewEntry::make('carte')->label('')->columnSpanFull()->view('filament.infolists.espc-map'),
             ]),
-            Section::make('Contact')->columns(3)->schema([
-                TextEntry::make('responsable')->placeholder('—'),
-                TextEntry::make('telephone')->label('Téléphone')->placeholder('—'),
-                TextEntry::make('email')->placeholder('—'),
-            ]),
         ]);
     }
 }

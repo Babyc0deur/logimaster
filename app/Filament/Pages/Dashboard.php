@@ -68,7 +68,7 @@ class Dashboard extends BaseDashboard
     /** Filtres mémorisés par district : changer de district ne reprend pas le mois (souvent vide) choisi pour un autre. */
     public function getFiltersSessionKey(): string
     {
-        return md5(static::class).'_v4_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
+        return md5(static::class).'_v5_'.(Filament::getTenant()?->getKey() ?? 'global').'_filters';
     }
 
     public static function canSeeIndicators(): bool

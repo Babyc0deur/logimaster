@@ -29,8 +29,6 @@ class EspcsTable
                 TextColumn::make('nom')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('type')->badge()->formatStateUsing(fn ($state) => EspcForm::TYPES[$state] ?? $state)->placeholder('—')->sortable(),
                 TextColumn::make('circuits')->label('Circuit(s)')->state(fn (Espc $e) => $e->circuits->pluck('nom')->all())->badge()->separator(',')->placeholder('Aucun'),
-                TextColumn::make('responsable')->placeholder('—')->searchable(),
-                TextColumn::make('telephone')->label('Contact')->placeholder('—'),
                 IconColumn::make('gps')->label('GPS')->boolean()->state(fn (Espc $e) => $e->hasGps()),
                 TextColumn::make('derniere_livraison')->label('Dernière livraison')->placeholder('—')
                     ->state(fn (Espc $e) => $e->livraisons()->where('statut', 'livre')->max('date_livraison')),

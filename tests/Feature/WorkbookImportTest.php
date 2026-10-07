@@ -411,7 +411,7 @@ class WorkbookImportTest extends TestCase
         $this->seed(OrganisationSeeder::class);
         $this->assertSame(113, District::count());
         $this->assertSame(34, Region::count());          // 33 régions + la région fictive R1 des fixtures
-        $this->assertSame(1, Pres::where('name', "PRES Côte d'Ivoire")->count());
+        $this->assertSame('PRES de San-Pédro', Region::where('name', 'NAWA')->first()->pres->name);   // régions rattachées à leur PRES
         $this->assertSame('ANYAMA', District::where('sync_id', 'DS005')->value('name'));
         $this->assertSame('ABIDJAN 1', Region::find(District::where('name', 'YOPOUGON-OUEST SONGON')->value('region_id'))->name);
 
