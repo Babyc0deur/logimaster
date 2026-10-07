@@ -11,6 +11,6 @@
             <li><strong>{{ $report->titre }}</strong> ({{ strtoupper($report->format) }})</li>
         @endforeach
     </ul>
-    <p style="color:#6b7280;font-size:12px">Ce message est envoyé automatiquement par la plateforme LogiMaster Pro. Les données sont celles du mois indiqué, arrêtées à la date de génération.</p>
+    <p style="color:#6b7280;font-size:12px">Ce message est envoyé automatiquement par la plateforme LogiMaster. Les données sont celles du mois indiqué, arrêtées à la date de génération.</p>
 </body>
 </html>

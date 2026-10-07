@@ -51,7 +51,7 @@ class MobileAdminTest extends TestCase
         $this->assertSame('/m', $manifest['scope']);
         $this->assertCount(3, $manifest['icons']);
         foreach ($manifest['icons'] as $icon) {
-            $this->assertFileExists(public_path(ltrim($icon['src'], '/')));
+            $this->assertFileExists(public_path(ltrim(strtok($icon['src'], '?'), '/')));   // adresse versionnée (?v=…)
         }
 
         $sw = $this->get('/m/sw.js')->assertOk()->assertHeader('Service-Worker-Allowed', '/m');

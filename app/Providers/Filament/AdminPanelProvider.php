@@ -33,7 +33,10 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Orange,
                 'info'    => Color::Sky,
             ])
-            ->brandName('LogiMaster Pro')
+            ->brandName('LogiMaster')
+            ->brandLogo(fn () => view('filament.brand'))   // icône LogiMaster + nom
+            ->brandLogoHeight('2rem')
+            ->favicon(fn () => \App\Support\Brand::favicon())
             ->renderHook(\Filament\View\PanelsRenderHook::BODY_START, fn () => view('filament.preloader'))   // préchargeur au chargement des pages
             ->tenant(District::class, ownershipRelationship: 'districts')
             ->databaseNotifications()

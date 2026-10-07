@@ -1,4 +1,4 @@
-# Scénario de test de bout en bout — LogiMaster Pro
+# Scénario de test de bout en bout — LogiMaster
 
 Durée : environ 45 minutes. Un ordinateur (administration) et un téléphone (application convoyeur).
 Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'écart.

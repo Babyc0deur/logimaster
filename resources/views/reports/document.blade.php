@@ -28,7 +28,7 @@
     </style>
 </head>
 <body>
-    <div class="footer">LogiMaster Pro — {{ $doc->title }} — {{ $doc->scope }} — généré le {{ $generatedAt->format('d/m/Y H:i') }}</div>
+    <div class="footer">LogiMaster — {{ $doc->title }} — {{ $doc->scope }} — généré le {{ $generatedAt->format('d/m/Y H:i') }}</div>
 
     <div class="cover">
         <div class="brand">LOGIMASTER PRO · DDKM</div>

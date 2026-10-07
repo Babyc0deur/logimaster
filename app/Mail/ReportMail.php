@@ -19,7 +19,7 @@ class ReportMail extends Mailable
     {
         $first = $this->reports[0];
 
-        return new Envelope(subject: 'LogiMaster Pro — '.$first->titre);
+        return new Envelope(subject: 'LogiMaster — '.$first->titre);
     }
 
     public function content(): Content

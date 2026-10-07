@@ -12,7 +12,7 @@ services:
       sizeGB: 2
     envVars:
       - key: APP_NAME
-        value: LogiMaster Pro
+        value: LogiMaster
       - key: APP_ENV
         value: production
       - key: APP_DEBUG

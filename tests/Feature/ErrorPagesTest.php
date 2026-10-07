@@ -9,7 +9,7 @@ class ErrorPagesTest extends TestCase
     public function test_unknown_page_shows_the_branded_french_404(): void
     {
         $this->get('/cette-page-n-existe-pas')->assertNotFound()
-            ->assertSee('LogiMaster Pro')->assertSee('Page introuvable')->assertSee('Erreur 404')->assertSee('Retour à l', false);
+            ->assertSee('LogiMaster')->assertSee('Page introuvable')->assertSee('Erreur 404')->assertSee('Retour à l', false);
     }
 
     public function test_api_errors_stay_json(): void

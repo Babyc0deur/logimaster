@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="LogiMaster">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="/m/manifest.webmanifest">
-    <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
-    <link rel="icon" href="/pwa/icon-192.png">
+    <link rel="apple-touch-icon" href="{{ \App\Support\Brand::url('pwa/apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <title>LogiMaster Convoyeur</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -309,7 +309,7 @@ function render() {
 
 // ---- connexion
 function loginView() {
-    return '<div class="center"><img class="logo" src="/pwa/icon-192.png" alt=""><div class="brandline"><span>LogiMaster · convoyeur</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Vos circuits, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous pour voir vos sorties validées.</p>' +
+    return '<div class="center"><img class="logo" src="' + esc(CFG.logo || '/logo.svg') + '" alt=""><div class="brandline"><span>LogiMaster · convoyeur</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Vos circuits, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous pour voir vos sorties validées.</p>' +
         '<form id="login"><label for="em">Identifiant</label><input id="em" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex. kone.ibrahim" required>' +
         '<label for="pw">Code d\'accès ou mot de passe</label><input id="pw" type="password" autocomplete="current-password" required>' +
         '<p class="muted" style="margin:8px 2px 0">Identifiant et code provisoire remis par votre district.</p>' +

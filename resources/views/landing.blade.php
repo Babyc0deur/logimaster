@@ -4,9 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3efe6">
-    <meta name="description" content="LogiMaster Pro : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application convoyeur utilisable sans réseau.">
-    <title>LogiMaster Pro — Flotte et livraisons des districts sanitaires</title>
-    <link rel="icon" href="/pwa/icon-192.png">
+    <meta name="description" content="LogiMaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application convoyeur utilisable sans réseau.">
+    <title>LogiMaster — Flotte et livraisons des districts sanitaires</title>
+    <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
+    <link rel="icon" type="image/svg+xml" href="{{ \App\Support\Brand::logo() }}">
+    <link rel="apple-touch-icon" href="{{ \App\Support\Brand::url('pwa/apple-touch-icon.png') }}">
     <link rel="manifest" href="/m/manifest.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +39,8 @@
         .brand b { font:600 1.25rem/1 var(--serif); letter-spacing:-.01em; }
         .brand i { font:normal 500 11px/1 var(--mono); color:var(--muted); border:1px solid var(--rule-2); padding:3px 5px; border-radius:3px; margin-left:2px; }
         nav.links { display:flex; align-items:center; gap:26px; font-size:.92rem; }
-        nav.links a.l { text-decoration:none; color:var(--ink-2); }
+        nav.links a.l { text-decoration:none; color:var(--ink-2); white-space:nowrap; }
+        nav.links .btn { white-space:nowrap; }
         nav.links a.l:hover { color:var(--signal); }
         .btn { display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:4px; font:600 .93rem/1 var(--sans); text-decoration:none; border:1px solid var(--ink); transition:background .15s, color .15s; }
         .btn.dark { background:var(--ink); color:var(--paper); }
@@ -162,13 +165,12 @@
 
 <header class="top">
     <div class="wrap">
-        <a class="brand" href="/"><img src="/pwa/icon-192.png" alt=""><b>LogiMaster</b><i>PRO</i></a>
+        <a class="brand" href="/"><img src="{{ \App\Support\Brand::logo() }}" alt=""><b>LogiMaster</b></a>
         <nav class="links">
             <a class="l" href="#fonctionnement">Fonctionnement</a>
             <a class="l" href="#saisie">Suivi de la saisie</a>
             <a class="l" href="#indicateurs">Indicateurs</a>
             <a class="l" href="#terrain">Application terrain</a>
-            <a class="l" href="#cartographie">Cartographie</a>
             @if ($adminOpen)<a class="btn line sm" href="/admin">Se connecter</a>@endif
             <a class="btn dark sm" href="#installer">Installer l'application</a>
         </nav>
@@ -326,7 +328,7 @@
 
 <footer>
     <div class="wrap">
-        <span>LogiMaster Pro · gestion de flotte et livraisons des districts sanitaires</span>
+        <span>LogiMaster · gestion de flotte et livraisons des districts sanitaires</span>
         <span><a href="#fonctionnement">Fonctionnement</a><a href="/m">Application convoyeur</a><a href="/m/installer">Affiche d'installation</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
     </div>
 </footer>

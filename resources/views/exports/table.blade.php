@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-    <h1>LogiMaster Pro — {{ $title }}</h1>
+    <h1>LogiMaster — {{ $title }}</h1>
     <p>Généré le {{ now()->format('d/m/Y H:i') }} · {{ count($rows) }} ligne(s)</p>
     <table>
         <thead><tr>@foreach ($headers as $h)<th>{{ $h }}</th>@endforeach</tr></thead>

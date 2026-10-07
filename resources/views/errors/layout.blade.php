@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title }} · LogiMaster Pro</title>
+    <title>{{ $title }} · LogiMaster</title>
     <style>
         :root { --bg: #f5f7fb; --card: #ffffff; --text: #111827; --muted: #6b7280; --border: #e5e7eb; --accent: #2563eb; --accent-text: #ffffff; --code: #dbeafe; --code-text: #1d4ed8; }
         @media (prefers-color-scheme: dark) {
@@ -24,7 +24,7 @@
 </head>
 <body>
     <main class="card" role="main">
-        <div class="brand">LogiMaster Pro</div>
+        <div class="brand">LogiMaster</div>
         <span class="code">Erreur {{ $code }}</span>
         <h1>{{ $title }}</h1>
         <p>{{ $message }}</p>

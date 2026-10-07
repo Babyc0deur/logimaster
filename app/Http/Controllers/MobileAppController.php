@@ -21,6 +21,7 @@ class MobileAppController extends Controller
     {
         return view('mobile.app', ['config' => [
             'api' => '/api/mobile',
+            'logo' => \App\Support\Brand::logo(),
             'vapidKey' => config('webpush.public_key'),
         ]]);
     }
@@ -57,9 +58,9 @@ class MobileAppController extends Controller
             'background_color' => '#f3efe6',
             'theme_color' => '#f3efe6',
             'icons' => [
-                ['src' => '/pwa/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => '/pwa/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => '/pwa/icon-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+                ['src' => \App\Support\Brand::url('pwa/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => \App\Support\Brand::url('pwa/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => \App\Support\Brand::url('pwa/icon-maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'no-cache']);
     }

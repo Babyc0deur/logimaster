@@ -29,7 +29,7 @@ class ReportRenderer
 
         // Feuille 1 : en-tête et chiffres clés de toutes les sections
         $writer->getCurrentSheet()->setName('Synthèse');
-        $writer->addRow(Row::fromValues(['LogiMaster Pro — '.$doc->title], $title));
+        $writer->addRow(Row::fromValues(['LogiMaster — '.$doc->title], $title));
         $writer->addRow(Row::fromValues([$doc->subtitle]));
         $writer->addRow(Row::fromValues(['Généré le '.now()->format('d/m/Y H:i')]));
         $writer->addRow(Row::fromValues([]));

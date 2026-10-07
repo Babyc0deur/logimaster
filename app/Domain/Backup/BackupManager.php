@@ -69,7 +69,7 @@ class BackupManager
                 }
             }
             $zip->addFromString('manifest.json', json_encode([
-                'application' => 'LogiMaster Pro', 'created_at' => $now->toIso8601String(), 'database_sha256' => hash_file('sha256', $copy),
+                'application' => 'LogiMaster', 'created_at' => $now->toIso8601String(), 'database_sha256' => hash_file('sha256', $copy),
                 'counts' => $counts, 'photos' => $photos, 'app_env' => config('app.env'),
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $zip->close();

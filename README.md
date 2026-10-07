@@ -1,4 +1,4 @@
-# LogiMaster Pro — Gestion de flotte DDKM
+# LogiMaster — Gestion de flotte DDKM
 
 Backend **Laravel 13** + back-office **Filament 4** (français), API REST (**Sanctum**), indicateurs DDKM pré-calculés,
 import/export du classeur Excel Logimaster des districts.
