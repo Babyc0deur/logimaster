@@ -21,6 +21,14 @@ return [
     // District ouvert après la connexion (s'il fait partie des districts de l'utilisateur ; sinon le premier de sa liste)
     'default_district' => env('LOGIMASTER_DEFAULT_DISTRICT', 'MEAGUI'),
 
+    // Cartographie : chef-lieu des districts (latitude, longitude), centre de la carte et point de départ des véhicules
+    'district_centres' => [
+        'MEAGUI' => [5.4045, -6.5582],
+        'SOUBRE' => [5.7853, -6.6083],
+        'GUEYO' => [5.6880, -6.0712],
+        'BUYO' => [6.2474, -7.0024],
+    ],
+
     /*
     | Adresse que le téléphone ouvre pour installer l'application mobile (QR code). Doit être joignable depuis le téléphone
     | et en HTTPS (installation + notifications). Défaut : APP_URL/m.

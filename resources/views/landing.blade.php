@@ -107,6 +107,12 @@
         .qrcard .url { font:500 12.5px/1.4 var(--mono); word-break:break-all; display:block; margin-bottom:16px; color:var(--signal); }
         .qrcard .cta { gap:8px; }
 
+        .map-legend { display:grid; grid-template-columns:repeat(3, 1fr); margin-top:28px; border-top:1px solid var(--rule); }
+        .map-legend div { padding:16px 18px 0 0; }
+        .map-legend div + div { padding-left:18px; border-left:1px solid var(--rule); }
+        .map-legend b { display:block; font-weight:600; margin-bottom:4px; }
+        .map-legend span { font-size:.93rem; color:var(--ink-2); }
+        @media (max-width: 980px) { .map-legend { grid-template-columns:1fr; } .map-legend div + div { border-left:none; padding-left:0; } }
         .faq { border-top:1px solid var(--ink); }
         .faq details { border-bottom:1px solid var(--rule); }
         .faq summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:20px; padding:18px 0; font:500 1.2rem/1.35 var(--serif); }
@@ -162,6 +168,7 @@
             <a class="l" href="#saisie">Suivi de la saisie</a>
             <a class="l" href="#indicateurs">Indicateurs</a>
             <a class="l" href="#terrain">Application terrain</a>
+            <a class="l" href="#cartographie">Cartographie</a>
             @if ($adminOpen)<a class="btn line sm" href="/admin">Se connecter</a>@endif
             <a class="btn dark sm" href="#installer">Installer l'application</a>
         </nav>
@@ -277,9 +284,26 @@
     </div>
 </section>
 
+<section id="cartographie">
+    <div class="wrap">
+        <div class="sh"><span class="mono">05 — Cartographie</span><div><h2>Les véhicules du district sur la carte</h2><p>Une carte OpenStreetMap du district : chaque véhicule suit son circuit sur le réseau routier, site par site, avec son avancement et sa prochaine étape.</p></div></div>
+        <figure>
+            <div class="shot">
+                <div class="cap"><span>Cartographie · district de Méagui</span><span>Simulation de la journée</span></div>
+                <img src="/landing/cartographie-zoom.jpg" width="1584" height="975" loading="lazy" alt="Cartographie du district de Méagui : tracés routiers des circuits, position de chaque véhicule et liste des véhicules avec leur avancement.">
+            </div>
+        </figure>
+        <div class="map-legend">
+            <div><b>Un véhicule, une couleur</b><span>Le tracé de son circuit, ses sites (pleins une fois livrés) et son étiquette d'immatriculation.</span></div>
+            <div><b>La journée en accéléré</b><span>Départ du chef-lieu, trajet, 10 minutes par site, retour au district ; vitesse ×30, ×60 ou ×180.</span></div>
+            <div><b>Le réseau routier réel</b><span>Fond OpenStreetMap et itinéraires calculés sur les routes ; positions GPS des centres de santé quand elles sont renseignées.</span></div>
+        </div>
+    </div>
+</section>
+
 <section id="questions">
     <div class="wrap">
-        <div class="sh"><span class="mono">05 — Questions</span><div><h2>Questions fréquentes</h2></div></div>
+        <div class="sh"><span class="mono">06 — Questions</span><div><h2>Questions fréquentes</h2></div></div>
         <div class="faq">
             <details open><summary>Comment un convoyeur obtient-il son accès ?</summary><p>Tout chef de mission ou passager actif a un accès créé avec sa fiche dans le personnel. Le bureau lui remet son identifiant et un code provisoire ; il choisit son mot de passe à la première connexion.</p></details>
             <details><summary>Et s'il n'y a pas de réseau sur la route ?</summary><p>Les livraisons, le carburant et les photos sont gardés sur le téléphone, puis envoyés au retour du réseau avec l'heure réelle de chaque action. Rien n'est perdu ni compté deux fois.</p></details>
