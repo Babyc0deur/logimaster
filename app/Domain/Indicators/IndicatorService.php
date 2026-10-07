@@ -37,15 +37,74 @@ class IndicatorService
         $start = $month->startOfMonth();
         $end = $month->endOfMonth();
 
-        foreach ($this->calculators() as $calculator) {
-            $result = $calculator->compute($districtId, $start, $end);
-            IndicatorSnapshot::updateOrCreate(
-                ['district_id' => $districtId, 'indicator_key' => $calculator->key(), 'period' => $start->toDateString()],
-                ['value' => $result->value, 'breakdown' => $result->breakdown, 'computed_at' => now()],
-            );
-        }
+        self::withoutTenant(function () use ($districtId, $start, $end) {
+            foreach ($this->calculators() as $calculator) {
+                $result = $calculator->compute($districtId, $start, $end);
+                IndicatorSnapshot::updateOrCreate(
+                    ['district_id' => $districtId, 'indicator_key' => $calculator->key(), 'period' => $start->toDateString()],
+                    ['value' => $result->value, 'breakdown' => $result->breakdown, 'computed_at' => now()],
+                );
+            }
+        });
 
         return count($this->calculators());
+    }
+
+    /**
+     * Calculs hors de la limitation automatique de Filament au district du menu (tenant) : depuis une page de
+     * l'administration, les requêtes des calculateurs ne verraient sinon que ce district et compteraient zéro ailleurs.
+     */
+    public static function withoutTenant(callable $callback): mixed
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if (! $tenant) {
+            return $callback();
+        }
+        \Filament\Facades\Filament::setTenant(null, isQuiet: true);
+        try {
+            return $callback();
+        } finally {
+            \Filament\Facades\Filament::setTenant($tenant, isQuiet: true);
+        }
+    }
+
+    /**
+     * Indicateurs calculés à la volée sur une période quelconque (filtre « Du / Au » qui n'est pas un mois entier) :
+     * même agrégation que summary() (ratios pondérés, sommes, détails fusionnés), avec la période précédente de même durée.
+     *
+     * @param  array<int, string>  $districtIds
+     */
+    public function summaryForRange(array $districtIds, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $from = $from->startOfDay();
+        $to = $to->endOfDay();
+        $days = (int) $from->diffInDays($to->startOfDay()) + 1;
+        $now = $this->rangeRows($districtIds, $from, $to);
+        $before = $this->rangeRows($districtIds, $from->subDays($days), $from->subDay()->endOfDay());
+
+        return $this->withTrend($now, $before);
+    }
+
+    private function rangeRows(array $districtIds, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        return self::withoutTenant(function () use ($districtIds, $from, $to) {
+            $out = [];
+            foreach ($this->calculators() as $calculator) {
+                $results = array_map(fn ($id) => $calculator->compute($id, $from, $to), $districtIds);
+                $breakdown = $this->mergeBreakdowns(array_map(fn ($r) => $r->breakdown, $results));
+                if ($calculator->isRatio()) {
+                    $num = (float) ($breakdown['numerator'] ?? 0);
+                    $den = (float) ($breakdown['denominator'] ?? 0);
+                    $value = $den > 0 ? round($num / $den * 100, 4) : 0.0;
+                } else {
+                    $value = round(array_sum(array_map(fn ($r) => $r->value, $results)), 4);
+                }
+                $out[$calculator->key()] = ['value' => $value, 'breakdown' => $breakdown, 'districts' => count($results),
+                    'evaluated' => IndicatorCatalog::evaluated($calculator->key(), $breakdown)];
+            }
+
+            return $out;
+        });
     }
 
     /**
@@ -89,9 +148,12 @@ class IndicatorService
      */
     public function summaryWithTrend(?array $districtIds, CarbonImmutable $month): array
     {
-        $now = $this->summary($districtIds, $month);
-        $before = $this->summary($districtIds, $month->subMonthNoOverflow());
+        return $this->withTrend($this->summary($districtIds, $month), $this->summary($districtIds, $month->subMonthNoOverflow()));
+    }
 
+    /** Ajoute à chaque indicateur la valeur de la période précédente et l'évolution. */
+    private function withTrend(array $now, array $before): array
+    {
         foreach ($now as $key => &$row) {
             $had = ($before[$key]['districts'] ?? 0) > 0 && ($before[$key]['evaluated'] ?? true);
             $prev = $had ? $before[$key]['value'] : null;

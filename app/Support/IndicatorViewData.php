@@ -18,6 +18,18 @@ class IndicatorViewData
     {
         $ids = DashboardFilters::districtIds($filters);
         $month = DashboardFilters::indicatorMonth($filters);
+
+        // période « Du / Au » qui n'est pas exactement un mois entier : indicateurs calculés sur ces dates (jours réels)
+        if ($range = self::customRange($filters)) {
+            [$from, $to] = $range;
+            $memoKey = md5(json_encode([$ids, $from->toDateString(), $to->toDateString()]));
+            $cacheKey = 'indicateurs_periode_'.md5(json_encode([$ids, $from->toDateString(), $to->toDateString(), self::lastChanges($ids)]));
+
+            return self::$memo[$memoKey] ??= [
+                'month' => $month, 'ids' => $ids, 'from' => $from, 'to' => $to, 'days' => (int) $from->diffInDays($to->startOfDay()) + 1, 'mode' => 'periode',
+                'rows' => \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, fn () => app(IndicatorService::class)->summaryForRange($ids, $from, $to)),
+            ];
+        }
         $memoKey = md5(json_encode([$ids, $month->format('Y-m')]));
 
         if (! isset(self::$memo[$memoKey])) {
@@ -25,9 +37,29 @@ class IndicatorViewData
         }
 
         return self::$memo[$memoKey] ??= [
-            'month' => $month, 'ids' => $ids,
+            'month' => $month, 'ids' => $ids, 'from' => $month->startOfMonth(), 'to' => $month->endOfMonth(), 'days' => $month->daysInMonth, 'mode' => 'mois',
             'rows' => app(IndicatorService::class)->summaryWithTrend($ids, $month),
         ];
+    }
+
+    /**
+     * Dates « Du / Au » du filtre quand elles ne forment pas exactement un mois entier (sinon null : calculs mensuels enregistrés).
+     *
+     * @return array{0: \Carbon\CarbonImmutable, 1: \Carbon\CarbonImmutable}|null
+     */
+    public static function customRange(?array $filters): ?array
+    {
+        if (empty($filters['date_from']) || empty($filters['date_until']) || ! empty($filters['periode'])) {
+            return null;
+        }
+        $from = \Carbon\CarbonImmutable::parse($filters['date_from'])->startOfDay();
+        $to = \Carbon\CarbonImmutable::parse($filters['date_until'])->endOfDay();
+        if ($to < $from) {
+            return null;
+        }
+        $wholeMonth = $from->day === 1 && $from->isSameMonth($to) && $to->day === $to->daysInMonth;
+
+        return $wholeMonth ? null : [$from, $to];
     }
 
     public static function flush(): void

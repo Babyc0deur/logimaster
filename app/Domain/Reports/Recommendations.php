@@ -47,10 +47,6 @@ final class Recommendations
             $km = $rows['respect_circuits']['breakdown']['km_supplementaires'] ?? 0;
             $out[] = "Circuits : {$fmt('respect_circuits')} respectés (objectif {$target('respect_circuits')}), {$km} km supplémentaires parcourus. Documenter les déviations et réviser les circuits à risque.";
         }
-        if ($off('respect_espc')) {
-            $transit = collect($rows['respect_espc']['breakdown']['non_conformes'] ?? [])->filter(fn ($n) => str_contains((string) $n['realise'], 'transit'))->count();
-            $out[] = "Livraison ESPC : {$fmt('respect_espc')} sur site (objectif {$target('respect_espc')})".($transit ? ", dont {$transit} livraison(s) en point de transit" : '').'. Prévoir des solutions pour les sites difficiles d\'accès.';
-        }
         $cost = $rows['cout_global'];
         if ($cost['districts'] > 0 && ($cost['delta_pct'] ?? 0) > 10) {
             $out[] = sprintf('Coût global : %s, en hausse de %.1f %% par rapport au mois précédent. Analyser la répartition carburant / maintenance / frais.', $fmt('cout_global'), $cost['delta_pct']);

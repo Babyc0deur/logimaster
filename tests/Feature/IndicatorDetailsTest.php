@@ -190,7 +190,7 @@ class IndicatorDetailsTest extends TestCase
         $this->assertSame('success', IndicatorCatalog::color('taux_immobilisation', 4));        // objectif ≤ 10
         $this->assertSame('danger', IndicatorCatalog::color('taux_immobilisation', 30));
         $this->assertSame('gray', IndicatorCatalog::color('distance_totale', 1000));            // pas d'objectif
-        $this->assertSame('85,5 %', IndicatorCatalog::format('respect_espc', 85.5));
+        $this->assertSame('85,5 %', IndicatorCatalog::format('respect_circuits', 85.5));
     }
 
     public function test_every_indicator_has_a_renderable_detail_block(): void
@@ -224,7 +224,7 @@ class IndicatorDetailsTest extends TestCase
         $this->run_($this->d1);
 
         $t = "/admin/{$this->d1->id}";
-        // tableau de bord unique : flotte + 9 indicateurs DDKM, détail de l'indicateur choisi
+        // tableau de bord unique : flotte + 8 indicateurs DDKM, détail de l'indicateur choisi
         foreach ([$t, "{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09"] as $url) {
             $this->assertSame(200, $this->get($url)->getStatusCode(), $url);
         }

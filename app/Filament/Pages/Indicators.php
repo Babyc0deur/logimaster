@@ -81,7 +81,7 @@ class Indicators extends BaseDashboard
                 ->label('Recalculer le mois')->icon('heroicon-o-arrow-path')->color('gray')
                 ->visible(fn () => auth()->user()->can('create_reports'))
                 ->requiresConfirmation()
-                ->modalDescription('Recalcule les 9 indicateurs du mois sélectionné pour les districts du périmètre (les calculs sont normalement automatiques chaque nuit).')
+                ->modalDescription('Recalcule les indicateurs du mois sélectionné pour les districts du périmètre (les calculs sont normalement automatiques chaque nuit).')
                 ->action(function () {
                     $ids = DashboardFilters::districtIds($this->filters);
                     $month = DashboardFilters::indicatorMonth($this->filters);

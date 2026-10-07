@@ -5,7 +5,12 @@
             <p style="font-size:.85rem;color:#6b7280">Aucun indicateur calculé pour cette période et ce périmètre. Les indicateurs sont recalculés chaque nuit
                 (<code>php artisan indicators:compute</code>) ; vous pouvez aussi les recalculer depuis la page « Indicateurs DDKM ».</p>
         @endif
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.75rem">
+        <style>
+            .lm-ind-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:.75rem; }
+            @media (max-width: 1100px) { .lm-ind-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+            @media (max-width: 560px) { .lm-ind-grid { grid-template-columns:1fr; } }
+        </style>
+        <div class="lm-ind-grid">
             @foreach ($cards as $card)
                 @php
                     $border = ['success' => '#10b981', 'warning' => '#f59e0b', 'danger' => '#ef4444', 'gray' => 'var(--lm-rule, #d1d5db)'][$card['color']];
@@ -20,7 +25,7 @@
                         @if ($card['delta'])
                             <span style="color:{{ $card['delta_good'] === null ? '#6b7280' : ($card['delta_good'] ? '#059669' : '#dc2626') }};font-weight:600">
                                 {{ $card['delta_good'] === false ? '▼' : '▲' }} {{ $card['delta'] }}
-                            </span> vs mois préc.
+                            </span> {{ $compare }}
                         @endif
                     </div>
                     <div style="font-size:.7rem;color:#9ca3af">{{ $card['sub'] }}</div>

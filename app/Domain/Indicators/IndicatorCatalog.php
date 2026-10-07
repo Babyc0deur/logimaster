@@ -13,42 +13,39 @@ final class IndicatorCatalog
      */
     public static function defaults(): array
     {
+        // ordre d'affichage du tableau de bord ; la livraison ESPC sur site n'est plus affichée (même information que le respect du chronogramme)
         return [
-            'distance_totale' => [
-                'label' => 'Distance totale parcourue', 'short' => 'Distance', 'unit' => 'km', 'direction' => null, 'target' => null, 'icon' => 'heroicon-o-map',
-                'definition' => 'Somme des kilomètres des sorties clôturées de la période, ventilée par motif de déplacement et par véhicule.',
-            ],
-            'respect_chronogramme' => [
-                'label' => 'Taux de respect du chronogramme', 'short' => 'Chronogramme', 'unit' => '%', 'direction' => 'up', 'target' => 90.0, 'icon' => 'heroicon-o-calendar-days',
-                'definition' => 'Sites livrés selon le planning ÷ sites planifiés au chronogramme. Un site est « selon planning » s\'il est livré au plus tard à la date prévue.',
-            ],
-            'taux_immobilisation' => [
-                'label' => "Taux d'immobilisation", 'short' => 'Immobilisation', 'unit' => '%', 'direction' => 'down', 'target' => 10.0, 'icon' => 'heroicon-o-wrench-screwdriver',
-                'definition' => "Jours d'indisponibilité ÷ (nombre de véhicules × jours de la période), par véhicule et par cause.",
-            ],
-            'utilisation_vehicules' => [
-                'label' => "Taux d'utilisation des véhicules", 'short' => 'Utilisation', 'unit' => '%', 'direction' => 'up', 'target' => 60.0, 'icon' => 'heroicon-o-truck',
-                'definition' => 'Jours d\'utilisation ÷ jours de disponibilité (jours de la période moins jours d\'immobilisation). Un véhicule est utilisé un jour s\'il a au moins une sortie.',
-            ],
             'cout_global' => [
                 'label' => 'Coût global de prise en charge', 'short' => 'Coût global', 'unit' => 'FCFA', 'direction' => null, 'target' => null, 'icon' => 'heroicon-o-banknotes',
                 'definition' => 'Carburant + maintenance (vidanges et immobilisations) + autres frais. Coût au km = coût global ÷ distance parcourue.',
             ],
+            'utilisation_vehicules' => [
+                'label' => "Taux d'utilisation des véhicules", 'short' => "Taux d'utilisation", 'unit' => '%', 'direction' => 'up', 'target' => 60.0, 'icon' => 'heroicon-o-truck',
+                'definition' => 'Jours d\'utilisation ÷ jours de disponibilité (jours de la période moins jours d\'immobilisation). Un véhicule est utilisé un jour s\'il a au moins une sortie.',
+            ],
+            'taux_immobilisation' => [
+                'label' => "Taux d'immobilisation", 'short' => "Taux d'immobilisation", 'unit' => '%', 'direction' => 'down', 'target' => 10.0, 'icon' => 'heroicon-o-wrench-screwdriver',
+                'definition' => "Jours d'indisponibilité ÷ (nombre de véhicules × jours de la période), par véhicule et par cause.",
+            ],
+            'respect_chronogramme' => [
+                'label' => 'Taux de respect du chronogramme', 'short' => 'Taux de respect du chronogramme', 'unit' => '%', 'direction' => 'up', 'target' => 90.0, 'icon' => 'heroicon-o-calendar-days',
+                'definition' => 'Sites livrés selon le planning ÷ sites planifiés au chronogramme. Un site est « selon planning » s\'il est livré au plus tard à la date prévue.',
+            ],
             'utilisation_rationnelle_carburant' => [
-                'label' => 'Utilisation rationnelle du carburant', 'short' => 'Carburant rationnel', 'unit' => '%', 'direction' => 'up', 'target' => 85.0, 'icon' => 'heroicon-o-fire',
+                'label' => 'Utilisation rationnelle du carburant', 'short' => "Taux d'utilisation rationnelle du carburant", 'unit' => '%', 'direction' => 'up', 'target' => 85.0, 'icon' => 'heroicon-o-fire',
                 'definition' => 'Carburant théorique (km × consommation théorique ÷ 100) ÷ carburant réellement acheté. 100 % = consommation conforme.',
             ],
             'carburant_par_motif' => [
-                'label' => 'Carburant par motif de déplacement', 'short' => 'Carburant / motif', 'unit' => 'L', 'direction' => null, 'target' => null, 'icon' => 'heroicon-o-beaker',
+                'label' => 'Carburant par motif de déplacement', 'short' => 'Carburant par motif', 'unit' => 'L', 'direction' => null, 'target' => null, 'icon' => 'heroicon-o-beaker',
                 'definition' => 'Litres consommés, ventilés par motif (celui du ravitaillement, sinon celui de la sortie liée).',
             ],
             'respect_circuits' => [
-                'label' => 'Taux de respect des circuits', 'short' => 'Circuits', 'unit' => '%', 'direction' => 'up', 'target' => 90.0, 'icon' => 'heroicon-o-map-pin',
+                'label' => 'Taux de respect des circuits', 'short' => 'Circuit', 'unit' => '%', 'direction' => 'up', 'target' => 90.0, 'icon' => 'heroicon-o-map-pin',
                 'definition' => 'Sorties dont le circuit a été respecté ÷ sorties sur circuit évaluées. Écarts : circuit, date, raison, km supplémentaires.',
             ],
-            'respect_espc' => [
-                'label' => 'Taux de respect de la livraison ESPC sur site', 'short' => 'Livraison ESPC', 'unit' => '%', 'direction' => 'up', 'target' => 95.0, 'icon' => 'heroicon-o-building-office-2',
-                'definition' => 'Livraisons effectuées sur site ÷ livraisons prévues. Délais : dans les délais, retard ≤ 24 h, retard > 24 h.',
+            'distance_totale' => [
+                'label' => 'Distance totale parcourue', 'short' => 'Distance totale parcourue', 'unit' => 'km', 'direction' => null, 'target' => null, 'icon' => 'heroicon-o-map',
+                'definition' => 'Somme des kilomètres des sorties clôturées de la période, ventilée par motif de déplacement et par véhicule.',
             ],
         ];
     }

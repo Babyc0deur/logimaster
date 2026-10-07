@@ -21,7 +21,7 @@ use Carbon\CarbonImmutable;
 class ReportBuilder
 {
     public const TYPES = [
-        'ddkm' => 'Rapport mensuel DDKM (9 indicateurs)',
+        'ddkm' => 'Rapport mensuel DDKM (8 indicateurs)',
         'flotte' => 'Rapport de flotte',
         'carburant' => 'Rapport carburant',
         'maintenance' => 'Rapport maintenance',
@@ -104,7 +104,7 @@ class ReportBuilder
         $pctKeys = array_keys(array_filter(IndicatorCatalog::all(), fn ($m) => $m['unit'] === '%'));
         $pctKeys = array_values(array_filter($pctKeys, fn ($k) => $rows[$k]['evaluated'] ?? true));   // indicateur non évalué : pas de barre à 0 %
         $palette = ['success' => '#22c55e', 'warning' => '#f59e0b', 'danger' => '#ef4444', 'gray' => '#94a3b8'];
-        $doc->section('Synthèse des indicateurs DDKM', [], [['title' => 'Les 9 indicateurs', 'headers' => ['Indicateur', 'Valeur', 'Mois précédent', 'Évolution', 'Objectif', 'Situation'], 'rows' => $summary]], [], [
+        $doc->section('Synthèse des indicateurs DDKM', [], [['title' => 'Les 8 indicateurs', 'headers' => ['Indicateur', 'Valeur', 'Mois précédent', 'Évolution', 'Objectif', 'Situation'], 'rows' => $summary]], [], [
             $this->chart('Indicateurs en pourcentage (vert : conforme · orange : à surveiller · rouge : hors objectif)', ChartSvg::hbars(
                 array_map(fn ($k) => IndicatorCatalog::all()[$k]['short'], $pctKeys),
                 array_map(fn ($k) => (float) $rows[$k]['value'], $pctKeys), '%',

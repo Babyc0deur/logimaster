@@ -42,16 +42,17 @@ class IndicatorCards extends Widget
                 'color' => $has ? IndicatorCatalog::rowColor($key, $row) : 'gray',
                 'delta' => $has && $delta !== null ? sprintf('%+.1f %s', $delta, $meta['unit'] === '%' ? 'pt' : ($meta['unit'] === 'FCFA' ? 'FCFA' : $meta['unit'])) : null,
                 'delta_good' => $delta === null || $meta['direction'] === null ? null : ($meta['direction'] === 'up' ? $delta >= 0 : $delta <= 0),
-                'sub' => $has && ! $evaluated ? 'Consommation théorique non renseignée' : $this->subtitle($key, $row, $has),
+                'sub' => $has && ! $evaluated ? 'Consommation théorique non renseignée' : $this->subtitle($key, $row, $has, $data['days']),
                 'definition' => $meta['definition'],
                 'url' => Dashboard::getUrl(['filters' => array_filter(['indicateur' => $key] + ($this->pageFilters ?? []))]).'#indicateur-detail',
             ];
         }
 
-        return ['cards' => $cards, 'month' => $data['month'], 'empty' => collect($data['rows'])->every(fn ($r) => $r['districts'] === 0)];
+        return ['cards' => $cards, 'month' => $data['month'], 'empty' => collect($data['rows'])->every(fn ($r) => $r['districts'] === 0),
+            'compare' => $data['mode'] === 'mois' ? 'vs mois préc.' : 'vs période préc.'];
     }
 
-    private function subtitle(string $key, array $row, bool $has): ?string
+    private function subtitle(string $key, array $row, bool $has, int $days): ?string
     {
         if (! $has) {
             return null;
@@ -61,11 +62,11 @@ class IndicatorCards extends Widget
 
         return match ($key) {
             'respect_chronogramme' => $n($b['numerator'] ?? 0).'/'.$n($b['denominator'] ?? 0).' sites livrés',
-            'taux_immobilisation' => $n($b['numerator'] ?? 0).'/'.$n($b['denominator'] ?? 0).' jours',
-            'utilisation_vehicules' => $n($b['numerator'] ?? 0).'/'.$n($b['denominator'] ?? 0).' jours',
+            // jours-véhicule : nombre de véhicules × jours de la période filtrée
+            'taux_immobilisation' => $n($b['numerator'] ?? 0).' j immobilisés / '.$n($b['denominator'] ?? 0).' j ('.$n($b['nb_vehicules'] ?? 0).' véh. × '.$days.' j)',
+            'utilisation_vehicules' => $n($b['numerator'] ?? 0).' j utilisés / '.$n($b['denominator'] ?? 0).' j disponibles ('.$n($b['nb_vehicules'] ?? 0).' véh. × '.$days.' j)',
             'cout_global' => ($b['km'] ?? 0) > 0 ? $n($row['value'] / $b['km']).' FCFA/km' : null,
             'respect_circuits' => $n($b['numerator'] ?? 0).'/'.$n($b['denominator'] ?? 0).' circuits',
-            'respect_espc' => $n($b['numerator'] ?? 0).'/'.$n($b['denominator'] ?? 0).' livraisons',
             'distance_totale' => $n($b['nb_sorties'] ?? 0).' sorties',
             default => null,
         };

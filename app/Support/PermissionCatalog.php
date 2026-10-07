@@ -12,7 +12,7 @@ final class PermissionCatalog
 {
     /** Éléments, dans l'ordre d'affichage : clé de module => [libellé, description]. */
     public const ITEMS = [
-        'pilotage' => ['Tableau de bord et indicateurs', 'Tableau de bord, 9 indicateurs DDKM'],
+        'pilotage' => ['Tableau de bord et indicateurs', 'Tableau de bord, 8 indicateurs DDKM'],
         'chronogrammes' => ['Chronogramme', 'Planning des sorties et sa validation'],
         'circuits' => ['Circuits', 'Itinéraires et centres desservis'],
         'sorties' => ['Sorties véhicules', 'Missions réalisées, kilométrage'],
