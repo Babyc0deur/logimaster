@@ -10,6 +10,8 @@ use Illuminate\Support\Carbon;
 
 class FuelChart extends ChartWidget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 3;

@@ -11,6 +11,8 @@ use Filament\Widgets\Widget;
 /** Carte des 9 indicateurs DDKM : valeur du mois, évolution vs mois précédent, couleur selon l'objectif ; chaque carte ouvre son détail. */
 class IndicatorCards extends Widget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 0;

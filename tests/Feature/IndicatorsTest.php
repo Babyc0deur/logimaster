@@ -81,7 +81,7 @@ class IndicatorsTest extends TestCase
 
         $s = $this->snapshots();
 
-        $this->assertCount(9, $s);
+        $this->assertCount(8, $s);
         $this->assertEquals(250, $s['distance_totale']->value);                       // 100 + 100 + 50
         $this->assertEquals(['distribution' => 200, 'urgence' => 50], $s['distance_totale']->breakdown['par_motif']);
         $this->assertEquals(50, $s['respect_circuits']->value);                       // 1 / 2
@@ -91,7 +91,6 @@ class IndicatorsTest extends TestCase
         $this->assertEquals(25 / 20 * 100, $s['utilisation_rationnelle_carburant']->value); // 250 km × 10 L/100 = 25 L théoriques / 20 L réels
         $this->assertEquals(20, $s['carburant_par_motif']->value);
         $this->assertEquals(['distribution' => 20], $s['carburant_par_motif']->breakdown['par_motif']);
-        $this->assertEqualsWithDelta(2 / 3 * 100, $s['respect_espc']->value, 0.001);  // E1, E2 desservis ; E3 (circuit C2) non desservi
         $this->assertEqualsWithDelta(2 / 6 * 100, $s['respect_chronogramme']->value, 0.001); // C1 hebdo : 2/5 ; C2 mensuel : 0/1
     }
 
@@ -100,7 +99,7 @@ class IndicatorsTest extends TestCase
         $this->snapshots();
         $this->snapshots();
 
-        $this->assertSame(9, IndicatorSnapshot::count());
+        $this->assertSame(8, IndicatorSnapshot::count());
     }
 
     public function test_command_and_api_summary_aggregate_by_weighted_ratio(): void

@@ -21,7 +21,6 @@ class IndicatorService
             new C\UtilisationRationnelleCarburantCalculator,
             new C\CarburantParMotifCalculator,
             new C\RespectCircuitsCalculator,
-            new C\RespectEspcCalculator,
         ];
     }
 
@@ -85,12 +84,33 @@ class IndicatorService
         return $this->withTrend($now, $before);
     }
 
+    /**
+     * Districts qui ont au moins un véhicule, ou une saisie sur la période : les autres n'ont rien à calculer.
+     *
+     * @param  array<int, string>  $districtIds
+     * @return array<int, string>
+     */
+    private function activeDistricts(array $districtIds, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection();
+        $active = $db->table('vehicles')->whereNull('deleted_at')->whereIn('district_id', $districtIds)->distinct()->pluck('district_id');
+        $dates = ['sorties_vehicules' => 'date_sortie', 'ravitaillements' => 'date_ravitaillement', 'chronogrammes' => 'date_prevue',
+            'immobilisations' => 'date_debut', 'vidanges' => 'date', 'expenses' => 'date_depense'];
+        foreach ($dates as $table => $col) {
+            $active = $active->merge($db->table($table)->whereIn('district_id', $districtIds)
+                ->whereBetween($col, [$from->toDateString(), $to->toDateString()])->distinct()->pluck('district_id'));
+        }
+
+        return array_values(array_intersect($districtIds, $active->unique()->all()));
+    }
+
     private function rangeRows(array $districtIds, CarbonImmutable $from, CarbonImmutable $to): array
     {
         return self::withoutTenant(function () use ($districtIds, $from, $to) {
             $out = [];
+            $active = $this->activeDistricts($districtIds, $from, $to);   // un district sans véhicule ni saisie donne zéro partout : inutile de le calculer
             foreach ($this->calculators() as $calculator) {
-                $results = array_map(fn ($id) => $calculator->compute($id, $from, $to), $districtIds);
+                $results = array_map(fn ($id) => $calculator->compute($id, $from, $to), $active);
                 $breakdown = $this->mergeBreakdowns(array_map(fn ($r) => $r->breakdown, $results));
                 if ($calculator->isRatio()) {
                     $num = (float) ($breakdown['numerator'] ?? 0);
@@ -99,7 +119,7 @@ class IndicatorService
                 } else {
                     $value = round(array_sum(array_map(fn ($r) => $r->value, $results)), 4);
                 }
-                $out[$calculator->key()] = ['value' => $value, 'breakdown' => $breakdown, 'districts' => count($results),
+                $out[$calculator->key()] = ['value' => $value, 'breakdown' => $breakdown, 'districts' => count($districtIds),
                     'evaluated' => IndicatorCatalog::evaluated($calculator->key(), $breakdown)];
             }
 
@@ -118,7 +138,7 @@ class IndicatorService
     public function summary(?array $districtIds, CarbonImmutable $month): array
     {
         $snapshots = IndicatorSnapshot::query()
-            ->whereDate('period', $month->startOfMonth()->toDateString())
+            ->where('period', $month->startOfMonth()->toDateString())
             ->when($districtIds !== null, fn ($q) => $q->whereIn('district_id', $districtIds))
             ->get()->groupBy('indicator_key');
 
@@ -175,8 +195,8 @@ class IndicatorService
         $from = $last->subMonths($months - 1);
 
         $rows = IndicatorSnapshot::where('indicator_key', $key)
-            ->whereDate('period', '>=', $from->toDateString())
-            ->when($anchor !== null, fn ($q) => $q->whereDate('period', '<=', $last->toDateString()))
+            ->where('period', '>=', $from->toDateString())
+            ->when($anchor !== null, fn ($q) => $q->where('period', '<=', $last->toDateString()))
             ->when($districtIds !== null, fn ($q) => $q->whereIn('district_id', $districtIds))
             ->orderBy('period')->get()->groupBy(fn ($s) => $s->period->format('Y-m'));
 

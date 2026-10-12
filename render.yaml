@@ -34,7 +34,7 @@ services:
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
-        value: database
+        value: file              # cache sur le disque : moins d'écritures concurrentes dans la base SQLite
       - key: QUEUE_CONNECTION
         value: sync
       - key: LOGIMASTER_MOBILE_URL

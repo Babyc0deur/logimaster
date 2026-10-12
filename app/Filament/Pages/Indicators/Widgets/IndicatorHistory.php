@@ -12,6 +12,8 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 /** Évolution sur 12 mois de l'indicateur sélectionné (avec son objectif). */
 class IndicatorHistory extends ChartWidget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected int|string|array $columnSpan = 'full';

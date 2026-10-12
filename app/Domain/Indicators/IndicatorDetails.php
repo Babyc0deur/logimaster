@@ -103,19 +103,6 @@ final class IndicatorDetails
                 $tables[] = ['title' => 'Écarts constatés', 'headers' => ['Circuit', 'Date', 'Véhicule', 'Km en plus', 'Raison'],
                     'rows' => collect($b['ecarts'] ?? [])->map(fn ($e) => [$e['circuit'], $e['date'], $e['vehicule'], $e['km_supplementaires'] !== null ? '+'.$num($e['km_supplementaires'], 1) : '—', $e['raison'] ?? '—'])->all()];
                 break;
-
-            case 'respect_espc':
-                $kpis = [['label' => 'Livraisons conformes (sur site)', 'value' => $ratio()]];
-                $delais = $b['delais'] ?? [];
-                $totalDelais = array_sum($delais);
-                $tables[] = ['title' => 'Délais de livraison', 'headers' => ['Délai', 'Livraisons', 'Part'], 'rows' => [
-                    ['Dans les délais', $delais['dans_les_delais'] ?? 0, $pct($delais['dans_les_delais'] ?? 0, $totalDelais)],
-                    ['Retard ≤ 24 h', $delais['retard_24h'] ?? 0, $pct($delais['retard_24h'] ?? 0, $totalDelais)],
-                    ['Retard > 24 h', $delais['retard_plus_24h'] ?? 0, $pct($delais['retard_plus_24h'] ?? 0, $totalDelais)],
-                ]];
-                $tables[] = ['title' => 'Livraisons non conformes', 'headers' => ['Site', 'Prévu le', 'Réalisé', 'Raison'],
-                    'rows' => collect($b['non_conformes'] ?? [])->map(fn ($n) => [$n['site'], $n['date_prevue'], $n['realise'], $n['raison'] ?? '—'])->all()];
-                break;
         }
 
         return ['kpis' => $kpis, 'tables' => $tables];

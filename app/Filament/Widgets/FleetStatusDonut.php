@@ -10,6 +10,8 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 /** Immobilisation des véhicules (tableau de bord) : véhicules disponibles / en mission / immobilisés / hors service. */
 class FleetStatusDonut extends ChartWidget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;

@@ -136,7 +136,7 @@ class ReportsTest extends TestCase
         $this->assertStringContainsString('Commentaires et recommandations', $flat);
 
         // Les snapshots manquants ont été calculés au passage
-        $this->assertSame(9, \App\Models\IndicatorSnapshot::where('district_id', $this->d1->id)->count());
+        $this->assertSame(8, \App\Models\IndicatorSnapshot::where('district_id', $this->d1->id)->count());
     }
 
     public function test_financial_and_supplier_reports_show_budget_and_bailleur_figures(): void

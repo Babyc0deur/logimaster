@@ -96,14 +96,6 @@ class IndicatorDetailsTest extends TestCase
         $missed = collect($s['respect_chronogramme']['breakdown']['non_livres'])->keyBy('site');
         $this->assertSame('en_retard', $missed['S2D1']['statut']);
         $this->assertSame('Panne véhicule', $missed['S4D1']['raison']);
-
-        // Livraison ESPC : conformes = livrées sur site (S1, S2) ; S3 en transit et S4 non livré sont non conformes
-        $this->assertEqualsWithDelta(50, $s['respect_espc']['value'], 0.001);
-        $this->assertSame(['dans_les_delais' => 1, 'retard_24h' => 1, 'retard_plus_24h' => 1], $s['respect_espc']['breakdown']['delais']);
-        $non = collect($s['respect_espc']['breakdown']['non_conformes'])->keyBy('site');
-        $this->assertStringContainsString('point de transit', $non['S3D1']['realise']);
-        $this->assertSame('Route impraticable', $non['S3D1']['raison']);
-        $this->assertSame('non livré', $non['S4D1']['realise']);
     }
 
     public function test_future_and_cancelled_plans_are_not_counted(): void
@@ -225,11 +217,11 @@ class IndicatorDetailsTest extends TestCase
 
         $t = "/admin/{$this->d1->id}";
         // tableau de bord unique : flotte + 8 indicateurs DDKM, détail de l'indicateur choisi
-        foreach ([$t, "{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09"] as $url) {
+        foreach ([$t, "{$t}?filters[indicateur]=respect_circuits&filters[periode]=2026-09"] as $url) {
             $this->assertSame(200, $this->get($url)->getStatusCode(), $url);
         }
-        $this->get("{$t}?filters[indicateur]=respect_espc&filters[periode]=2026-09")->assertDontSee('Recalculer')->assertDontSee('Total Véhicules');   // calcul automatique, pas de doublons
+        $this->get("{$t}?filters[indicateur]=respect_circuits&filters[periode]=2026-09")->assertDontSee('Recalculer')->assertDontSee('Total Véhicules');   // calcul automatique, pas de doublons
         // l'ancienne adresse des indicateurs renvoie vers le tableau de bord, filtres conservés
-        $this->get("{$t}/indicateurs?filters[indicateur]=respect_espc")->assertRedirectContains('respect_espc');
+        $this->get("{$t}/indicateurs?filters[indicateur]=respect_circuits")->assertRedirectContains('respect_circuits');
     }
 }

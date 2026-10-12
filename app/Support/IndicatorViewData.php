@@ -80,7 +80,7 @@ class IndicatorViewData
         if ($ids === [] || $month->greaterThan(\Carbon\CarbonImmutable::now()->endOfMonth())) {
             return;
         }
-        $computed = \App\Models\IndicatorSnapshot::whereDate('period', $month->startOfMonth()->toDateString())->whereIn('district_id', $ids)
+        $computed = \App\Models\IndicatorSnapshot::where('period', $month->startOfMonth()->toDateString())->whereIn('district_id', $ids)
             ->selectRaw('district_id, min(computed_at) as at')->groupBy('district_id')->pluck('at', 'district_id');
 
         $todo = array_slice(array_values(array_diff($ids, $computed->keys()->all())), 0, 15);   // jamais calculés

@@ -10,6 +10,8 @@ use Filament\Widgets\Widget;
 /** Alertes prioritaires du dashboard : vidanges, CT, assurances, documents, immobilisations > 7 jours. */
 class MaintenanceAlerts extends Widget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 2;

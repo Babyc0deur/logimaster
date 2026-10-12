@@ -11,6 +11,8 @@ use Filament\Widgets\Widget;
 /** Détail de l'indicateur sélectionné : chiffres clés, tableaux (par motif, véhicule, circuit…), écarts et raisons. */
 class IndicatorDetail extends Widget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected int|string|array $columnSpan = 'full';

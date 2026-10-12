@@ -14,6 +14,8 @@ use Filament\Widgets\Widget;
  */
 class FleetAnalysis extends Widget
 {
+    protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+
     use InteractsWithPageFilters;
 
     protected static bool $isDiscovered = false;   // affiché seulement par le tableau de bord

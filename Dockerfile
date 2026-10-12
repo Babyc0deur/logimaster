@@ -23,7 +23,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
     COMPOSER_ALLOW_SUPERUSER=1
 RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
-    && printf 'upload_max_filesize=12M\npost_max_size=12M\nmemory_limit=512M\nopcache.enable=1\nopcache.validate_timestamps=0\n' > /usr/local/etc/php/conf.d/app.ini
+    && printf 'upload_max_filesize=12M\npost_max_size=12M\nmemory_limit=512M\nopcache.enable=1\nopcache.validate_timestamps=0\nopcache.memory_consumption=192\nopcache.interned_strings_buffer=16\nopcache.max_accelerated_files=30000\nrealpath_cache_size=4096K\nrealpath_cache_ttl=600\n' > /usr/local/etc/php/conf.d/app.ini
 
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
