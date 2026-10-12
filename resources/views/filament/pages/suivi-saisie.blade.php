@@ -34,6 +34,47 @@
             <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Aucune saisie en {{ $year }}</div><div style="font-size:1.3rem;font-weight:600;color:{{ $red }}">{{ $aucun }}</div></div>
         </div>
 
+        <div class="ss-card" style="border:1px solid rgba(127,127,127,.28);border-radius:12px;overflow:hidden">
+            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid rgba(127,127,127,.28)">
+                <strong style="font-size:.95rem">Carte des districts sanitaires</strong>
+                <select wire:model.live="mois" style="{{ $field }}" aria-label="Mois de la carte">
+                    <option value="" style="color:#111">Toute l'année {{ $year }}</option>
+                    @foreach ($months as $m => $date)
+                        <option value="{{ $m }}" style="color:#111">{{ ucfirst($date->translatedFormat('F Y')) }}</option>
+                    @endforeach
+                </select>
+                <span style="font-size:.85rem"><b style="color:{{ $green }}">{{ $mapOk }}</b> district(s) renseigné(s) · <b style="color:{{ $red }}">{{ count($map) - $mapOk }}</b> non renseigné(s)</span>
+                <span style="margin-left:auto;display:flex;gap:14px;font-size:.8rem">
+                    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $green }};vertical-align:-1px"></i> Renseigné</span>
+                    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $red }};vertical-align:-1px"></i> Non renseigné</span>
+                </span>
+            </div>
+            <div wire:key="ss-map-{{ md5(json_encode([$map, $region])) }}" wire:ignore x-data="{}"
+                 x-init="
+                    const data = @js($map);
+                    const run = () => window.lmSaisieMap($refs.map, data);
+                    const boot = () => {
+                        if (window.lmSaisieMap) return run();
+                        const s = document.createElement('script'); s.src = '/js/lm-saisie-map.js?v={{ @filemtime(public_path('js/lm-saisie-map.js')) }}'; s.onload = run; document.head.appendChild(s);
+                    };
+                    if (window.L) { boot(); }
+                    else {
+                        if (!document.getElementById('leaflet-css')) {
+                            const css = document.createElement('link'); css.id = 'leaflet-css'; css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+                        }
+                        const existing = document.getElementById('leaflet-js');
+                        if (existing) { existing.addEventListener('load', boot); }
+                        else { const js = document.createElement('script'); js.id = 'leaflet-js'; js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.onload = boot; document.head.appendChild(js); }
+                    }
+                 ">
+                <div x-ref="map" style="height:min(64vh, 620px);min-height:380px;z-index:0"></div>
+            </div>
+            <p style="font-size:.75rem;opacity:.75;padding:8px 14px;border-top:1px solid rgba(127,127,127,.28)">
+                Chaque point est le chef-lieu d'un district sanitaire. Les zones colorées sont <b>approximatives</b> : chaque point du territoire est rattaché au chef-lieu le plus proche
+                (les limites officielles des districts sanitaires ne sont pas publiées en données ouvertes). Fond de carte © contributeurs OpenStreetMap.
+            </p>
+        </div>
+
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;opacity:.85">
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $green }};vertical-align:-1px"></span> Renseigné (au moins une sortie de véhicule saisie)</span>
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $red }};vertical-align:-1px"></span> Non renseigné</span>

@@ -39,6 +39,9 @@ class SuiviSaisie extends Page
 
     public string $recherche = '';
 
+    /** Mois de la carte (1 à 12) ; vide = toute l'année. */
+    public string $mois = '';
+
     public static function canAccess(): bool
     {
         return (bool) auth()->user()?->can('view_indicators');
@@ -73,16 +76,27 @@ class SuiviSaisie extends Page
             ->get(['id', 'name', 'region_id'])
             ->sortBy(fn ($d) => ($d->region?->name ?? '').'|'.$d->name)->values();
 
+        // tous les districts accessibles : le tableau en affiche une partie (filtres), la carte les montre tous
+        $everyone = DashboardFilters::accessibleDistricts()->with('region:id,name')->get(['id', 'name', 'region_id', 'latitude', 'longitude']);
+
         // nombre de sorties (hors annulées) par district et par mois
         $counts = [];
         DB::table('sorties_vehicules')->whereNull('deleted_at')->where('statut', '!=', 'annulee')
-            ->whereIn('district_id', $districts->pluck('id'))
+            ->whereIn('district_id', $everyone->pluck('id'))
             ->whereBetween('date_sortie', ["{$year}-01-01", "{$year}-12-31"])
             ->selectRaw('district_id, substr(date_sortie, 6, 2) as mois, count(*) as n')
             ->groupBy('district_id', 'mois')->get()
             ->each(function ($r) use (&$counts) {
                 $counts[$r->district_id][(int) $r->mois] = (int) $r->n;
             });
+
+        $month = (int) $this->mois;
+        $map = $everyone->filter(fn ($d) => $d->latitude !== null)->map(fn ($d) => [
+            'n' => $d->name, 'r' => $d->region?->name, 'lat' => round((float) $d->latitude, 4), 'lon' => round((float) $d->longitude, 4),
+            'v' => $month >= 1 && $month <= 12 ? ($counts[$d->id][$month] ?? 0) : array_sum($counts[$d->id] ?? []),   // sorties saisies
+            'm' => count($counts[$d->id] ?? []),                                                                       // mois renseignés
+            'dim' => $this->region !== '' && $d->region_id !== $this->region,
+        ])->values()->all();
 
         $today = CarbonImmutable::now();
         $elapsed = $year < $today->year ? 12 : ($year > $today->year ? 0 : $today->month);   // mois écoulés (le mois en cours compte)
@@ -112,6 +126,9 @@ class SuiviSaisie extends Page
             'aucun' => $districts->filter(fn ($d) => empty($counts[$d->id]))->count(),
             'regions' => Region::whereHas('districts', fn ($q) => $q->whereIn('id', DashboardFilters::accessibleDistricts()->select('id')))->orderBy('name')->pluck('name', 'id'),
             'months' => collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => CarbonImmutable::create($year, $m, 1)])->all(),
+            'map' => $map,
+            'mapOk' => collect($map)->where('v', '>', 0)->count(),
+            'mapMissing' => $everyone->count() - count($map),
         ];
     }
 }

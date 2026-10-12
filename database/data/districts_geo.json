@@ -1,0 +1,567 @@
+{
+"ABENGOUROU": {
+"lat": 6.7269,
+"lon": -3.49684,
+"source": "osm"
+},
+"ABOBO-EST": {
+"lat": 5.42632,
+"lon": -4.02022,
+"source": "osm"
+},
+"ABOBO-OUEST": {
+"lat": 5.43032,
+"lon": -4.01622,
+"source": "osm"
+},
+"ABOISSO": {
+"lat": 5.46749,
+"lon": -3.20662,
+"source": "osm"
+},
+"ADIAKE": {
+"lat": 5.28684,
+"lon": -3.30201,
+"source": "osm"
+},
+"ADJAME PLATEAU ATTECOUBE": {
+"lat": 5.35312,
+"lon": -4.0222,
+"source": "osm"
+},
+"ADZOPE": {
+"lat": 6.10583,
+"lon": -3.86404,
+"source": "osm"
+},
+"AGBOVILLE": {
+"lat": 5.93073,
+"lon": -4.21313,
+"source": "osm"
+},
+"AGNIBILEKROU": {
+"lat": 7.12799,
+"lon": -3.20153,
+"source": "osm"
+},
+"AKOUPE": {
+"lat": 6.38152,
+"lon": -3.8859,
+"source": "osm"
+},
+"ALEPE": {
+"lat": 5.49661,
+"lon": -3.66389,
+"source": "osm"
+},
+"ANYAMA": {
+"lat": 5.49605,
+"lon": -4.05124,
+"source": "osm"
+},
+"ARRAH": {
+"lat": 6.67454,
+"lon": -3.97013,
+"source": "osm"
+},
+"BANGOLO": {
+"lat": 7.0119,
+"lon": -7.48676,
+"source": "osm"
+},
+"BEOUMI": {
+"lat": 7.67454,
+"lon": -5.58273,
+"source": "osm"
+},
+"BETTIE": {
+"lat": 6.07544,
+"lon": -3.40958,
+"source": "osm"
+},
+"BIANKOUMA": {
+"lat": 7.73835,
+"lon": -7.6128,
+"source": "osm"
+},
+"BLOLEQUIN": {
+"lat": 6.57055,
+"lon": -8.00327,
+"source": "osm"
+},
+"BOCANDA": {
+"lat": 7.06306,
+"lon": -4.49725,
+"source": "osm"
+},
+"BONDOUKOU": {
+"lat": 8.0398,
+"lon": -2.79843,
+"source": "osm"
+},
+"BONGOUANOU": {
+"lat": 6.64753,
+"lon": -4.20466,
+"source": "osm"
+},
+"BOTRO": {
+"lat": 7.85254,
+"lon": -5.31037,
+"source": "osm"
+},
+"BOUAFLE": {
+"lat": 6.98018,
+"lon": -5.74583,
+"source": "osm"
+},
+"BOUAKE NORD-EST": {
+"lat": 7.68902,
+"lon": -5.02836,
+"source": "osm"
+},
+"BOUAKE NORD-OUEST": {
+"lat": 7.69302,
+"lon": -5.02436,
+"source": "osm"
+},
+"BOUAKE SUD": {
+"lat": 7.69702,
+"lon": -5.02036,
+"source": "osm"
+},
+"BOUNA": {
+"lat": 9.26872,
+"lon": -2.99898,
+"source": "osm"
+},
+"BOUNDIALI": {
+"lat": 9.52323,
+"lon": -6.48202,
+"source": "osm"
+},
+"BUYO": {
+"lat": 6.25072,
+"lon": -7.00573,
+"source": "osm"
+},
+"COCODY BINGERVILLE": {
+"lat": 5.35737,
+"lon": -3.99493,
+"source": "osm"
+},
+"DABAKALA": {
+"lat": 8.36324,
+"lon": -4.42849,
+"source": "osm"
+},
+"DABOU": {
+"lat": 5.324,
+"lon": -4.3723,
+"source": "osm"
+},
+"DALOA": {
+"lat": 6.88692,
+"lon": -6.45299,
+"source": "osm"
+},
+"DANANE": {
+"lat": 7.26313,
+"lon": -8.15463,
+"source": "osm"
+},
+"DAOUKRO": {
+"lat": 7.05794,
+"lon": -3.96607,
+"source": "osm"
+},
+"DIANRA": {
+"lat": 8.95252,
+"lon": -6.25471,
+"source": "osm"
+},
+"DIDIEVI": {
+"lat": 7.12866,
+"lon": -4.89804,
+"source": "osm"
+},
+"DIKODOUGOU": {
+"lat": 9.07049,
+"lon": -5.77261,
+"source": "osm"
+},
+"DIMBOKRO": {
+"lat": 6.64943,
+"lon": -4.70406,
+"source": "osm"
+},
+"DIVO": {
+"lat": 5.84053,
+"lon": -5.3549,
+"source": "osm"
+},
+"DOROPO": {
+"lat": 9.80952,
+"lon": -3.34588,
+"source": "osm"
+},
+"DUEKOUE": {
+"lat": 6.7453,
+"lon": -7.34327,
+"source": "osm"
+},
+"FERKESSEDOUGOU": {
+"lat": 9.59398,
+"lon": -5.1976,
+"source": "osm"
+},
+"FRESCO": {
+"lat": 5.10418,
+"lon": -5.58608,
+"source": "osm"
+},
+"GAGNOA 1": {
+"lat": 6.13348,
+"lon": -5.9511,
+"source": "osm"
+},
+"GAGNOA 2": {
+"lat": 6.13748,
+"lon": -5.9471,
+"source": "osm"
+},
+"GRAND BASSAM": {
+"lat": 5.21288,
+"lon": -3.74323,
+"source": "osm"
+},
+"GRAND LAHOU": {
+"lat": 5.25034,
+"lon": -5.00244,
+"source": "osm"
+},
+"GUEYO": {
+"lat": 5.68996,
+"lon": -6.07105,
+"source": "osm"
+},
+"GUIGLO": {
+"lat": 6.54914,
+"lon": -7.49597,
+"source": "osm"
+},
+"GUITRY": {
+"lat": 5.51915,
+"lon": -5.2401,
+"source": "osm"
+},
+"ISSIA": {
+"lat": 6.48779,
+"lon": -6.58879,
+"source": "osm"
+},
+"JACQUEVILLE": {
+"lat": 5.20765,
+"lon": -4.41951,
+"source": "osm"
+},
+"KANI": {
+"lat": 8.47725,
+"lon": -6.60327,
+"source": "osm"
+},
+"KANIASSO": {
+"lat": 9.81467,
+"lon": -7.5111,
+"source": "osm"
+},
+"KATIOLA": {
+"lat": 8.14041,
+"lon": -5.10217,
+"source": "osm"
+},
+"KONG": {
+"lat": 9.14868,
+"lon": -4.61065,
+"source": "osm"
+},
+"KORHOGO 1": {
+"lat": 9.45807,
+"lon": -5.63163,
+"source": "osm"
+},
+"KORHOGO 2": {
+"lat": 9.46207,
+"lon": -5.62763,
+"source": "osm"
+},
+"KORO": {
+"lat": 8.55368,
+"lon": -7.46238,
+"source": "osm"
+},
+"KOUASSI KOUASSIKRO": {
+"lat": 7.34141,
+"lon": -4.67709,
+"source": "osm"
+},
+"KOUIBLY": {
+"lat": 7.25682,
+"lon": -7.2354,
+"source": "osm"
+},
+"KOUMASSI": {
+"lat": 5.2927,
+"lon": -3.95858,
+"source": "osm"
+},
+"KOUN-FAO": {
+"lat": 7.488,
+"lon": -3.25175,
+"source": "osm"
+},
+"KOUNAHIRI": {
+"lat": 7.78874,
+"lon": -5.83529,
+"source": "osm"
+},
+"KOUTO": {
+"lat": 9.89273,
+"lon": -6.41276,
+"source": "osm"
+},
+"LAKOTA": {
+"lat": 5.85112,
+"lon": -5.68278,
+"source": "osm"
+},
+"M'BAHIAKRO": {
+"lat": 7.45728,
+"lon": -4.3411,
+"source": "nominatim"
+},
+"M'BATTO": {
+"lat": 6.4695,
+"lon": -4.35857,
+"source": "nominatim"
+},
+"M'BENGUE": {
+"lat": 10.00108,
+"lon": -5.90074,
+"source": "nominatim"
+},
+"MADINANI": {
+"lat": 9.61038,
+"lon": -6.94307,
+"source": "osm"
+},
+"MAN": {
+"lat": 7.41026,
+"lon": -7.55037,
+"source": "osm"
+},
+"MANKONO": {
+"lat": 8.05773,
+"lon": -6.18978,
+"source": "osm"
+},
+"MEAGUI": {
+"lat": 5.40393,
+"lon": -6.55517,
+"source": "osm"
+},
+"MINIGNAN": {
+"lat": 9.99856,
+"lon": -7.83615,
+"source": "osm"
+},
+"NASSIAN": {
+"lat": 8.45238,
+"lon": -3.47207,
+"source": "osm"
+},
+"NIAKARA": {
+"lat": 8.66069,
+"lon": -5.28941,
+"source": "nominatim"
+},
+"ODIENNE": {
+"lat": 9.50443,
+"lon": -7.56194,
+"source": "osm"
+},
+"OUANGOLODOUGOU": {
+"lat": 9.96628,
+"lon": -5.14992,
+"source": "osm"
+},
+"OUANINOU": {
+"lat": 8.23753,
+"lon": -7.86714,
+"source": "osm"
+},
+"OUME": {
+"lat": 6.38239,
+"lon": -5.41757,
+"source": "osm"
+},
+"PORT BOUET-VRIDI": {
+"lat": 5.26486,
+"lon": -4.00232,
+"source": "osm"
+},
+"PRIKRO": {
+"lat": 7.64708,
+"lon": -3.99732,
+"source": "osm"
+},
+"SAKASSOU": {
+"lat": 7.45348,
+"lon": -5.29235,
+"source": "osm"
+},
+"SAN-PEDRO": {
+"lat": 4.759,
+"lon": -6.64639,
+"source": "nominatim"
+},
+"SANDEGUE": {
+"lat": 7.95552,
+"lon": -3.58136,
+"source": "osm"
+},
+"SASSANDRA": {
+"lat": 4.949,
+"lon": -6.09217,
+"source": "osm"
+},
+"SEGUELA": {
+"lat": 7.96141,
+"lon": -6.67024,
+"source": "osm"
+},
+"SIKENSI": {
+"lat": 5.67137,
+"lon": -4.57516,
+"source": "osm"
+},
+"SINEMATIALI": {
+"lat": 9.58408,
+"lon": -5.38403,
+"source": "osm"
+},
+"SINFRA": {
+"lat": 6.61675,
+"lon": -5.90895,
+"source": "osm"
+},
+"SOUBRE": {
+"lat": 5.78502,
+"lon": -6.59332,
+"source": "osm"
+},
+"TABOU": {
+"lat": 4.41628,
+"lon": -7.35592,
+"source": "osm"
+},
+"TAI": {
+"lat": 5.87546,
+"lon": -7.45628,
+"source": "osm"
+},
+"TANDA": {
+"lat": 7.80366,
+"lon": -3.16725,
+"source": "osm"
+},
+"TEHINI": {
+"lat": 9.60671,
+"lon": -3.65768,
+"source": "osm"
+},
+"TENGRELA": {
+"lat": 10.48084,
+"lon": -6.4084,
+"source": "osm"
+},
+"TIAPOUM": {
+"lat": 5.13851,
+"lon": -3.02192,
+"source": "osm"
+},
+"TIASSALE": {
+"lat": 5.89565,
+"lon": -4.82506,
+"source": "osm"
+},
+"TIEBISSOU": {
+"lat": 7.15807,
+"lon": -5.22557,
+"source": "osm"
+},
+"TOUBA": {
+"lat": 8.2841,
+"lon": -7.68181,
+"source": "osm"
+},
+"TOULEPLEU": {
+"lat": 6.5809,
+"lon": -8.41502,
+"source": "osm"
+},
+"TOUMODI": {
+"lat": 6.56022,
+"lon": -5.01609,
+"source": "osm"
+},
+"TRANSUA": {
+"lat": 7.5495,
+"lon": -3.01366,
+"source": "osm"
+},
+"TREICHVILLE-MARCORY": {
+"lat": 5.30601,
+"lon": -4.00811,
+"source": "osm"
+},
+"VAVOUA": {
+"lat": 7.37935,
+"lon": -6.47966,
+"source": "osm"
+},
+"YAKASSE-ATTOBROU": {
+"lat": 6.18247,
+"lon": -3.65123,
+"source": "osm"
+},
+"YAMOUSSOUKRO": {
+"lat": 6.82001,
+"lon": -5.2776,
+"source": "osm"
+},
+"YOPOUGON-EST": {
+"lat": 5.33519,
+"lon": -4.07576,
+"source": "osm"
+},
+"YOPOUGON-OUEST SONGON": {
+"lat": 5.33919,
+"lon": -4.07176,
+"source": "osm"
+},
+"ZOUAN-HOUNIEN": {
+"lat": 6.91982,
+"lon": -8.20892,
+"source": "osm"
+},
+"ZOUKOUGBEU": {
+"lat": 6.76299,
+"lon": -6.86427,
+"source": "osm"
+},
+"ZUENOULA": {
+"lat": 7.42802,
+"lon": -6.05003,
+"source": "osm"
+}
+}

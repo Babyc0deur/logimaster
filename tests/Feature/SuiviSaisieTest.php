@@ -33,6 +33,9 @@ class SuiviSaisieTest extends TestCase
         }
         SortieVehicule::create(['district_id' => $meagui->id, 'vehicle_id' => $v->id, 'date_sortie' => '2026-02-03', 'km_depart' => 1, 'km_arrivee' => 2, 'motif' => 'autre', 'statut' => 'annulee']);
 
+        $meagui->forceFill(['latitude' => 5.4045, 'longitude' => -6.5582])->save();   // chefs-lieux : carte
+        $gueyo->forceFill(['latitude' => 5.688, 'longitude' => -6.0712])->save();
+
         $admin = User::factory()->create(['is_active' => true]);
         $admin->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($admin);
@@ -45,6 +48,14 @@ class SuiviSaisieTest extends TestCase
         $this->assertSame([], $rows['GUEYO']['mois']);
         $this->assertSame(3, $data['elapsed']);
         $this->assertSame(1, $data['aucun']);
+
+        // carte : un point par district avec coordonnées ; vert = sortie saisie (toute l'année, ou le mois choisi)
+        $map = collect($data['map'])->keyBy('n');
+        $this->assertSame(3, $map['MEAGUI']['v']);
+        $this->assertSame(0, $map['GUEYO']['v']);
+        $this->assertSame(1, $data['mapOk']);
+        $march = Livewire::test(SuiviSaisie::class)->set('annee', 2026)->set('mois', '1');
+        $this->assertSame(2, collect($march->instance()->getViewData()['map'])->keyBy('n')['MEAGUI']['v']);   // janvier : 2 sorties
 
         $page->set('manquants', true)->assertSee('GUEYO')->assertSee('MEAGUI');   // MEAGUI : février manquant
         $page->set('recherche', 'gue')->assertSee('GUEYO')->assertDontSee('MEAGUI</td>', false);
