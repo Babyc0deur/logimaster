@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3efe6">
-    <meta name="description" content="LogiMaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application convoyeur utilisable sans réseau.">
-    <title>LogiMaster — Flotte et livraisons des districts sanitaires</title>
+    <meta name="description" content="Logimaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application convoyeur utilisable sans réseau.">
+    <title>Logimaster — Flotte et livraisons des districts sanitaires</title>
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <link rel="icon" type="image/svg+xml" href="{{ \App\Support\Brand::logo() }}">
     <link rel="apple-touch-icon" href="{{ \App\Support\Brand::url('pwa/apple-touch-icon.png') }}">
@@ -165,10 +165,10 @@
 
 <header class="top">
     <div class="wrap">
-        <a class="brand" href="/"><img src="{{ \App\Support\Brand::logo() }}" alt=""><b>LogiMaster</b></a>
+        <a class="brand" href="/"><img src="{{ \App\Support\Brand::logo() }}" alt=""><b>Logimaster</b></a>
         <nav class="links">
             <a class="l" href="#fonctionnement">Fonctionnement</a>
-            <a class="l" href="#saisie">Suivi de la saisie</a>
+            <a class="l" href="#saisie">Cartographie</a>
             <a class="l" href="#indicateurs">Indicateurs</a>
             <a class="l" href="#terrain">Application terrain</a>
             @if ($adminOpen)<a class="btn line sm" href="/admin">Se connecter</a>@endif
@@ -201,7 +201,7 @@
         <figure class="up" style="animation-delay:.35s">
             <div class="shot">
                 <div class="cap"><span>Tableau de bord · district de Méagui</span><span>Octobre 2025</span></div>
-                <img src="/landing/tableau-de-bord.jpg" width="2160" height="1350" alt="Tableau de bord de LogiMaster : filtres par PRES, région, district et période, puis les huit indicateurs DDKM du mois d'octobre 2025 pour le district de Méagui.">
+                <img src="/landing/tableau-de-bord.jpg" width="2160" height="1350" alt="Tableau de bord de Logimaster : filtres par PRES, région, district et période, puis les huit indicateurs DDKM du mois d'octobre 2025 pour le district de Méagui.">
             </div>
             <figcaption><b>Capture de l'application.</b> Les huit indicateurs du mois, comparés au mois précédent, pour le district choisi. Un clic sur un indicateur ouvre son détail et son évolution.</figcaption>
         </figure>
@@ -222,7 +222,7 @@
 
 <section id="saisie">
     <div class="wrap">
-        <div class="sh"><span class="mono">02 — Suivi de la saisie</span><div><h2>Qui a renseigné ses véhicules, et qui ne l'a pas fait</h2><p>Un tableau des districts sur les douze mois de l'année. Le niveau régional et national voit d'un coup d'œil où relancer.</p></div></div>
+        <div class="sh"><span class="mono">02 — Cartographie</span><div><h2>Qui a renseigné ses véhicules, et qui ne l'a pas fait</h2><p>Une carte de la Côte d'Ivoire et un tableau des districts sur les douze mois de l'année. Le niveau régional et national voit d'un coup d'œil où relancer.</p></div></div>
         <div class="split">
             <ul>
                 <li><b>Un district par ligne, un mois par colonne</b>Le chiffre de chaque case est le nombre de sorties saisies dans le mois.</li>
@@ -231,8 +231,8 @@
             </ul>
             <figure>
                 <div class="shot">
-                    <div class="cap"><span>Suivi de la saisie · région NAWA</span><span>2025</span></div>
-                    <img src="/landing/suivi-saisie.jpg" width="1665" height="690" alt="Tableau du suivi de la saisie pour la région NAWA en 2025 : quatre districts, douze mois, cases vertes pour les mois renseignés et rouges pour les mois sans saisie.">
+                    <div class="cap"><span>Cartographie · 113 districts sanitaires</span><span>2025</span></div>
+                    <img src="/landing/cartographie-saisie.jpg" width="1584" height="899" alt="Carte de la Côte d'Ivoire avec les 113 districts sanitaires : en vert ceux qui ont saisi leurs sorties de véhicules, en rouge ceux qui n'ont rien saisi.">
                 </div>
                 <div class="key"><span><i style="background:#16a34a"></i>Renseigné</span><span><i style="background:#dc2626"></i>Non renseigné</span><span><i style="background:#d6d3cc"></i>Mois à venir</span></div>
             </figure>
@@ -287,11 +287,11 @@
 
 <section id="cartographie">
     <div class="wrap">
-        <div class="sh"><span class="mono">05 — Cartographie</span><div><h2>Les véhicules du district sur la carte</h2><p>Une carte OpenStreetMap du district : chaque véhicule suit son circuit sur le réseau routier, site par site, avec son avancement et sa prochaine étape.</p></div></div>
+        <div class="sh"><span class="mono">05 — Suivi en temps réel</span><div><h2>Les véhicules du district sur la carte</h2><p>Une carte OpenStreetMap du district : chaque véhicule suit son circuit sur le réseau routier, site par site, avec son avancement et sa prochaine étape.</p></div></div>
         <figure>
             <div class="shot">
-                <div class="cap"><span>Cartographie · district de Méagui</span><span>Simulation de la journée</span></div>
-                <img src="/landing/cartographie-zoom.jpg" width="1584" height="975" loading="lazy" alt="Cartographie du district de Méagui : tracés routiers des circuits, position de chaque véhicule et liste des véhicules avec leur avancement.">
+                <div class="cap"><span>Suivi en temps réel · district de Méagui</span><span>Simulation de la journée</span></div>
+                <img src="/landing/cartographie-zoom.jpg" width="1584" height="975" loading="lazy" alt="Suivi en temps réel du district de Méagui : tracés routiers des circuits, position de chaque véhicule et liste des véhicules avec leur avancement.">
             </div>
         </figure>
         <div class="map-legend">
@@ -327,7 +327,7 @@
 
 <footer>
     <div class="wrap">
-        <span>LogiMaster · gestion de flotte et livraisons des districts sanitaires</span>
+        <span>Logimaster · gestion de flotte et livraisons des districts sanitaires</span>
         <span><a href="#fonctionnement">Fonctionnement</a><a href="/m">Application convoyeur</a><a href="/m/installer">Affiche d'installation</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
     </div>
 </footer>

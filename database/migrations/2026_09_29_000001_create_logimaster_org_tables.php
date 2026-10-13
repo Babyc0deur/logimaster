@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Modifier la table users pour LogiMaster
+        // Modifier la table users pour Logimaster
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_active')->default(true)->after('remember_token');
             $table->boolean('two_factor_enabled')->default(false)->after('is_active');

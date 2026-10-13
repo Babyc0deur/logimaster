@@ -13,7 +13,7 @@ use RuntimeException;
 use ZipArchive;
 
 /**
- * Sauvegardes de LogiMaster : une archive zip contenant
+ * Sauvegardes de Logimaster : une archive zip contenant
  *   - database.sqlite : copie cohérente de la base, prise pendant que l'application tourne (VACUUM INTO) ;
  *   - photos/… : factures, photos de compteur, bons de livraison ;
  *   - manifest.json : date, nombre de lignes par table, empreinte de la base.
@@ -69,7 +69,7 @@ class BackupManager
                 }
             }
             $zip->addFromString('manifest.json', json_encode([
-                'application' => 'LogiMaster', 'created_at' => $now->toIso8601String(), 'database_sha256' => hash_file('sha256', $copy),
+                'application' => 'Logimaster', 'created_at' => $now->toIso8601String(), 'database_sha256' => hash_file('sha256', $copy),
                 'counts' => $counts, 'photos' => $photos, 'app_env' => config('app.env'),
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $zip->close();

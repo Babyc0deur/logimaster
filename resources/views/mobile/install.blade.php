@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Installer LogiMaster Convoyeur</title>
+    <title>Installer Logimaster Convoyeur</title>
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <style>
         :root { --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#2563eb; }
@@ -34,13 +34,13 @@
     <div class="head">
         <img src="{{ \App\Support\Brand::logo() }}" alt="">
         <div>
-            <h1>LogiMaster Convoyeur</h1>
+            <h1>Logimaster Convoyeur</h1>
             <p class="sub">L'application pour exécuter vos circuits : livraisons, carburant, notifications.</p>
         </div>
     </div>
 
     <div class="grid">
-        <div class="qr"><img src="/m/qr.svg" alt="QR code d'installation de LogiMaster Convoyeur"></div>
+        <div class="qr"><img src="/m/qr.svg" alt="QR code d'installation de Logimaster Convoyeur"></div>
         <div>
             <h2>Android (Chrome)</h2>
             <ol>

@@ -36,8 +36,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Public Sans')
             ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.theme'))   // fond papier, titres à empattement
-            ->brandName('LogiMaster')
-            ->brandLogo(fn () => view('filament.brand'))   // icône LogiMaster + nom
+            ->brandName('Logimaster')
+            ->brandLogo(fn () => view('filament.brand'))   // icône Logimaster + nom
             ->brandLogoHeight('2rem')
             ->favicon(fn () => \App\Support\Brand::favicon())
             ->renderHook(\Filament\View\PanelsRenderHook::BODY_START, fn () => view('filament.preloader'))   // préchargeur au chargement des pages

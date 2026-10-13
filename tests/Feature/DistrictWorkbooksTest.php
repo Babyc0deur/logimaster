@@ -102,11 +102,11 @@ class DistrictWorkbooksTest extends TestCase
 
     public function test_command_matches_files_to_districts_and_keeps_the_latest_month(): void
     {
-        $this->workbook($this->dir.'/MAI/LogiMaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des Sites', 'Nom des ESPC et autres sites de destination',
+        $this->workbook($this->dir.'/MAI/Logimaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des Sites', 'Nom des ESPC et autres sites de destination',
             [['1111 AA 01', 'X', '2021-12-01', 'PNLP', 'TOYOTA', 'HIACE', 2021, '2027-01-01', 1500, 'Gasoil']]);
-        $this->workbook($this->dir.'/OCTOBRE/LogiMaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des ESPC', 'Nom des ESPC et autres sites de destination',
+        $this->workbook($this->dir.'/OCTOBRE/Logimaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des ESPC', 'Nom des ESPC et autres sites de destination',
             [['2222 BB 01', 'X', '2021-12-01', 'PNLP', 'NISSAN', 'NAVARA', 2021, '2027-01-01', 1500, 'Gasoil']]);
-        $this->workbook($this->dir.'/OCTOBRE/LogiMaster Version 30092025 DS YOP EST  .xlsx', 'Liste des ESPC', 'Nom des ESPC et autres sites de destination', []);
+        $this->workbook($this->dir.'/OCTOBRE/Logimaster Version 30092025 DS YOP EST  .xlsx', 'Liste des ESPC', 'Nom des ESPC et autres sites de destination', []);
 
         $this->artisan('import:districts', ['folder' => $this->dir])->assertSuccessful();
 
@@ -123,7 +123,7 @@ class DistrictWorkbooksTest extends TestCase
 
     public function test_dry_run_changes_nothing(): void
     {
-        $this->workbook($this->dir.'/OCTOBRE/LogiMaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des Sites', 'Nom des ESPC et autres sites de destination', []);
+        $this->workbook($this->dir.'/OCTOBRE/Logimaster Version 30092025 DS KOUASSI_KOUASSIKRO.xlsx', 'Liste des Sites', 'Nom des ESPC et autres sites de destination', []);
         $this->artisan('import:districts', ['folder' => $this->dir, '--dry-run' => true])->assertSuccessful();
         $this->assertSame(0, Espc::count());
     }

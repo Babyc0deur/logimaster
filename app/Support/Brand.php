@@ -3,7 +3,7 @@
 namespace App\Support;
 
 /**
- * Logo et icônes de LogiMaster. Les adresses portent la date du fichier (?v=…) : quand le logo change,
+ * Logo et icônes de Logimaster. Les adresses portent la date du fichier (?v=…) : quand le logo change,
  * navigateurs, téléphones et cache de l'hébergeur reprennent la nouvelle image au lieu de garder l'ancienne.
  */
 class Brand

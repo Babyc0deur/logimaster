@@ -1,4 +1,4 @@
-{{-- Préchargeur de l'administration : le logo LogiMaster se dessine (départ, itinéraire, arrivée) pendant le chargement de la page --}}
+{{-- Préchargeur de l'administration : le logo Logimaster se dessine (départ, itinéraire, arrivée) pendant le chargement de la page --}}
 <div id="lm-preloader" role="status" aria-live="polite" aria-label="Chargement">
     <div class="lm-pl-box">
         <svg class="lm-pl-logo" viewBox="0 0 512 512" aria-hidden="true">
@@ -7,7 +7,7 @@
             <circle class="lm-pl-start" cx="150" cy="132" r="43" fill="#16150f" stroke="#f3efe6" stroke-width="38"/>
             <circle class="lm-pl-end" cx="368" cy="362" r="49" fill="#16150f" stroke="#e25c1e" stroke-width="46"/>
         </svg>
-        <div class="lm-pl-name">LogiMaster</div>
+        <div class="lm-pl-name">Logimaster</div>
         <div class="lm-pl-text">Chargement…</div>
     </div>
 </div>

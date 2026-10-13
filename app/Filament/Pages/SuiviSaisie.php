@@ -11,7 +11,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Suivi de la saisie : un tableau districts × 12 mois de l'année.
+ * Cartographie (ex « Suivi de la saisie ») : carte des districts sanitaires et tableau districts × 12 mois de l'année.
  * Vert = au moins une sortie de véhicule saisie dans le mois ; rouge = rien de saisi ; gris = mois à venir.
  * On repère ainsi les districts qui ne font pas le suivi de leurs véhicules.
  */
@@ -19,17 +19,15 @@ class SuiviSaisie extends Page
 {
     protected string $view = 'filament.pages.suivi-saisie';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTableCells;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGlobeAlt;
 
-    protected static ?string $navigationLabel = 'Suivi de la saisie';
+    protected static ?string $navigationLabel = 'Cartographie';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Données';
+    protected static ?int $navigationSort = 6;   // juste après le chronogramme
 
-    protected static ?int $navigationSort = 0;
+    protected static ?string $title = 'Cartographie';
 
-    protected static ?string $title = 'Suivi de la saisie par district';
-
-    protected static ?string $slug = 'suivi-saisie';
+    protected static ?string $slug = 'cartographie';
 
     public int $annee = 0;
 

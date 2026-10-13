@@ -44,7 +44,7 @@ class MobileAdminTest extends TestCase
 
     public function test_the_app_page_manifest_and_service_worker_are_served(): void
     {
-        $this->get('/m')->assertOk()->assertSee('rel="manifest"', false)->assertSee('/m/manifest.webmanifest', false)->assertSee('LogiMaster Convoyeur');
+        $this->get('/m')->assertOk()->assertSee('rel="manifest"', false)->assertSee('/m/manifest.webmanifest', false)->assertSee('Logimaster Convoyeur');
 
         $manifest = $this->get('/m/manifest.webmanifest')->assertOk()->json();
         $this->assertSame('standalone', $manifest['display']);

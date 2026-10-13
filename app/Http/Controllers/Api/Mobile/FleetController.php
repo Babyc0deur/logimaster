@@ -154,7 +154,7 @@ class FleetController extends MobileController
         }
         $sent = 0;
         foreach ($subs as $sub) {
-            $sent += $sender->send($sub, ['title' => 'Notification de test', 'body' => 'Les notifications LogiMaster fonctionnent sur ce téléphone.', 'url' => '/m', 'tag' => 'test']) ? 1 : 0;
+            $sent += $sender->send($sub, ['title' => 'Notification de test', 'body' => 'Les notifications Logimaster fonctionnent sur ce téléphone.', 'url' => '/m', 'tag' => 'test']) ? 1 : 0;
         }
 
         return $sent

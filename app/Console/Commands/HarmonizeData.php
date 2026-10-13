@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Met en forme les données déjà chargées pour qu'elles correspondent aux conventions de LogiMaster :
+ * Met en forme les données déjà chargées pour qu'elles correspondent aux conventions de Logimaster :
  * marques et modèles, bailleurs, plaques, noms et types d'ESPC, noms de circuits ; fusionne les ESPC en double d'un district.
  */
 class HarmonizeData extends Command

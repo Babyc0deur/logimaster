@@ -7,12 +7,12 @@
     <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="LogiMaster">
+    <meta name="apple-mobile-web-app-title" content="Logimaster">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="/m/manifest.webmanifest">
     <link rel="apple-touch-icon" href="{{ \App\Support\Brand::url('pwa/apple-touch-icon.png') }}">
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
-    <title>LogiMaster Convoyeur</title>
+    <title>Logimaster Convoyeur</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -309,7 +309,7 @@ function render() {
 
 // ---- connexion
 function loginView() {
-    return '<div class="center"><img class="logo" src="' + esc(CFG.logo || '/logo.svg') + '" alt=""><div class="brandline"><span>LogiMaster · convoyeur</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Vos circuits, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous pour voir vos sorties validées.</p>' +
+    return '<div class="center"><img class="logo" src="' + esc(CFG.logo || '/logo.svg') + '" alt=""><div class="brandline"><span>Logimaster · convoyeur</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Vos circuits, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous pour voir vos sorties validées.</p>' +
         '<form id="login"><label for="em">Identifiant</label><input id="em" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex. kone.ibrahim" required>' +
         '<label for="pw">Code d\'accès ou mot de passe</label><input id="pw" type="password" autocomplete="current-password" required>' +
         '<p class="muted" style="margin:8px 2px 0">Identifiant et code provisoire remis par votre district.</p>' +
@@ -721,7 +721,7 @@ function profileView() {
         (!standalone && ios ? '<div class="card muted">iPhone : touchez <b>Partager</b> puis <b>Sur l\'écran d\'accueil</b> pour installer l\'application et recevoir les notifications.</div>' : '') +
         '<button class="btn sec" id="pushtest" style="margin-bottom:12px">Recevoir une notification de test</button>' +
         '<a class="btn sec" href="#/password" style="margin-bottom:10px">Changer le mot de passe</a><button class="btn sec" id="sync" style="margin-bottom:10px">Synchroniser maintenant</button><button class="btn bad" id="out">Se déconnecter</button>' +
-        '<p class="muted" style="text-align:center;margin-top:16px">LogiMaster Convoyeur</p>');
+        '<p class="muted" style="text-align:center;margin-top:16px">Logimaster Convoyeur</p>');
 }
 function bindProfile() {
     var e;

@@ -47,8 +47,8 @@ class MobileAppController extends Controller
     public function manifest(): Response
     {
         return response(json_encode([
-            'name' => 'LogiMaster Convoyeur',
-            'short_name' => 'LogiMaster',
+            'name' => 'Logimaster Convoyeur',
+            'short_name' => 'Logimaster',
             'description' => 'Exécutez vos circuits : livraisons, carburant, notifications.',
             'lang' => 'fr',
             'start_url' => '/m?source=pwa',

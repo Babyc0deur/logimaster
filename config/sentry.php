@@ -53,7 +53,7 @@ return [
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#send_default_pii
     'send_default_pii' => env('SENTRY_SEND_DEFAULT_PII', false),
 
-    // LogiMaster : jamais le contenu des formulaires (noms, téléphones, photos de factures) dans les rapports d'erreur
+    // Logimaster : jamais le contenu des formulaires (noms, téléphones, photos de factures) dans les rapports d'erreur
     'max_request_body_size' => 'never',
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore_exceptions

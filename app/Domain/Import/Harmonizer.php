@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 /**
  * Harmonisation des données saisies à la main dans les classeurs : une seule écriture par marque, bailleur, type d'ESPC…
- * pour que les filtres, les regroupements et les rapports de LogiMaster comptent la même chose sous le même nom.
+ * pour que les filtres, les regroupements et les rapports de Logimaster comptent la même chose sous le même nom.
  */
 final class Harmonizer
 {

@@ -1,4 +1,4 @@
-/* Cartographie (LogiMaster) : simulation du déplacement des véhicules du district sur leurs circuits, fond OpenStreetMap (Leaflet). */
+/* Cartographie (Logimaster) : simulation du déplacement des véhicules du district sur leurs circuits, fond OpenStreetMap (Leaflet). */
 window.lmCartographie = window.lmCartographie || function (el, data) {
     if (el._lm) return; el._lm = true;
     const KMH = 40, STOP_MIN = 10, START = 7.5 * 60, GAP = 15;   // minutes simulées

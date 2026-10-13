@@ -1,4 +1,4 @@
-# Scénario de test de bout en bout — LogiMaster
+# Scénario de test de bout en bout — Logimaster
 
 Durée : environ 45 minutes. Un ordinateur (administration) et un téléphone (application convoyeur).
 Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'écart.
@@ -29,7 +29,7 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 
 ## 2. Installation et connexion mobile
 
-1. Scanner le QR code de la page (ou ouvrir l'adresse). ✔ Écran de connexion LogiMaster.
+1. Scanner le QR code de la page (ou ouvrir l'adresse). ✔ Écran de connexion Logimaster.
 2. Installer : Android « Installer l'application » ; iPhone Safari → Partager → « Sur l'écran d'accueil ». ✔ Icône sur l'écran d'accueil, ouverture plein écran.
 3. `/m/installer` ✔ affiche imprimable avec le QR.
 4. Se connecter avec un mauvais mot de passe. ✔ Message d'erreur, pas d'accès.

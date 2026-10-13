@@ -141,7 +141,7 @@ class ImportDistrictWorkbooks extends Command
         return Str::of(Str::ascii($text))->lower()->replaceMatches('/[^a-z0-9]+/', '')->toString();
     }
 
-    /** Nom de district déduit du nom de fichier (retire « LogiMaster Version … », DS/DDS, copies, mois). */
+    /** Nom de district déduit du nom de fichier (retire « Logimaster Version … », DS/DDS, copies, mois). */
     private function nameFromFile(string $path): string
     {
         $name = pathinfo($path, PATHINFO_FILENAME);

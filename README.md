@@ -1,4 +1,4 @@
-# LogiMaster — Gestion de flotte DDKM
+# Logimaster — Gestion de flotte DDKM
 
 Backend **Laravel 13** + back-office **Filament 4** (français), API REST (**Sanctum**), indicateurs DDKM pré-calculés,
 import/export du classeur Excel Logimaster des districts.
@@ -134,7 +134,7 @@ exigent leur permission de consultation, et les rôles ne sont accessibles qu'au
   ignorées et corrections pour vérification. Source des classeurs : dossier « Version 300925 Validé » (PRES > région).
 - **Circuits et harmonisation** : `php artisan import:districts "<dossier>" --circuits` importe les circuits (nom et sites dans
   l'ordre, onglet CHRONOGRAMME) sans doublon ni sortie planifiée, en écartant les motifs saisis comme circuits (PNLP, garage…).
-  `php artisan data:harmonize` (`--dry-run` pour simuler) met les données au format LogiMaster : marques et modèles (fautes
+  `php artisan data:harmonize` (`--dry-run` pour simuler) met les données au format Logimaster : marques et modèles (fautes
   corrigées), bailleurs (« UCP FM », « FOND MONDIAL » → FONDS MONDIAL), noms et types d'ESPC (CSR, CSU, HG…), circuits
   (« C1 », « CIR1 », « 1 » → CIRCUIT 1) ; fusionne les ESPC et circuits en double. Les imports appliquent les mêmes règles.
 - **Par entité** (menu *Import / Export* des listes Véhicules, Chauffeurs, Circuits, ESPC, Chronogramme ; API
