@@ -1,6 +1,6 @@
 /* Cartographie : carte des districts sanitaires de Côte d'Ivoire (Leaflet + OpenStreetMap), limites officielles des districts.
    Vert = au moins une sortie de véhicule saisie, rouge = rien. */
-window.lmSaisieMap = window.lmSaisieMap || function (el, data) {
+window.lmSaisieMap = window.lmSaisieMap || function (el, data, geoUrl) {
     if (el._lm) return; el._lm = true;
     var OK = '#16a34a', BAD = '#dc2626', DIM = '#9ca3af';
     var map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.25 });
@@ -14,7 +14,7 @@ window.lmSaisieMap = window.lmSaisieMap || function (el, data) {
     map.fitBounds(focus.length && focus.length < data.length ? bounds() : [[4.3, -8.6], [10.8, -2.4]]);
     el.addEventListener('click', function () { map.scrollWheelZoom.enable(); }, { once: true });
 
-    fetch('/geo/ci-districts.json').then(function (r) { return r.json(); }).then(function (g) {
+    fetch(geoUrl || '/geo/ci-districts.json').then(function (r) { return r.json(); }).then(function (g) {
         L.geoJSON(g.features, {
             style: function (f) {
                 var d = byName[f.properties.n];

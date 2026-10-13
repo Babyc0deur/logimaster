@@ -52,7 +52,7 @@
             <div wire:key="ss-map-{{ md5(json_encode([$map, $region])) }}" wire:ignore x-data="{}"
                  x-init="
                     const data = @js($map);
-                    const run = () => window.lmSaisieMap($refs.map, data);
+                    const run = () => window.lmSaisieMap($refs.map, data, '{{ \App\Support\Brand::url('geo/ci-districts.json') }}');   // adresse versionnée : le navigateur reprend le nouveau fichier
                     const boot = () => {
                         if (window.lmSaisieMap) return run();
                         const s = document.createElement('script'); s.src = '/js/lm-saisie-map.js?v={{ @filemtime(public_path('js/lm-saisie-map.js')) }}'; s.onload = run; document.head.appendChild(s);
