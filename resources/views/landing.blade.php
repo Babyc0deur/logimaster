@@ -67,7 +67,6 @@
         .hero-routes .halo { fill:var(--c); opacity:.18; transform-box:fill-box; transform-origin:center; animation:vpulse 3.6s ease-in-out infinite; }
         .hero-routes .veh.stopped .halo { animation-duration:1.8s; opacity:.3; }
         @keyframes vpulse { 0%, 100% { transform:scale(.8); opacity:.1; } 50% { transform:scale(1.25); opacity:.26; } }
-        @media (prefers-reduced-motion: reduce) { .hero-routes .halo { animation:none; } }
         @media (max-width: 880px) { .hero-map { width:96vw; right:2%; top:70px; } .hero-map img { opacity:.18; } }
         .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:56px; align-items:end; }
         h1 { font:500 clamp(2.6rem, 5.4vw, 4.6rem)/1.02 var(--serif); letter-spacing:-.025em; margin:18px 0 0; }
