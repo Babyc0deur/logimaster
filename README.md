@@ -13,7 +13,7 @@ php -d memory_limit=2G vendor/bin/phpunit   # `php artisan test` dépasse la lim
 php artisan serve --port=8085      # puis http://localhost:8085/admin
 ```
 
-Le seeder charge l'organisation réelle (**1 PRES → 33 régions → 113 districts**, codes du classeur Logimaster, fichier
+Le seeder charge l'organisation réelle (**10 PRES → 33 régions → 113 districts**, codes du classeur Logimaster, fichier
 `database/data/organisation_ci.json`) et un jeu de démonstration dans le district **ANYAMA**.
 
 Comptes de démonstration (mot de passe `password`, à changer hors local) :
@@ -44,9 +44,12 @@ du périmètre de l'utilisateur.
   prix du carburant avec historique, seuils d'alerte.
 - **Maintenance** : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
   calendrier mensuel, alertes 🔴/🟠/🟢, notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
-- **Indicateurs DDKM** : 9 calculateurs, snapshots (`php artisan indicators:compute`, planifié 01:00 + clôture mensuelle),
-  écran de détail par indicateur (tendance, historique, répartition par véhicule/site), cartes des 9 indicateurs et donut
-  de l'état de la flotte sur le tableau de bord.
+- **Indicateurs DDKM** : **8 indicateurs** sur deux lignes (coût global, utilisation des véhicules, taux d'immobilisation, respect du
+  chronogramme, utilisation rationnelle du carburant, carburant par motif, respect des circuits, distance totale ; la livraison
+  ESPC n'est plus calculée). Snapshots (`php artisan indicators:compute`, planifié 01:00 + clôture mensuelle ; `indicators:backfill`
+  pour les mois passés), période libre calculée à la volée, « Non évalué » pour l'utilisation rationnelle du carburant sans
+  consommation théorique. Écran de détail par indicateur (tendance, historique, répartition par véhicule/site), cartes des 8
+  indicateurs et donut de l'état de la flotte sur le tableau de bord.
 - **Circuits et ESPC** : étapes ordonnées avec distances, point de départ, carte (Leaflet / OpenStreetMap), fiche ESPC
   (adresse, e-mail, GPS). **Suivi des livraisons** (un seul menu) : vue circuit — chaque sortie du jour se lit comme une ligne d'étapes (départ puis sites, avec statut, distances, retards, raisons, indicateurs et actions rapides livrée / non livrée) ; vue tableau (bouton « Vue tableau ») : statut par site (planifiée / livrée / non livrée),
   date, lieu (site ou transit), raison ; clôturer une sortie marque les sites livrés. API : `/api/livraisons`.
@@ -57,14 +60,24 @@ du périmètre de l'utilisateur.
 - **Rapports** : PDF et Excel (DDKM, flotte, carburant, maintenance, financier, bailleur), envoi par e-mail, envois
   planifiés (`php artisan reports:send`, 06:00 ; `--monthly` le 1er du mois à 03:30).
 
+- **Cartographie** (menu, sous le chronogramme ; anciennement « Suivi de la saisie ») : carte de la Côte d'Ivoire avec les **limites
+  officielles des 113 districts sanitaires** (`public/geo/ci-districts.json`, issu du fichier du ministère) et les limites des
+  **33 régions** (traits orange). Chaque district est vert (au moins une sortie saisie, hors annulées) ou rouge, pour un mois ou
+  l'année ; le point blanc est son chef-lieu. Filtres année, mois et région ; **taux de remplissage** = mois renseignés / mois
+  écoulés (carte, carte de chiffres et colonne « Taux » du tableau des 12 mois par district).
+- **Suivi en temps réel** (ancienne « Cartographie ») : simulation, sur OpenStreetMap, du déplacement des véhicules du district
+  choisi dans le menu, chacun sur son circuit (départ du chef-lieu à 07:30, 40 km/h, 10 min par site, itinéraires OSRM public
+  de démonstration). Limite de la région et districts voisins en traits fins, district teinté ; un clic sur un véhicule cadre son
+  parcours. Sites sans GPS : positions de démonstration autour du chef-lieu.
 - **Paramètres** (dernier groupe du menu) : centres de santé (ESPC), chefs de mission et passagers, districts.
 - **Administration** (permission `manage_settings`) : seuils d'alerte, prix du carburant, **objectifs des
-  9 indicateurs** (couleurs des cartes, rapports et recommandations), **districts** (liste du périmètre, création et
+  8 indicateurs** (couleurs des cartes, rapports et recommandations), **districts** (liste du périmètre, création et
   édition par le national avec `manage_districts`), **journal d'audit** en lecture seule (`view_audit_logs`).
 
 ## Page d'accueil et application mobile
 
-- `/` : page de présentation (animée) avec le QR code d'installation et l'accès à l'administration (`/admin`).
+- `/` : page de présentation (papier / encre / orange) : fonctionnement, **cartographie**, les 8 indicateurs, application
+  terrain, suivi en temps réel, questions, avec le QR code d'installation et l'accès à l'administration (`/admin`).
 - `/m` : **application convoyeur** installable (PWA). Le chef de mission ou le passager y reçoit les sorties validées de son
   équipe, exécute le circuit site par site (livré / transit / non livré), déclare le carburant et termine la sortie ; le
   bureau le voit aussitôt dans « Suivi des livraisons ». Fonctionne hors réseau (actions envoyées au retour du réseau).
@@ -93,6 +106,22 @@ du périmètre de l'utilisateur.
   `php artisan webpush:vapid --write` génère les clés VAPID dans `.env` (sous Windows, `WEBPUSH_OPENSSL_CONF` doit pointer
   vers un `openssl.cnf` valide). API : `/api/mobile/*` (jeton à capacité « mobile » uniquement).
 - Compte de démonstration : identifiant `kone.ibrahim` (ou `convoyeur@logimaster.test`) / `password` (ANYAMA, sortie du jour validée).
+
+## Organisation et géographie
+
+- **Organisation** : **10 PRES** réelles, auxquelles sont rattachées les 33 régions (`app/Domain/Organisation/PresMapping.php`, commande
+  `php artisan organisation:pres`, idempotente) ; districts renommés selon la liste officielle (ex. SAN-PEDRO).
+- **Districts** : `php artisan districts:geo [--force]` charge les coordonnées des chefs-lieux
+  (`database/data/districts_geo.json`, OpenStreetMap, replacés dans leur polygone officiel si besoin).
+- Le fichier des limites est servi avec une adresse versionnée (`Brand::url()`), le navigateur reprend donc toujours le dernier tracé.
+
+## Déploiement (Render, Docker)
+
+`docker/start.sh` enchaîne au démarrage : migrations, restauration de la sauvegarde, installation, chargement des données,
+`organisation:pres`, `districts:geo --force`, `indicators:backfill`, puis caches (config, routes, vues, événements, Filament).
+SQLite est réglé pour la performance (WAL, `busy_timeout`, index composites) ; opcache est configuré dans le `Dockerfile`.
+Variables à définir sur Render : `APP_NAME=Logimaster`, `CACHE_STORE=file`, `VAPID_*` (notifications push), `BACKUP_S3_*`
+(sauvegardes), `SENTRY_LARAVEL_DSN` (erreurs). Un **disque persistant** est nécessaire pour conserver la base entre deux déploiements.
 
 ## Module Finance (retiré)
 
@@ -149,7 +178,9 @@ exigent leur permission de consultation, et les rôles ne sont accessibles qu'au
 
 ## Reste à faire
 
-2FA admin et verrouillage de compte, bibliothèque de documents, PostgreSQL.
+2FA admin et verrouillage de compte, bibliothèque de documents, PostgreSQL ; GPS des centres de santé (pour des positions
+réelles dans le suivi en temps réel) ; service d'itinéraires fiable à la place du serveur OSRM de démonstration ; démarrage mobile limité
+au jour planifié ; dépôt GitHub à passer en privé avant les données réelles.
 
 Hors périmètre (décision du projet) : synchronisation hors ligne (`/api/sync/*`), applications mobile et desktop,
 temps réel (Reverb, Horizon, Scramble), optimisation de circuits.

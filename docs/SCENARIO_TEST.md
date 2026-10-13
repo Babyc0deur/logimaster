@@ -70,6 +70,14 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 3. **Livraisons ESPC** ✔ sites livrés présents ; « non livré » avec son motif.
 4. Tableau de bord ✔ les indicateurs bougent (livraison, respect du chronogramme, carburant) ; filtre par défaut mai–oct. 2025 ; filtre district/région/PRES fonctionnel.
 
+## 6 bis. Cartographie et suivi en temps réel
+
+1. Menu **Cartographie** (sous Chronogramme), compte `pres@logimaster.test`. ✔ Carte des 113 districts sanitaires (limites officielles) avec les limites orange des régions ; vert = au moins une sortie saisie, rouge = rien ; points blancs = chefs-lieux.
+2. Changer le **mois** puis la **région** (menu de la carte). ✔ Couleurs et compteurs mis à jour ; la région choisie est mise en avant et la carte zoome dessus ; le survol d'un district donne région, sorties et mois renseignés.
+3. ✔ Le **taux de remplissage** s'affiche (bandeau de la carte, carte de chiffres, colonne « Taux » du tableau : mois renseignés / mois écoulés).
+4. Menu **Suivi en temps réel**, district MEAGUI choisi dans le sélecteur. ✔ Les véhicules du district partent du chef-lieu à 07:30 (vitesses ×30 / ×60 / ×180, Pause, Recommencer) ; limite de la région en orange, district teinté.
+5. Cliquer un véhicule dans la liste. ✔ La carte cadre son parcours et le met en avant. Changer de district dans le menu. ✔ La simulation suit le nouveau district (message explicite s'il n'a ni véhicule ni circuit).
+
 ## 7. Hors réseau
 
 1. Sur le téléphone, couper données + Wi-Fi (mode avion).
