@@ -22,7 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/** Preuves de terrain : photo du compteur, preuve de livraison par site, position GPS des centres relevée à la livraison. */
+/** Preuves de terrain : photo du compteur, position GPS du véhicule et kilométrage relevés à chaque livraison. */
 class TerrainProofsTest extends TestCase
 {
     use RefreshDatabase;
@@ -90,24 +90,30 @@ class TerrainProofsTest extends TestCase
         $this->assertStringStartsWith('compteurs/', $sortie->fresh()->photo_km_arrivee);
     }
 
-    public function test_delivery_proof_and_first_precise_position_places_the_centre(): void
+    public function test_delivery_records_the_vehicle_position_and_odometer_and_first_precise_position_places_the_centre(): void
     {
-        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->h)->assertOk();
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010], $this->h)->assertOk();
         $stop = $this->stop('CSR A');
 
         $this->postJson("/api/mobile/livraisons/{$stop->id}", [
-            'statut' => 'livre', 'lat' => 5.40012, 'lon' => -6.55031, 'precision' => 18,
-            'receptionnaire' => '  Mme Koffi (majore)  ', 'colis' => 6, 'preuve_photo' => $this->photo(),
-        ], $this->h)->assertOk()->assertJsonPath('stops.0.receptionnaire', 'Mme Koffi (majore)')->assertJsonPath('stops.0.colis', 6)->assertJsonPath('stops.0.preuve', true);
+            'statut' => 'livre', 'lat' => 5.40012, 'lon' => -6.55031, 'precision' => 18, 'km_compteur' => 42035,
+        ], $this->h)->assertOk()->assertJsonPath('stops.0.km', 42035)->assertJsonPath('stops.0.position', true);
 
         $stop->refresh();
-        $this->assertStringStartsWith('preuves/', $stop->preuve_photo);
+        $this->assertSame(42035, $stop->km_compteur);
+        $this->assertEqualsWithDelta(5.40012, $stop->lat, 1e-6);
         $this->assertSame(18, $stop->gps_precision_m);
         $this->assertSame(0, $stop->gps_ecart_m);
         $espc = $stop->espc->fresh();
         $this->assertEqualsWithDelta(5.40012, $espc->gps_lat, 1e-6);
         $this->assertSame('livraison', $espc->gps_source);
         $this->assertNotNull($espc->gps_releve_at);
+    }
+
+    public function test_odometer_below_the_departure_reading_is_refused(): void
+    {
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$this->stop('CSR A')->id}", ['statut' => 'livre', 'km_compteur' => 42000], $this->h)->assertStatus(422);
     }
 
     public function test_known_centre_keeps_its_position_and_a_distant_delivery_is_flagged(): void
@@ -117,7 +123,7 @@ class TerrainProofsTest extends TestCase
         $stop->espc->update(['gps_lat' => 5.40, 'gps_lon' => -6.55, 'gps_source' => 'manuel']);
 
         // environ 2,2 km au nord du centre
-        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'livre', 'lat' => 5.42, 'lon' => -6.55, 'precision' => 10, 'receptionnaire' => 'X'], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'livre', 'lat' => 5.42, 'lon' => -6.55, 'precision' => 10], $this->h)->assertOk();
 
         $stop->refresh();
         $this->assertGreaterThan(2000, $stop->gps_ecart_m);
@@ -131,35 +137,32 @@ class TerrainProofsTest extends TestCase
         $a = $this->stop('CSR A');
         $b = $this->stop('DR C');
 
-        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre', 'lat' => 5.4, 'lon' => -6.5, 'precision' => 900, 'receptionnaire' => 'X'], $this->h)->assertOk();
-        $this->postJson("/api/mobile/livraisons/{$b->id}", ['statut' => 'transit', 'lat' => 5.4, 'lon' => -6.5, 'precision' => 5, 'receptionnaire' => 'Y'], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre', 'lat' => 5.4, 'lon' => -6.5, 'precision' => 900], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$b->id}", ['statut' => 'transit', 'lat' => 5.4, 'lon' => -6.5, 'precision' => 5], $this->h)->assertOk();
 
         $this->assertNull($a->espc->fresh()->gps_lat);
         $this->assertNull($b->espc->fresh()->gps_lat);
         $this->assertSame(900, $a->fresh()->gps_precision_m);
     }
 
-    public function test_marking_not_delivered_clears_the_delivery_proof(): void
+    public function test_marking_not_delivered_clears_the_odometer(): void
     {
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->h)->assertOk();
         $stop = $this->stop('CSR A');
-        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'livre', 'receptionnaire' => 'X', 'colis' => 2, 'preuve_photo' => $this->photo()], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'livre', 'km_compteur' => 42100], $this->h)->assertOk();
         $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'non_livre', 'raison' => 'Centre fermé'], $this->h)->assertOk();
 
-        $stop->refresh();
-        $this->assertNull($stop->receptionnaire);
-        $this->assertNull($stop->colis);
-        $this->assertNull($stop->preuve_photo);
+        $this->assertNull($stop->fresh()->km_compteur);
     }
 
-    public function test_office_sees_the_proof_the_photos_and_the_position_alert(): void
+    public function test_office_sees_the_odometer_the_position_and_the_position_alert(): void
     {
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010, 'photo_compteur' => $this->photo()], $this->h)->assertOk();
         $a = $this->stop('CSR A');
         $b = $this->stop('CSU B');
         $b->espc->update(['gps_lat' => 5.40, 'gps_lon' => -6.55]);
-        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre', 'receptionnaire' => 'Mme Koffi', 'colis' => 6, 'preuve_photo' => $this->photo(), 'lat' => 5.3, 'lon' => -6.5, 'precision' => 12], $this->h)->assertOk();
-        $this->postJson("/api/mobile/livraisons/{$b->id}", ['statut' => 'livre', 'receptionnaire' => 'M. Yao', 'lat' => 5.45, 'lon' => -6.55, 'precision' => 12], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre', 'km_compteur' => 42050, 'lat' => 5.3, 'lon' => -6.5, 'precision' => 12], $this->h)->assertOk();
+        $this->postJson("/api/mobile/livraisons/{$b->id}", ['statut' => 'livre', 'km_compteur' => 42080, 'lat' => 5.45, 'lon' => -6.55, 'precision' => 12], $this->h)->assertOk();
 
         $office = User::factory()->create(['is_active' => true]);
         $office->assignRole(User::ROLE_PRES_ADMIN);
@@ -168,11 +171,10 @@ class TerrainProofsTest extends TestCase
         \Filament\Facades\Filament::setTenant($this->district);
 
         $this->get("/admin/{$this->district->id}/suivi-circuits?date=2026-10-14")->assertOk()
-            ->assertSee('Mme Koffi')->assertSee('6 colis')->assertSee('Voir le bon signé')
+            ->assertSee('42 050 km')->assertSee('Position du véhicule relevée')
             ->assertSee('du centre au moment de la livraison');   // M. Yao : ~5,6 km du centre
 
-        $this->get("/admin/{$this->district->id}/livraisons")->assertOk()->assertSee('Mme Koffi');
-        $this->assertStringContainsString('data:image/png;base64,', view('filament.modals.photos', ['photos' => [['titre' => 'x', 'src' => \App\Support\PrivatePhoto::dataUri($a->fresh()->preuve_photo)]]])->render());
+        $this->get("/admin/{$this->district->id}/livraisons")->assertOk();
         $this->assertNotNull(\App\Support\PrivatePhoto::dataUri($this->plan->fresh()->sortie->photo_km_depart));
     }
 

@@ -188,12 +188,12 @@ function recount(p) { p.restants = p.stops.filter(function (s) { return s.etat =
 function applyLocal(op) {
     var p = op.plan ? S.details[op.plan] : null; if (!p) return;
     if (op.type === 'start') { p.demarree = true; p.sortie = p.sortie || { id: null, statut: 'en_cours', km_depart: (op.body && op.body.km_depart) || null, km_arrivee: null }; p.sortie.photo_depart = !!op.photo; }
-    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.receptionnaire = ok ? (op.body.receptionnaire || null) : null; st.colis = ok && op.body.colis != null ? op.body.colis : null; st.preuve = ok && !!op.photo; } recount(p); }
+    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = ok && op.body.km_compteur != null ? op.body.km_compteur : null; st.position = ok && op.body.lat != null; } recount(p); }
     if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; p.sortie.photo_arrivee = !!op.photo; } }
     if (op.type === 'fuel') { p.ravitaillements.unshift({ facture: !!op.photo, client_ref: op.body.client_ref, litres: +op.body.litres, prix_unitaire: +op.body.prix_unitaire || null, montant: null, km_compteur: op.body.km_compteur || null, station: op.body.station || null, date: op.at.slice(0, 10), pending: true }); }
     S.sorties.forEach(function (s) { if (s.id === op.plan) { s.demarree = p.demarree; s.terminee = p.terminee; s.traites = p.traites; s.livres = p.livres; } });
 }
-var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur', livraison: 'preuve_photo', signal: 'photo' };
+var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur', signal: 'photo' };
 function send(op) {
     return (op.photo ? photoGet(op.id) : Promise.resolve(null)).then(function (photo) {
         var body = Object.assign({}, op.body);
@@ -511,7 +511,7 @@ function circuitView(id) {
         var d = DOT[s.etat] || DOT.planifie, can = p.demarree && !p.terminee, active = can && (s === next || openStop === s.id);
         body += '<div class="stop"><div class="dot ' + d[0] + '">' + d[1] + '</div><h4>' + esc(s.espc) + (s.type ? '<span class="tag n" style="background:var(--soft);color:var(--muted)">' + esc(String(s.type).replace(/_/g, ' ')) + '</span>' : '') + '</h4>' +
             '<div class="muted">' + LABEL[s.etat] + (s.raison ? ' · ' + esc(s.raison) : '') + '</div>' +
-            (s.receptionnaire || s.colis != null || s.preuve ? '<div class="muted">' + [s.receptionnaire ? 'Reçu par ' + esc(s.receptionnaire) : '', s.colis != null ? esc(s.colis) + ' colis' : '', s.preuve ? '📷 bon signé' : ''].filter(Boolean).join(' · ') + '</div>' : '');
+            (s.km != null || s.position ? '<div class="muted">' + [s.position ? '📍 position relevée' : '', s.km != null ? Number(s.km).toLocaleString('fr-FR') + ' km' : ''].filter(Boolean).join(' · ') + '</div>' : '');
         if (can && s.etat !== 'planifie' && openStop !== s.id) body += '<button class="muted" data-edit="' + s.id + '" style="background:none;border:none;padding:4px 0;text-decoration:underline;font-size:13px;color:var(--accent)">Modifier</button>';
         if (active) body += '<div class="acts"><button class="btn ok" data-do="livre" data-id="' + s.id + '">Livré</button><button class="btn warn" data-do="transit" data-id="' + s.id + '">Transit</button><button class="btn bad" data-do="non_livre" data-id="' + s.id + '">Non livré</button></div>';
         body += '</div>';
@@ -539,15 +539,22 @@ function bindCommon() {
     if (route().name === 'alerts') bindAlerts();
     if (route().name === 'profile') bindProfile();
 }
+var geoError = null;
 function getPos(wait) {
-    wait = wait || 2500;
+    wait = wait || 2500; geoError = null;
     return new Promise(function (resolve) {
-        if (!navigator.geolocation) return resolve(null);
-        var done = false, t = setTimeout(function () { done = true; resolve(null); }, wait);
+        if (!navigator.geolocation) { geoError = 'absent'; return resolve(null); }
+        var done = false, t = setTimeout(function () { done = true; geoError = 'delai'; resolve(null); }, wait);
         navigator.geolocation.getCurrentPosition(function (g) {
             if (!done) { clearTimeout(t); resolve({ lat: +g.coords.latitude.toFixed(6), lon: +g.coords.longitude.toFixed(6), precision: Math.round(g.coords.accuracy || 0) || null }); }
-        }, function () { if (!done) { clearTimeout(t); resolve(null); } }, { enableHighAccuracy: true, maximumAge: 30000, timeout: wait - 100 });
+        }, function (e) { if (!done) { clearTimeout(t); geoError = e && e.code === 1 ? 'refuse' : 'indispo'; resolve(null); } }, { enableHighAccuracy: true, maximumAge: 30000, timeout: wait - 100 });
     });
+}
+function geoMessage(g) {
+    if (g) return '📍 Position du véhicule relevée' + (g.precision ? ' (précision ' + g.precision + ' m)' : '');
+    return geoError === 'refuse' ? '📍 Localisation refusée : autorisez-la dans les réglages du navigateur pour ce site, puis réessayez.'
+        : geoError === 'delai' ? '📍 Position non reçue à temps : sortez à découvert et réessayez.'
+        : '📍 Position indisponible sur cet appareil.';
 }
 function stopAction(p, stopId, statut) {
     if (statut === 'non_livre') return sheetReason(p, stopId);
@@ -613,28 +620,37 @@ function sheetFinish(p) {
 function sheetDeliver(p, stopId, statut) {
     var st = p.stops.filter(function (s) { return s.id === stopId; })[0] || {};
     var pos = null, posDone = false;
+    // dernier kilométrage connu : site précédent, sinon départ de la sortie
+    var last = p.stops.reduce(function (m, s) { return s.km != null && s.km > m ? s.km : m; }, (p.sortie && p.sortie.km_depart) || 0);
     sheet('<h3>' + (statut === 'transit' ? 'Livré en transit' : 'Livré') + ' : ' + esc(st.espc || '') + '</h3>' +
-        '<div class="muted" id="gps">📍 Recherche de la position…</div>' +
-        '<label for="rc">Reçu par (nom et fonction)</label><input id="rc" type="text" maxlength="120" autocomplete="off" placeholder="ex. Mme Koffi, major" value="' + esc((S.recv || {})[st.espc] || '') + '">' +
-        '<label for="cl">Nombre de colis (facultatif)</label><input id="cl" type="number" inputmode="numeric" min="0" placeholder="ex. 6">' +
-        photoField('Bon de livraison signé (facultatif)', 'Photographier le bon signé') +
+        '<button class="btn sec" id="locate" type="button">📍 Relever la position du véhicule</button>' +
+        '<div class="muted" id="gps" style="margin-top:6px">' + (navigator.onLine ? 'La position est demandée quand vous appuyez sur le bouton.' : 'Hors réseau : le GPS fonctionne quand même, la livraison sera envoyée au retour du réseau.') + '</div>' +
+        '<label for="kms">Kilométrage au compteur</label><input id="kms" type="number" inputmode="numeric" min="' + esc(last || 0) + '" placeholder="' + (last ? 'au moins ' + esc(last) : 'ex. 42350') + '" required>' +
         '<p class="err" id="err"></p><button class="btn ok" id="ok" style="margin-top:8px">Confirmer la livraison</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
-        bindPhotoField();
-        $('rc').oninput = function () { $('err').textContent = ''; };
-        getPos(10000).then(function (g) {
-            pos = g; posDone = true; var el = $('gps'); if (!el) return;
-            el.textContent = g ? '📍 Position relevée' + (g.precision ? ' (précision ' + g.precision + ' m)' : '') : '📍 Position indisponible : la livraison sera enregistrée sans position';
-        });
+        $('kms').oninput = function () { $('err').textContent = ''; };
+        function locate() {
+            var b = $('locate'); if (b) { b.disabled = true; b.textContent = '📍 Recherche de la position…'; }
+            return getPos(10000).then(function (g) {
+                pos = g; posDone = true;
+                var el = $('gps'); if (el) el.textContent = geoMessage(g);
+                if (b) { b.disabled = false; b.textContent = g ? '📍 Relever à nouveau' : '📍 Réessayer'; }
+                return g;
+            });
+        }
+        $('locate').onclick = locate;
         $('ok').onclick = function () {
-            var who = $('rc').value.trim(), n = $('cl').value;
-            if (!who) { $('err').textContent = 'Indiquez qui a reçu la livraison.'; return; }
-            var body = { statut: statut, receptionnaire: who };
-            if (n !== '') body.colis = parseInt(n, 10);
-            if (pos) Object.assign(body, pos);
-            S.recv = S.recv || {}; if (st.espc) S.recv[st.espc] = who;
-            var photo = sheetPhoto; closeSheet(); openStop = null;
-            if (!posDone) toast('Position non reçue à temps : livraison enregistrée sans position');
-            enqueueWithPhoto({ type: 'livraison', plan: p.id, target: stopId, body: body }, photo);
+            var v = parseInt($('kms').value, 10);
+            if (isNaN(v)) { $('err').textContent = 'Indiquez le kilométrage au compteur.'; return; }
+            if (last && v < last) { $('err').textContent = 'Inférieur au dernier kilométrage relevé (' + last + ' km).'; return; }
+            var go = function () {
+                var body = { statut: statut, km_compteur: v };
+                if (pos) Object.assign(body, pos);
+                closeSheet(); openStop = null;
+                if (!pos) toast('Livraison enregistrée sans position GPS');
+                enqueue({ type: 'livraison', plan: p.id, target: stopId, body: body });
+            };
+            if (pos || posDone) return go();
+            $('ok').disabled = true; locate().then(function () { go(); });   // l'appui sur « Confirmer » est l'action qui déclenche la demande
         };
     });
 }
@@ -645,7 +661,7 @@ function sheetReason(p, stopId) {
         [].forEach.call(document.querySelectorAll('[data-r]'), function (b) { b.onclick = function () { $('rs').value = b.getAttribute('data-r'); }; });
         $('ok').onclick = function () {
             var v = $('rs').value.trim(); if (!v) { $('err').textContent = 'La raison est obligatoire.'; return; }
-            closeSheet(); openStop = null; getPos().then(function (pos) { enqueue({ type: 'livraison', plan: p.id, target: stopId, body: Object.assign({ statut: 'non_livre', raison: v }, pos || {}) }); });
+            closeSheet(); openStop = null; getPos().then(function (pos) { if (!pos && geoError === 'refuse') toast('Localisation refusée : site enregistré sans position'); enqueue({ type: 'livraison', plan: p.id, target: stopId, body: Object.assign({ statut: 'non_livre', raison: v }, pos || {}) }); });
         };
     });
 }

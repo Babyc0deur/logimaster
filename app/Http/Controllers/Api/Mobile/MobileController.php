@@ -105,11 +105,8 @@ class MobileController extends ApiController
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lon' => ['nullable', 'numeric', 'between:-180,180'],
             'precision' => ['nullable', 'numeric', 'min:0', 'max:100000'],    // précision du GPS du téléphone, en mètres
-            'receptionnaire' => ['nullable', 'string', 'max:120'],            // preuve de livraison : qui a reçu
-            'colis' => ['nullable', 'integer', 'min:0', 'max:100000'],
-            'preuve_photo' => ['nullable', 'string', 'max:6000000'],         // photo du bon de livraison signé (data URL)
+            'km_compteur' => ['nullable', 'integer', 'min:0', 'max:9999999'],  // kilométrage au compteur au moment de la livraison
         ]);
-        $photo = isset($data['preuve_photo']) ? $this->decodePhoto($data['preuve_photo']) : null;
         $when = isset($data['done_at']) ? CarbonImmutable::parse($data['done_at']) : CarbonImmutable::now();
 
         $update = match ($data['statut']) {
@@ -124,15 +121,14 @@ class MobileController extends ApiController
             default => ['statut' => 'planifie', 'date_livraison' => null, 'lieu_livraison' => null, 'raison_non_livraison' => null],
         };
         $delivered = in_array($data['statut'], ['livre', 'transit'], true);
+        $km = $delivered ? ($data['km_compteur'] ?? null) : null;
+        $kmDepart = $plan->sortie?->km_depart;
+        abort_if($km !== null && $kmDepart && $km < (int) $kmDepart, 422, 'Le kilométrage est inférieur au kilométrage de départ ('.(int) $kmDepart.' km).');
         $livraison->update($update + [
             'lat' => $data['lat'] ?? null, 'lon' => $data['lon'] ?? null,
             'saisi_par' => $request->user()->getKey(), 'saisi_at' => $when,
-            'receptionnaire' => $delivered ? (trim((string) ($data['receptionnaire'] ?? '')) ?: null) : null,
-            'colis' => $delivered ? ($data['colis'] ?? null) : null,
-        ] + ($delivered ? [] : ['preuve_photo' => null]));
-        if ($delivered && $photo) {
-            $livraison->forceFill(['preuve_photo' => $this->storePhoto($photo, 'preuves')])->saveQuietly();
-        }
+            'km_compteur' => $km,
+        ]);
         app(SiteGeolocation::class)->record($livraison->fresh('espc'), $data['lat'] ?? null, $data['lon'] ?? null, isset($data['precision']) ? (float) $data['precision'] : null);
 
         return $this->detail($plan->fresh());
@@ -291,7 +287,7 @@ class MobileController extends ApiController
             },
             'date_livraison' => $l->date_livraison?->toDateString(), 'raison' => $l->raison_non_livraison, 'distance_km' => $distances->get($l->espc_id),
             'saisi_at' => $l->saisi_at?->toIso8601String(),
-            'receptionnaire' => $l->receptionnaire, 'colis' => $l->colis, 'preuve' => (bool) $l->preuve_photo,
+            'km' => $l->km_compteur, 'position' => $l->lat !== null, 'lat' => $l->lat, 'lon' => $l->lon,
         ]);
         $sortie = $p->sortie;
 
