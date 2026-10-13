@@ -43,16 +43,23 @@
                         <option value="{{ $m }}" style="color:#111">{{ ucfirst($date->translatedFormat('F Y')) }}</option>
                     @endforeach
                 </select>
+                <select wire:model.live="region" style="{{ $field }}" aria-label="Région de la carte">
+                    <option value="" style="color:#111">Toutes les régions</option>
+                    @foreach ($regions as $id => $name)
+                        <option value="{{ $id }}" style="color:#111">{{ $name }}</option>
+                    @endforeach
+                </select>
                 <span style="font-size:.85rem"><b style="color:{{ $green }}">{{ $mapOk }}</b> district(s) renseigné(s) · <b style="color:{{ $red }}">{{ count($map) - $mapOk }}</b> non renseigné(s)</span>
                 <span style="margin-left:auto;display:flex;gap:14px;font-size:.8rem">
                     <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $green }};vertical-align:-1px"></i> Renseigné</span>
                     <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $red }};vertical-align:-1px"></i> Non renseigné</span>
+                    <span><i style="display:inline-block;width:16px;height:0;border-top:3px solid #ea580c;vertical-align:3px"></i> Limite de région</span>
                 </span>
             </div>
             <div wire:key="ss-map-{{ md5(json_encode([$map, $region])) }}" wire:ignore x-data="{}"
                  x-init="
                     const data = @js($map);
-                    const run = () => window.lmSaisieMap($refs.map, data, '{{ \App\Support\Brand::url('geo/ci-districts.json') }}');   // adresse versionnée : le navigateur reprend le nouveau fichier
+                    const run = () => window.lmSaisieMap($refs.map, data, '{{ \App\Support\Brand::url('geo/ci-districts.json') }}', @js($regions[$region] ?? ''));   // adresse versionnée : le navigateur reprend le nouveau fichier
                     const boot = () => {
                         if (window.lmSaisieMap) return run();
                         const s = document.createElement('script'); s.src = '/js/lm-saisie-map.js?v={{ @filemtime(public_path('js/lm-saisie-map.js')) }}'; s.onload = run; document.head.appendChild(s);
@@ -70,7 +77,7 @@
                 <div x-ref="map" style="height:min(64vh, 620px);min-height:380px;z-index:0"></div>
             </div>
             <p style="font-size:.75rem;opacity:.75;padding:8px 14px;border-top:1px solid rgba(127,127,127,.28)">
-                Limites officielles des 113 districts sanitaires ; chaque point est le chef-lieu du district. Fond de carte © contributeurs OpenStreetMap.
+                Limites officielles des 113 districts sanitaires ; les traits orange sont les limites des régions ; chaque point blanc est le chef-lieu du district. Fond de carte © contributeurs OpenStreetMap.
             </p>
         </div>
 
