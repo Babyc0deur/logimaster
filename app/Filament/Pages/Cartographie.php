@@ -25,8 +25,11 @@ class Cartographie extends Page
 
     protected static ?string $slug = 'suivi-temps-reel';
 
-    /** Région simulée : tous ses districts (limites de la région et de chaque district sur la carte). */
+    /** Région dont les limites (et celles de ses districts) sont tracées. */
     private const REGION = 'NAWA';
+
+    /** District dont les véhicules sont simulés. */
+    private const DISTRICT = 'MEAGUI';
 
     public static function canAccess(): bool
     {
@@ -35,17 +38,19 @@ class Cartographie extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Simulation du déplacement des véhicules sur leurs circuits, région NAWA et ses districts — fond de carte OpenStreetMap.';
+        return 'Simulation du déplacement des véhicules sur leurs circuits, district de Méagui, région NAWA — fond de carte OpenStreetMap.';
     }
 
     public function getViewData(): array
     {
-        $scope = DashboardFilters::accessibleDistricts()->with('region:id,name')
+        $limits = DashboardFilters::accessibleDistricts()->with('region:id,name')
             ->whereIn('region_id', Region::where('name', self::REGION)->select('id'))->orderBy('name')->get();
+        $scope = $limits->where('name', self::DISTRICT)->values();
         if ($scope->isEmpty() && Filament::getTenant()) {
             $scope = collect([Filament::getTenant()->loadMissing('region:id,name')]);
+            $limits = $scope;
         }
 
-        return ['map' => app(FleetMapSimulation::class)->buildMany($scope)];
+        return ['map' => app(FleetMapSimulation::class)->buildMany($scope, 12, $limits)];
     }
 }

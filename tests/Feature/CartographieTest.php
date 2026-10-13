@@ -60,7 +60,7 @@ class CartographieTest extends TestCase
         $region = Region::create(['pres_id' => Pres::create(['name' => 'PRES'])->id, 'name' => 'NAWA']);
         $ds = [];
         foreach ([['A', 5.4, -6.5], ['B', 5.9, -6.1]] as [$n, $lat, $lon]) {
-            $d = District::create(['region_id' => $region->id, 'name' => "DIST {$n}", 'sync_id' => $n, 'sync_password_hash' => 'x']);
+            $d = District::create(['region_id' => $region->id, 'name' => $n === 'A' ? 'MEAGUI' : "DIST {$n}", 'sync_id' => $n, 'sync_password_hash' => 'x']);
             $d->forceFill(['latitude' => $lat, 'longitude' => $lon])->save();
             Vehicle::create(['district_id' => $d->id, 'immatriculation' => "V{$n}"]);
             $c = Circuit::create(['district_id' => $d->id, 'nom' => "C{$n}"]);
@@ -78,6 +78,6 @@ class CartographieTest extends TestCase
         $user->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($user);
         Filament::setTenant($ds[0]);
-        Livewire::test(Cartographie::class)->assertSee('VA')->assertSee('VB')->assertDontSee('Toute la région');
+        Livewire::test(Cartographie::class)->assertSee('VA')->assertDontSee('VB');
     }
 }

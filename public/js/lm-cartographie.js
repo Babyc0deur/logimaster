@@ -30,7 +30,7 @@ window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
 
     // limites : région (trait orange) et district(s) simulé(s) (zone teintée), sous les tracés
     if (geoUrl) fetch(geoUrl).then(r => r.json()).then(g => {
-        const names = (data.origins || []).map(o => o.district), regs = data.regions || [];
+        const names = data.limits ? data.limits.districts : (data.origins || []).map(o => o.district), regs = data.limits ? data.limits.regions : (data.regions || []);
         const pane = map.createPane('limites'); pane.style.zIndex = 350;
         L.geoJSON((g.features || []).filter(f => names.includes(f.properties.n)), { pane: 'limites', interactive: false, style: { color: '#16150f', weight: 1, fillColor: '#ea580c', fillOpacity: 0.1 } }).addTo(map);
         L.geoJSON((g.regions || []).filter(f => regs.includes(f.properties.r)), { pane: 'limites', interactive: false, style: { fill: false, color: '#ea580c', weight: 2.6, opacity: 0.9 } }).addTo(map);

@@ -28,9 +28,10 @@ class FleetMapSimulation
      * Simulation sur plusieurs districts (une région, par exemple) : chaque véhicule part du chef-lieu de son propre district.
      * Jusqu'à 6 districts, tous leurs véhicules (8 au plus) ; au-delà, un seul véhicule par district ; au plus $cap véhicules sur la carte.
      *
-     * @param  Collection<int, District>  $districts
+     * @param  Collection<int, District>  $districts  districts simulés
+     * @param  Collection<int, District>|null  $limits  districts dont les limites (et celles de leurs régions) sont tracées ; par défaut les districts simulés
      */
-    public function buildMany(Collection $districts, int $cap = 12): array
+    public function buildMany(Collection $districts, int $cap = 12, ?Collection $limits = null): array
     {
         $per = $districts->count() <= 6 ? 8 : 1;
         $vehicles = [];
@@ -59,6 +60,7 @@ class FleetMapSimulation
             'multi' => $districts->count() > 1,
             'origins' => $origins,
             'regions' => $regions,
+            'limits' => $limits ? ['districts' => $limits->pluck('name')->all(), 'regions' => $limits->map(fn ($d) => $d->region?->name)->filter()->unique()->values()->all()] : null,
             'centre' => $origins[0] ?? ['lat' => self::FALLBACK[0], 'lon' => self::FALLBACK[1]],
             'vehicles' => $vehicles,
             'simulated' => $simulated,
