@@ -41,7 +41,7 @@ class SuiviSaisieTest extends TestCase
         $this->actingAs($admin);
         Filament::setTenant($meagui);
 
-        $page = Livewire::test(SuiviSaisie::class)->set('annee', 2026)->assertOk()->assertSee('MEAGUI')->assertSee('GUEYO');
+        $page = Livewire::test(SuiviSaisie::class)->set('annee', 2026)->assertOk()->assertSee('MEAGUI')->assertSee('GUEYO')->assertSee('Taux de remplissage');
         $data = $page->instance()->getViewData();
         $rows = collect($data['rows'])->keyBy('name');
         $this->assertSame([1 => 2, 3 => 1], $rows['MEAGUI']['mois']);   // février : sortie annulée, non comptée

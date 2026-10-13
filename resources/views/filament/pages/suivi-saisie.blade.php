@@ -32,6 +32,7 @@
             <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Districts</div><div style="font-size:1.3rem;font-weight:600">{{ $total }}</div></div>
             <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">À jour ({{ $elapsed }} mois écoulé{{ $elapsed > 1 ? 's' : '' }})</div><div style="font-size:1.3rem;font-weight:600;color:{{ $green }}">{{ $complets }}</div></div>
             <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Aucune saisie en {{ $year }}</div><div style="font-size:1.3rem;font-weight:600;color:{{ $red }}">{{ $aucun }}</div></div>
+            <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Taux de remplissage {{ $year }}</div><div style="font-size:1.3rem;font-weight:600;color:{{ $tauxAnnee >= 80 ? $green : ($tauxAnnee >= 50 ? '#d97706' : $red) }}">{{ $tauxAnnee }} %</div><div style="font-size:.7rem;opacity:.6">mois renseignés / mois écoulés</div></div>
         </div>
 
         <div class="ss-card" style="border:1px solid rgba(127,127,127,.28);border-radius:12px;overflow:hidden">
@@ -49,7 +50,7 @@
                         <option value="{{ $id }}" style="color:#111">{{ $name }}</option>
                     @endforeach
                 </select>
-                <span style="font-size:.85rem"><b style="color:{{ $green }}">{{ $mapOk }}</b> district(s) renseigné(s) · <b style="color:{{ $red }}">{{ count($map) - $mapOk }}</b> non renseigné(s)</span>
+                <span style="font-size:.85rem"><b style="color:{{ $green }}">{{ $mapOk }}</b> district(s) renseigné(s) · <b style="color:{{ $red }}">{{ count($map) - $mapOk }}</b> non renseigné(s) · taux de remplissage <b>{{ $tauxCarte }} %</b></span>
                 <span style="margin-left:auto;display:flex;gap:14px;font-size:.8rem">
                     <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $green }};vertical-align:-1px"></i> Renseigné</span>
                     <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:{{ $red }};vertical-align:-1px"></i> Non renseigné</span>
@@ -98,6 +99,7 @@
                             <th class="ss-th" style="{{ $th }}">{{ ucfirst($date->translatedFormat('M')) }}</th>
                         @endforeach
                         <th class="ss-th" style="{{ $th }}">Mois saisis</th>
+                        <th class="ss-th" style="{{ $th }}">Taux</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,9 +120,10 @@
                                 </td>
                             @endforeach
                             <td style="padding:4px 8px;text-align:center;font-weight:600;color:{{ $r['renseignes'] >= $elapsed ? $green : $red }}">{{ $r['renseignes'] }} / {{ $elapsed }}</td>
+                            <td style="padding:4px 8px;text-align:center;font-weight:600">{{ $elapsed > 0 ? round(100 * $r['renseignes'] / $elapsed) : 0 }} %</td>
                         </tr>
                     @empty
-                        <tr><td colspan="16" style="padding:1.5rem;text-align:center;opacity:.7">Aucun district.</td></tr>
+                        <tr><td colspan="17" style="padding:1.5rem;text-align:center;opacity:.7">Aucun district.</td></tr>
                     @endforelse
                 </tbody>
                 @if ($rows->isNotEmpty())
@@ -130,7 +133,7 @@
                             @foreach ($perMonth as $m => $n)
                                 <td style="padding:6px 2px;text-align:center;font-size:.75rem;font-weight:600">{{ $m > $elapsed ? '' : $n.'/'.$rows->count() }}</td>
                             @endforeach
-                            <td></td>
+                            <td></td><td></td>
                         </tr>
                     </tfoot>
                 @endif

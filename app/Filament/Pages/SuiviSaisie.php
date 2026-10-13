@@ -113,7 +113,15 @@ class SuiviSaisie extends Page
             $perMonth[$m] = $rows->filter(fn ($r) => isset($r['mois'][$m]))->count();
         }
 
+        // taux de remplissage : un district est « renseigné » un mois dès qu'une sortie non annulée y est saisie
+        $taux = fn (int $ok, int $on) => $on > 0 ? (int) round(100 * $ok / $on) : 0;
+        $tauxAnnee = $taux($districts->sum(fn ($d) => count($counts[$d->id] ?? [])), $districts->count() * $elapsed);
+        $mapOk = collect($map)->where('v', '>', 0)->count();
+
         return [
+            'tauxAnnee' => $tauxAnnee,
+            'tauxCarte' => $taux($mapOk, count($map)),
+            'elapsedMap' => $elapsed,
             'rows' => $rows,
             'year' => $year,
             'years' => $this->years(),
@@ -125,7 +133,7 @@ class SuiviSaisie extends Page
             'regions' => Region::whereHas('districts', fn ($q) => $q->whereIn('id', DashboardFilters::accessibleDistricts()->select('id')))->orderBy('name')->pluck('name', 'id'),
             'months' => collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => CarbonImmutable::create($year, $m, 1)])->all(),
             'map' => $map,
-            'mapOk' => collect($map)->where('v', '>', 0)->count(),
+            'mapOk' => $mapOk,
             'mapMissing' => $everyone->count() - count($map),
         ];
     }
