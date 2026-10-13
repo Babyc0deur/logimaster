@@ -53,10 +53,22 @@
         /* ouverture */
         .hero { padding:72px 0 0; position:relative; overflow:hidden; }
         /* carte des districts en filigrane, légèrement transparente, fondue vers le bas et vers la gauche */
-        .hero::before { content:""; position:absolute; top:24px; right:max(2%, calc((100vw - 1124px) / 2 - 40px)); width:min(50vw, 640px); aspect-ratio:984 / 1040; background:url('/landing/ci-map.svg') no-repeat center / contain; opacity:.24; pointer-events:none; z-index:0;
-            -webkit-mask-image:linear-gradient(to bottom, #000 45%, transparent 96%); mask-image:linear-gradient(to bottom, #000 45%, transparent 96%); }
-        .hero > .wrap { position:relative; z-index:1; }
-        @media (max-width: 880px) { .hero::before { width:96vw; right:2%; top:70px; opacity:.16; } }
+        .hero-map { position:absolute; top:24px; right:max(2%, calc((100vw - 1124px) / 2 - 40px)); width:min(50vw, 640px); aspect-ratio:984 / 1040; pointer-events:none; z-index:0;
+            -webkit-mask-image:linear-gradient(to bottom, #000 62%, transparent 100%); mask-image:linear-gradient(to bottom, #000 62%, transparent 100%); }
+        .hero-map img { position:absolute; inset:0; width:100%; height:100%; opacity:.24; }
+        /* itinéraires et véhicules (mouvement lent : sinus, arrêt sur les sites) */
+        .hero-routes { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+        .hero-routes .leg { fill:none; stroke:var(--c); stroke-width:3; stroke-linecap:round; opacity:.55; }
+        .hero-routes .stop, .hero-routes .hub { fill:var(--paper, #f3efe6); stroke:var(--c); stroke-width:2.4; transition:fill .8s ease, r .8s ease; }
+        .hero-routes .hub { stroke-width:3; }
+        .hero-routes .stop.on, .hero-routes .hub.on { fill:var(--c); }
+        .hero-routes .veh { opacity:0; }
+        .hero-routes .dot { fill:var(--c); stroke:#fff; stroke-width:2.6; }
+        .hero-routes .halo { fill:var(--c); opacity:.18; transform-box:fill-box; transform-origin:center; animation:vpulse 3.6s ease-in-out infinite; }
+        .hero-routes .veh.stopped .halo { animation-duration:1.8s; opacity:.3; }
+        @keyframes vpulse { 0%, 100% { transform:scale(.8); opacity:.1; } 50% { transform:scale(1.25); opacity:.26; } }
+        @media (prefers-reduced-motion: reduce) { .hero-routes .halo { animation:none; } }
+        @media (max-width: 880px) { .hero-map { width:96vw; right:2%; top:70px; } .hero-map img { opacity:.18; } }
         .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:56px; align-items:end; }
         h1 { font:500 clamp(2.6rem, 5.4vw, 4.6rem)/1.02 var(--serif); letter-spacing:-.025em; margin:18px 0 0; }
         h1 em { font-style:italic; color:var(--signal); }
@@ -184,6 +196,10 @@
 
 <main>
 <div class="hero">
+    <div class="hero-map" aria-hidden="true">
+        <img src="/landing/ci-map.svg" alt="" width="984" height="1040">
+        @include('landing-parts.hero-routes')
+    </div>
     <div class="wrap">
         <div class="hero-grid">
             <div>
@@ -340,5 +356,6 @@
     </div>
 </footer>
 
+@include('landing-parts.hero-routes-js')
 </body>
 </html>
