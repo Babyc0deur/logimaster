@@ -51,7 +51,12 @@
         .btn .arr { font-family:var(--mono); font-weight:500; }
 
         /* ouverture */
-        .hero { padding:72px 0 0; }
+        .hero { padding:72px 0 0; position:relative; overflow:hidden; }
+        /* carte des districts en filigrane, légèrement transparente, fondue vers le bas et vers la gauche */
+        .hero::before { content:""; position:absolute; top:24px; right:max(2%, calc((100vw - 1124px) / 2 - 40px)); width:min(50vw, 640px); aspect-ratio:984 / 1040; background:url('/landing/ci-map.svg') no-repeat center / contain; opacity:.24; pointer-events:none; z-index:0;
+            -webkit-mask-image:linear-gradient(to bottom, #000 45%, transparent 96%); mask-image:linear-gradient(to bottom, #000 45%, transparent 96%); }
+        .hero > .wrap { position:relative; z-index:1; }
+        @media (max-width: 880px) { .hero::before { width:96vw; right:2%; top:70px; opacity:.16; } }
         .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:56px; align-items:end; }
         h1 { font:500 clamp(2.6rem, 5.4vw, 4.6rem)/1.02 var(--serif); letter-spacing:-.025em; margin:18px 0 0; }
         h1 em { font-style:italic; color:var(--signal); }
