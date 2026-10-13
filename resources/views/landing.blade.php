@@ -222,19 +222,21 @@
 
 <section id="saisie">
     <div class="wrap">
-        <div class="sh"><span class="mono">02 — Cartographie</span><div><h2>Qui a renseigné ses véhicules, et qui ne l'a pas fait</h2><p>Une carte de la Côte d'Ivoire et un tableau des districts sur les douze mois de l'année. Le niveau régional et national voit d'un coup d'œil où relancer.</p></div></div>
+        <div class="sh"><span class="mono">02 — Cartographie</span><div><h2>Qui a renseigné ses véhicules, et qui ne l'a pas fait</h2><p>Les limites officielles des districts sanitaires et des régions sur une carte de la Côte d'Ivoire, et le taux de remplissage de chaque district. Le niveau régional et national voit d'un coup d'œil où relancer.</p></div></div>
         <div class="split">
             <ul>
-                <li><b>Un district par ligne, un mois par colonne</b>Le chiffre de chaque case est le nombre de sorties saisies dans le mois.</li>
-                <li><b>Filtre par région et recherche</b>Les {{ $stats['districts'] }} districts, ou seulement ceux d'une région.</li>
+                <li><b>Limites officielles</b>Les {{ $stats['districts'] }} districts sanitaires, avec en orange les limites des 33 régions. Chaque district est vert dès qu'une sortie est saisie.</li>
+                <li><b>Taux de remplissage</b>Les mois renseignés rapportés aux mois écoulés, pour la carte, pour chaque district et pour l'année.</li>
+                <li><b>Filtres mois et région</b>Un mois précis ou l'année entière ; le choix d'une région la met en avant et zoome dessus.</li>
+                <li><b>Un district par ligne, un mois par colonne</b>Le tableau donne le nombre de sorties saisies dans chaque mois.</li>
                 <li><b>« Seulement les districts en retard »</b>Ne garde que ceux à qui il manque au moins un mois écoulé.</li>
             </ul>
             <figure>
                 <div class="shot">
-                    <div class="cap"><span>Cartographie · 113 districts sanitaires</span><span>2025</span></div>
-                    <img src="/landing/cartographie-saisie.jpg" width="1584" height="899" alt="Carte de la Côte d'Ivoire avec les 113 districts sanitaires : en vert ceux qui ont saisi leurs sorties de véhicules, en rouge ceux qui n'ont rien saisi.">
+                    <div class="cap"><span>Cartographie · limites des districts et des régions</span><span>2025</span></div>
+                    <img src="/landing/cartographie-saisie.jpg" width="1584" height="899" alt="Carte de la Côte d'Ivoire avec les limites officielles des 113 districts sanitaires et des régions : en vert les districts qui ont saisi leurs sorties de véhicules, en rouge ceux qui n'ont rien saisi, avec le taux de remplissage.">
                 </div>
-                <div class="key"><span><i style="background:#16a34a"></i>Renseigné</span><span><i style="background:#dc2626"></i>Non renseigné</span><span><i style="background:#d6d3cc"></i>Mois à venir</span></div>
+                <div class="key"><span><i style="background:#16a34a"></i>Renseigné</span><span><i style="background:#dc2626"></i>Non renseigné</span><span><i style="background:#ea580c"></i>Limite de région</span></div>
             </figure>
         </div>
     </div>
@@ -287,7 +289,7 @@
 
 <section id="cartographie">
     <div class="wrap">
-        <div class="sh"><span class="mono">05 — Suivi en temps réel</span><div><h2>Les véhicules du district sur la carte</h2><p>Une carte OpenStreetMap du district : chaque véhicule suit son circuit sur le réseau routier, site par site, avec son avancement et sa prochaine étape.</p></div></div>
+        <div class="sh"><span class="mono">05 — Suivi en temps réel</span><div><h2>Le district, sa région, ses véhicules et leurs circuits</h2><p>Une carte OpenStreetMap qui suit le district choisi : la limite de sa région, le district lui-même, et chaque véhicule sur son circuit, site par site, avec son avancement et sa prochaine étape.</p></div></div>
         <figure>
             <div class="shot">
                 <div class="cap"><span>Suivi en temps réel · district de Méagui</span><span>Simulation de la journée</span></div>
@@ -296,6 +298,7 @@
         </figure>
         <div class="map-legend">
             <div><b>Un véhicule, une couleur</b><span>Le tracé de son circuit, ses sites (pleins une fois livrés) et son étiquette d'immatriculation.</span></div>
+            <div><b>Le district choisi</b><span>La carte suit le sélecteur de district. Un clic sur un véhicule cadre son parcours et met son tracé en avant.</span></div>
             <div><b>La journée en accéléré</b><span>Départ du chef-lieu, trajet, 10 minutes par site, retour au district ; vitesse ×30, ×60 ou ×180.</span></div>
             <div><b>Le réseau routier réel</b><span>Fond OpenStreetMap et itinéraires calculés sur les routes ; positions GPS des centres de santé quand elles sont renseignées.</span></div>
         </div>
