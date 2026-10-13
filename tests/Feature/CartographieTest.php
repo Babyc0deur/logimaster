@@ -78,6 +78,6 @@ class CartographieTest extends TestCase
         $user->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($user);
         Filament::setTenant($ds[0]);
-        Livewire::test(Cartographie::class)->set('region', $region->id)->assertSee('VA')->assertSee('VB')->set('district', $ds[1]->id)->assertSee('VB')->assertDontSee('VA');
+        Livewire::test(Cartographie::class)->assertSee('VA')->assertSee('VB')->assertDontSee('Toute la région');
     }
 }

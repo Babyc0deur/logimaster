@@ -27,25 +27,6 @@
         .cg-hq { width:18px; height:18px; background:#16150f; border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.45); transform:rotate(45deg); }
     </style>
 
-    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
-        @php($field = 'border:1px solid rgba(127,127,127,.35);border-radius:8px;padding:6px 10px;background:transparent;color:inherit;font-size:.875rem')
-        <select wire:model.live="region" style="{{ $field }}" aria-label="Région">
-            <option value="" style="color:#111">Mon district ({{ $tenantName }})</option>
-            @foreach ($regions as $id => $name)
-                <option value="{{ $id }}" style="color:#111">Région {{ $name }}</option>
-            @endforeach
-        </select>
-        @if ($region !== '')
-            <select wire:model.live="district" style="{{ $field }}" aria-label="District">
-                <option value="" style="color:#111">Toute la région ({{ count($districts) }} districts)</option>
-                @foreach ($districts as $id => $name)
-                    <option value="{{ $id }}" style="color:#111">{{ $name }}</option>
-                @endforeach
-            </select>
-        @endif
-        <span wire:loading style="font-size:.8rem;opacity:.7">Chargement…</span>
-    </div>
-
     @if (empty($map['vehicles']))
         <div class="cg-box">Aucun véhicule avec un circuit dans {{ $map['multi'] ? 'ces districts' : 'ce district' }} : ajoutez des véhicules et des circuits (avec leurs sites) pour voir la simulation.</div>
     @else
@@ -82,20 +63,6 @@
                     </div>
                 </div>
                 <div class="cg-box" id="cg-list"></div>
-                <div class="cg-note">
-                    <b>Simulation.</b> Départ du chef-lieu de chaque district à partir de 07:30, 40 km/h de moyenne, 10 min d'arrêt par site, puis retour au district.
-                    Trait orange : limite de la région ; zone teintée : district simulé.
-                    @if ($map['hidden'] > 0)
-                        <br>{{ count($map['vehicles']) }} véhicules affichés sur {{ count($map['vehicles']) + $map['hidden'] }} : choisissez un district pour voir les autres.
-                    @endif
-                    @if ($map['empty'] > 0 && $map['multi'])
-                        <br>{{ $map['empty'] }} district(s) sans véhicule ni circuit renseigné.
-                    @endif
-                    Les tracés suivent le réseau routier OpenStreetMap (calcul d'itinéraire OSRM).
-                    @if ($map['simulated'])
-                        <br><b>Positions de démonstration :</b> les sites sans coordonnées GPS sont placés autour du chef-lieu. Renseignez le GPS des centres de santé pour des positions réelles.
-                    @endif
-                </div>
             </div>
         </div>
     @endif

@@ -7,7 +7,6 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use App\Models\District;
 use App\Models\Region;
 use App\Support\DashboardFilters;
 
@@ -26,16 +25,8 @@ class Cartographie extends Page
 
     protected static ?string $slug = 'suivi-temps-reel';
 
-    /** Région choisie ('' = rester sur le district du menu). */
-    public string $region = '';
-
-    /** District choisi ('' = tous les districts de la région, ou le district du menu si aucune région). */
-    public string $district = '';
-
-    public function updatedRegion(): void
-    {
-        $this->district = '';
-    }
+    /** Région simulée : tous ses districts (limites de la région et de chaque district sur la carte). */
+    private const REGION = 'NAWA';
 
     public static function canAccess(): bool
     {
@@ -44,29 +35,17 @@ class Cartographie extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Simulation du déplacement des véhicules sur leurs circuits, par district ou par région — fond de carte OpenStreetMap.';
+        return 'Simulation du déplacement des véhicules sur leurs circuits, région NAWA et ses districts — fond de carte OpenStreetMap.';
     }
 
     public function getViewData(): array
     {
-        $regions = Region::whereHas('districts', fn ($q) => $q->whereIn('id', DashboardFilters::accessibleDistricts()->select('id')))->orderBy('name')->pluck('name', 'id');
-        $districts = $this->region !== ''
-            ? DashboardFilters::accessibleDistricts()->where('region_id', $this->region)->orderBy('name')->pluck('name', 'id')
-            : collect();
-
-        $scope = collect([Filament::getTenant()]);
-        if ($this->region !== '' && $regions->has($this->region)) {
-            $scope = DashboardFilters::accessibleDistricts()->where('region_id', $this->region)
-                ->when($this->district !== '', fn ($q) => $q->whereKey($this->district))->orderBy('name')->get();
+        $scope = DashboardFilters::accessibleDistricts()->with('region:id,name')
+            ->whereIn('region_id', Region::where('name', self::REGION)->select('id'))->orderBy('name')->get();
+        if ($scope->isEmpty() && Filament::getTenant()) {
+            $scope = collect([Filament::getTenant()->loadMissing('region:id,name')]);
         }
-        $scope = $scope->filter()->values();
-        $scope->each(fn (District $d) => $d->loadMissing('region:id,name'));
 
-        return [
-            'map' => app(FleetMapSimulation::class)->buildMany($scope),
-            'regions' => $regions,
-            'districts' => $districts,
-            'tenantName' => Filament::getTenant()?->name,
-        ];
+        return ['map' => app(FleetMapSimulation::class)->buildMany($scope)];
     }
 }
