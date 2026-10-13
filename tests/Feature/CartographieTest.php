@@ -53,4 +53,31 @@ class CartographieTest extends TestCase
         Filament::setTenant($d);
         Livewire::test(Cartographie::class)->assertOk()->assertSee('Heure simulée')->assertSee('D1');
     }
+
+    public function test_region_simulation_starts_each_vehicle_from_its_own_district(): void
+    {
+        $this->seed(LogimasterRoleSeeder::class);
+        $region = Region::create(['pres_id' => Pres::create(['name' => 'PRES'])->id, 'name' => 'NAWA']);
+        $ds = [];
+        foreach ([['A', 5.4, -6.5], ['B', 5.9, -6.1]] as [$n, $lat, $lon]) {
+            $d = District::create(['region_id' => $region->id, 'name' => "DIST {$n}", 'sync_id' => $n, 'sync_password_hash' => 'x']);
+            $d->forceFill(['latitude' => $lat, 'longitude' => $lon])->save();
+            Vehicle::create(['district_id' => $d->id, 'immatriculation' => "V{$n}"]);
+            $c = Circuit::create(['district_id' => $d->id, 'nom' => "C{$n}"]);
+            $c->espc()->attach([Espc::create(['district_id' => $d->id, 'nom' => "CSR {$n}", 'type' => 'CSR', 'gps_lat' => $lat + .05, 'gps_lon' => $lon])->id => ['ordre' => 1]]);
+            $ds[] = $d;
+        }
+        $map = app(FleetMapSimulation::class)->buildMany(collect($ds)->each->load('region'));
+        $this->assertTrue($map['multi']);
+        $this->assertSame(['NAWA'], $map['regions']);
+        $this->assertCount(2, $map['origins']);
+        $this->assertCount(2, $map['vehicles']);
+        $this->assertSame(['lat' => 5.9, 'lon' => -6.1], $map['vehicles'][1]['origin']);
+
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole(User::ROLE_PRES_ADMIN);
+        $this->actingAs($user);
+        Filament::setTenant($ds[0]);
+        Livewire::test(Cartographie::class)->set('region', $region->id)->assertSee('VA')->assertSee('VB')->set('district', $ds[1]->id)->assertSee('VB')->assertDontSee('VA');
+    }
 }

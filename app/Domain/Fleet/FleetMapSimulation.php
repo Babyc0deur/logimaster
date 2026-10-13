@@ -5,6 +5,8 @@ namespace App\Domain\Fleet;
 use App\Models\Circuit;
 use App\Models\District;
 use App\Models\Vehicle;
+use App\Domain\Indicators\IndicatorService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,7 +24,55 @@ class FleetMapSimulation
     /** Chef-lieu par défaut (centre de la Côte d'Ivoire) si le district n'a ni coordonnées connues ni site géolocalisé. */
     private const FALLBACK = [7.54, -5.55];
 
+    /**
+     * Simulation sur plusieurs districts (une région, par exemple) : chaque véhicule part du chef-lieu de son propre district.
+     * Au-delà de 6 districts, un seul véhicule par district ; au plus $cap véhicules sur la carte.
+     *
+     * @param  Collection<int, District>  $districts
+     */
+    public function buildMany(Collection $districts, int $cap = 12): array
+    {
+        $per = $districts->count() <= 6 ? 2 : 1;
+        $vehicles = [];
+        $origins = [];
+        $simulated = false;
+        $empty = 0;
+        foreach ($districts as $d) {
+            $one = $this->build($d, $per);
+            $origins[] = ['district' => $d->name, 'region' => $d->region?->name, 'lat' => $one['centre']['lat'], 'lon' => $one['centre']['lon']];
+            $simulated = $simulated || $one['simulated'];
+            $empty += $one['vehicles'] === [] ? 1 : 0;
+            foreach ($one['vehicles'] as $v) {
+                $vehicles[] = $v;
+            }
+        }
+        $total = count($vehicles);
+        $vehicles = array_slice($vehicles, 0, $cap);
+        foreach ($vehicles as $i => &$v) {
+            $v['color'] = self::COLORS[$i % count(self::COLORS)];
+        }
+        unset($v);
+        $regions = collect($origins)->pluck('region')->filter()->unique()->values()->all();
+
+        return [
+            'district' => $districts->count() === 1 ? $districts->first()->name : $districts->count().' districts',
+            'multi' => $districts->count() > 1,
+            'origins' => $origins,
+            'regions' => $regions,
+            'centre' => $origins[0] ?? ['lat' => self::FALLBACK[0], 'lon' => self::FALLBACK[1]],
+            'vehicles' => $vehicles,
+            'simulated' => $simulated,
+            'hidden' => $total - count($vehicles),
+            'empty' => $empty,
+        ];
+    }
+
     public function build(District $district, int $max = 8): array
+    {
+        return IndicatorService::withoutTenant(fn () => $this->buildOne($district, $max));
+    }
+
+    private function buildOne(District $district, int $max): array
     {
         $centre = $this->centre($district);
         $circuits = Circuit::with('espc')->where('district_id', $district->id)->orderBy('nom')->get()
@@ -59,21 +109,32 @@ class FleetMapSimulation
                 'statut' => $v->statut,
                 'circuit' => $circuit->nom,
                 'color' => self::COLORS[$i % count(self::COLORS)],
+                'district' => $district->name,
+                'origin' => ['lat' => $centre[0], 'lon' => $centre[1]],
+                'slot' => $i,
                 'stops' => $stops,
             ];
         }
 
         return [
             'district' => $district->name,
+            'multi' => false,
+            'origins' => [['district' => $district->name, 'region' => $district->region?->name, 'lat' => $centre[0], 'lon' => $centre[1]]],
+            'regions' => array_values(array_filter([$district->region?->name])),
             'centre' => ['lat' => $centre[0], 'lon' => $centre[1]],
             'vehicles' => $out,
             'simulated' => $simulated,
+            'hidden' => 0,
+            'empty' => $out === [] ? 1 : 0,
         ];
     }
 
     /** Chef-lieu : coordonnées connues du district, sinon moyenne des sites géolocalisés, sinon centre du pays. */
     private function centre(District $district): array
     {
+        if ($district->latitude !== null && $district->longitude !== null) {
+            return [(float) $district->latitude, (float) $district->longitude];
+        }
         $known = config('logimaster.district_centres')[mb_strtoupper($district->name)] ?? null;
         if ($known) {
             return $known;

@@ -1,31 +1,40 @@
 /* Cartographie (Logimaster) : simulation du déplacement des véhicules du district sur leurs circuits, fond OpenStreetMap (Leaflet). */
-window.lmCartographie = window.lmCartographie || function (el, data) {
+window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
     if (el._lm) return; el._lm = true;
     const KMH = 40, STOP_MIN = 10, START = 7.5 * 60, GAP = 15;   // minutes simulées
     const map = L.map(el, { scrollWheelZoom: true, zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs OpenStreetMap' }).addTo(map);
     const centre = [data.centre.lat, data.centre.lon];
-    L.marker(centre, { icon: L.divIcon({ className: '', html: '<div class="cg-hq"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) })
-        .addTo(map).bindTooltip('District de ' + data.district + ' (départ et retour)', { direction: 'top' });
+    (data.origins || []).forEach(o => L.marker([o.lat, o.lon], { icon: L.divIcon({ className: '', html: '<div class="cg-hq"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) })
+        .addTo(map).bindTooltip('District de ' + o.district + (o.region ? ' · ' + o.region : '') + ' (départ et retour)', { direction: 'top' }));
     const truck = '<svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg>';
-    const all = [centre];
+    const all = (data.origins || [{ lat: centre[0], lon: centre[1] }]).map(o => [o.lat, o.lon]);
 
     const R = 6371, rad = d => d * Math.PI / 180;
     const km = (a, b) => { const dl = rad(b[0] - a[0]), dn = rad(b[1] - a[1]); const h = Math.sin(dl / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 
     const V = data.vehicles.map((v, i) => {
-        const pts = [centre, ...v.stops.map(s => [s.lat, s.lon]), centre];
+        const home = v.origin ? [v.origin.lat, v.origin.lon] : centre;
+        const pts = [home, ...v.stops.map(s => [s.lat, s.lon]), home];
         pts.forEach(p => all.push(p));
         const sites = v.stops.map(s => L.marker([s.lat, s.lon], { icon: L.divIcon({ className: '', html: '<div class="cg-site" style="border-color:' + v.color + ';color:' + v.color + '"></div>', iconSize: [12, 12], iconAnchor: [6, 6] }) })
             .addTo(map).bindTooltip(s.nom + ' · ' + v.circuit, { direction: 'top' }));
         const line = L.polyline(pts, { color: v.color, weight: 3, opacity: .55, dashArray: '6 7' }).addTo(map);
-        const marker = L.marker(centre, { zIndexOffset: 1000, icon: L.divIcon({ className: '', html: '<div style="position:relative"><div class="cg-truck" style="background:' + v.color + '">' + truck + '</div><span class="cg-tag" style="position:absolute;left:0;top:0">' + v.immatriculation + '</span></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
+        const marker = L.marker(home, { zIndexOffset: 1000, icon: L.divIcon({ className: '', html: '<div style="position:relative"><div class="cg-truck" style="background:' + v.color + '">' + truck + '</div><span class="cg-tag" style="position:absolute;left:0;top:0">' + v.immatriculation + '</span></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
         marker.bindTooltip(v.immatriculation + ' · ' + v.modele + ' · ' + v.circuit);
         const o = { v, i, sites, line, marker, path: pts, legs: null };
         setPath(o, pts, null);
         return o;
     });
     map.fitBounds(all, { padding: [30, 30] });
+
+    // limites : région (trait orange) et district(s) simulé(s) (zone teintée), sous les tracés
+    if (geoUrl) fetch(geoUrl).then(r => r.json()).then(g => {
+        const names = (data.origins || []).map(o => o.district), regs = data.regions || [];
+        const pane = map.createPane('limites'); pane.style.zIndex = 350;
+        L.geoJSON((g.features || []).filter(f => names.includes(f.properties.n)), { pane: 'limites', interactive: false, style: { color: '#16150f', weight: 1, fillColor: '#ea580c', fillOpacity: 0.1 } }).addTo(map);
+        L.geoJSON((g.regions || []).filter(f => regs.includes(f.properties.r)), { pane: 'limites', interactive: false, style: { fill: false, color: '#ea580c', weight: 2.6, opacity: 0.9 } }).addTo(map);
+    }).catch(() => {});
 
     // tracé : cumul des distances, et position des sites le long du tracé
     function setPath(o, path, stopIdx) {
@@ -35,9 +44,9 @@ window.lmCartographie = window.lmCartographie || function (el, data) {
         o.stopAt = stopIdx ? stopIdx.map(j => cum[j]) : o.v.stops.map((_, k) => cum[k + 1]);
         o.total = cum[cum.length - 1];
         // chronologie : trajets et arrêts
-        o.plan = []; let t = START + o.i * GAP, d = 0;
+        o.plan = []; let t = START + (o.v.slot || 0) * GAP, d = 0;
         o.stopAt.forEach((sd, k) => { t += (sd - d) / KMH * 60; o.plan.push({ k, arrive: t, leave: t + STOP_MIN }); t += STOP_MIN; d = sd; });
-        o.depart = START + o.i * GAP; o.back = t + (o.total - d) / KMH * 60;
+        o.depart = START + (o.v.slot || 0) * GAP; o.back = t + (o.total - d) / KMH * 60;
     }
     // tracés routiers (OSRM) : remplacent les lignes droites quand le service répond
     const osrm = pts => fetch('https://router.project-osrm.org/route/v1/driving/' + pts.map(p => p[1].toFixed(5) + ',' + p[0].toFixed(5)).join(';') + '?overview=full&geometries=geojson')
@@ -78,7 +87,7 @@ window.lmCartographie = window.lmCartographie || function (el, data) {
 
     let speed = 60, playing = true, sim = START - 5, last = performance.now();
     const list = document.getElementById('cg-list'), clock = document.getElementById('cg-clock');
-    list.innerHTML = V.map(o => '<div class="cg-veh" data-i="' + o.i + '"><span class="cg-sw" style="background:' + o.v.color + '"></span><div style="flex:1;min-width:0"><b>' + o.v.immatriculation + '</b> <small style="display:inline">· ' + o.v.circuit + '</small><small>' + o.v.modele + '</small><div class="cg-st" id="cg-st-' + o.i + '"></div><div class="cg-bar"><span id="cg-bar-' + o.i + '" style="background:' + o.v.color + ';width:0"></span></div></div></div>').join('');
+    list.innerHTML = V.map(o => '<div class="cg-veh" data-i="' + o.i + '"><span class="cg-sw" style="background:' + o.v.color + '"></span><div style="flex:1;min-width:0"><b>' + o.v.immatriculation + '</b> <small style="display:inline">· ' + o.v.circuit + '</small>' + (data.multi ? '<small>District de ' + o.v.district + '</small>' : '') + '<small>' + o.v.modele + '</small><div class="cg-st" id="cg-st-' + o.i + '"></div><div class="cg-bar"><span id="cg-bar-' + o.i + '" style="background:' + o.v.color + ';width:0"></span></div></div></div>').join('');
     list.querySelectorAll('.cg-veh').forEach(e => e.addEventListener('click', () => { const o = V[+e.dataset.i]; map.panTo(o.marker.getLatLng()); o.marker.openTooltip(); }));
     document.getElementById('cg-ctrl').addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;
