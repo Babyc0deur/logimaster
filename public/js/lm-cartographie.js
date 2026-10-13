@@ -30,9 +30,10 @@ window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
 
     // limites : région (trait orange) et district(s) simulé(s) (zone teintée), sous les tracés
     if (geoUrl) fetch(geoUrl).then(r => r.json()).then(g => {
-        const names = data.limits ? data.limits.districts : (data.origins || []).map(o => o.district), regs = data.limits ? data.limits.regions : (data.regions || []);
+        const names = (data.origins || []).map(o => o.district), all = data.limits ? data.limits.districts : names, regs = data.limits ? data.limits.regions : (data.regions || []);
         const pane = map.createPane('limites'); pane.style.zIndex = 350;
-        L.geoJSON((g.features || []).filter(f => names.includes(f.properties.n)), { pane: 'limites', interactive: false, style: { color: '#16150f', weight: 1, fillColor: '#ea580c', fillOpacity: 0.1 } }).addTo(map);
+        L.geoJSON((g.features || []).filter(f => all.includes(f.properties.n) && !names.includes(f.properties.n)), { pane: 'limites', interactive: false, style: { color: '#6b6659', weight: 0.8, fill: false, opacity: 0.7 } }).addTo(map);
+        L.geoJSON((g.features || []).filter(f => names.includes(f.properties.n)), { pane: 'limites', interactive: false, style: { color: '#16150f', weight: 1.4, fillColor: '#ea580c', fillOpacity: 0.12 } }).addTo(map);
         L.geoJSON((g.regions || []).filter(f => regs.includes(f.properties.r)), { pane: 'limites', interactive: false, style: { fill: false, color: '#ea580c', weight: 2.6, opacity: 0.9 } }).addTo(map);
     }).catch(() => {});
 
@@ -88,7 +89,7 @@ window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
     let speed = 60, playing = true, sim = START - 5, last = performance.now();
     const list = document.getElementById('cg-list'), clock = document.getElementById('cg-clock');
     list.innerHTML = V.map(o => '<div class="cg-veh" data-i="' + o.i + '"><span class="cg-sw" style="background:' + o.v.color + '"></span><div style="flex:1;min-width:0"><b>' + o.v.immatriculation + '</b> <small style="display:inline">· ' + o.v.circuit + '</small>' + (data.multi ? '<small>District de ' + o.v.district + '</small>' : '') + '<small>' + o.v.modele + '</small><div class="cg-st" id="cg-st-' + o.i + '"></div><div class="cg-bar"><span id="cg-bar-' + o.i + '" style="background:' + o.v.color + ';width:0"></span></div></div></div>').join('');
-    list.querySelectorAll('.cg-veh').forEach(e => e.addEventListener('click', () => { const o = V[+e.dataset.i]; map.panTo(o.marker.getLatLng()); o.marker.openTooltip(); }));
+    list.querySelectorAll('.cg-veh').forEach(e => e.addEventListener('click', () => { const o = V[+e.dataset.i]; map.fitBounds(o.line.getBounds(), { padding: [40, 40] }); V.forEach(x => x.line.setStyle({ weight: x === o ? 5 : 3, opacity: x === o ? .9 : .3 })); o.marker.openTooltip(); }));
     document.getElementById('cg-ctrl').addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;
         if (b.dataset.speed) { speed = +b.dataset.speed; document.querySelectorAll('#cg-ctrl [data-speed]').forEach(x => x.classList.toggle('on', x === b)); }

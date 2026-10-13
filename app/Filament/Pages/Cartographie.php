@@ -7,10 +7,9 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use App\Models\Region;
-use App\Support\DashboardFilters;
+use App\Models\District;
 
-/** Suivi en temps réel (ex « Cartographie ») du district (OpenStreetMap) : les véhicules parcourent leur circuit en simulation, site par site. */
+/** Suivi en temps réel (ex « Cartographie ») du district choisi dans le menu (OpenStreetMap) : les véhicules parcourent leur circuit en simulation, site par site. */
 class Cartographie extends Page
 {
     protected string $view = 'filament.pages.cartographie';
@@ -25,12 +24,6 @@ class Cartographie extends Page
 
     protected static ?string $slug = 'suivi-temps-reel';
 
-    /** Région dont les limites (et celles de ses districts) sont tracées. */
-    private const REGION = 'NAWA';
-
-    /** District dont les véhicules sont simulés. */
-    private const DISTRICT = 'MEAGUI';
-
     public static function canAccess(): bool
     {
         return (bool) auth()->user()?->can('view_chronogrammes');
@@ -38,19 +31,15 @@ class Cartographie extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Simulation du déplacement des véhicules sur leurs circuits, district de Méagui, région NAWA — fond de carte OpenStreetMap.';
+        return 'Simulation du déplacement des véhicules sur leurs circuits, district choisi, sa région, ses véhicules et leurs circuits — fond de carte OpenStreetMap.';
     }
 
+    /** Le district choisi dans le menu : sa région (limites et districts voisins), le district, ses véhicules et leurs circuits. */
     public function getViewData(): array
     {
-        $limits = DashboardFilters::accessibleDistricts()->with('region:id,name')
-            ->whereIn('region_id', Region::where('name', self::REGION)->select('id'))->orderBy('name')->get();
-        $scope = $limits->where('name', self::DISTRICT)->values();
-        if ($scope->isEmpty() && Filament::getTenant()) {
-            $scope = collect([Filament::getTenant()->loadMissing('region:id,name')]);
-            $limits = $scope;
-        }
+        $district = Filament::getTenant()->loadMissing('region:id,name');
+        $limits = District::where('region_id', $district->region_id)->with('region:id,name')->orderBy('name')->get();
 
-        return ['map' => app(FleetMapSimulation::class)->buildMany($scope, 12, $limits)];
+        return ['map' => app(FleetMapSimulation::class)->buildMany(collect([$district]), 12, $limits)];
     }
 }
