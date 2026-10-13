@@ -70,8 +70,7 @@
                 <div x-ref="map" style="height:min(64vh, 620px);min-height:380px;z-index:0"></div>
             </div>
             <p style="font-size:.75rem;opacity:.75;padding:8px 14px;border-top:1px solid rgba(127,127,127,.28)">
-                Chaque point est le chef-lieu d'un district sanitaire. Les zones colorées sont <b>approximatives</b> : chaque point du territoire est rattaché au chef-lieu le plus proche
-                (les limites officielles des districts sanitaires ne sont pas publiées en données ouvertes). Fond de carte © contributeurs OpenStreetMap.
+                Limites officielles des 113 districts sanitaires ; chaque point est le chef-lieu du district. Fond de carte © contributeurs OpenStreetMap.
             </p>
         </div>
 

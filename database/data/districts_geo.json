@@ -115,9 +115,9 @@
 "source": "osm"
 },
 "BOUAKE NORD-EST": {
-"lat": 7.68902,
-"lon": -5.02836,
-"source": "osm"
+"lat": 7.77255,
+"lon": -4.78675,
+"source": "polygone"
 },
 "BOUAKE NORD-OUEST": {
 "lat": 7.69302,
@@ -225,9 +225,9 @@
 "source": "osm"
 },
 "GAGNOA 2": {
-"lat": 6.13748,
-"lon": -5.9471,
-"source": "osm"
+"lat": 6.32063,
+"lon": -6.03849,
+"source": "polygone"
 },
 "GRAND BASSAM": {
 "lat": 5.21288,
@@ -290,9 +290,9 @@
 "source": "osm"
 },
 "KORHOGO 2": {
-"lat": 9.46207,
-"lon": -5.62763,
-"source": "osm"
+"lat": 9.30814,
+"lon": -6.11949,
+"source": "polygone"
 },
 "KORO": {
 "lat": 8.55368,

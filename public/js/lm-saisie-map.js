@@ -1,5 +1,5 @@
-/* Suivi de la saisie : carte des districts sanitaires de Côte d'Ivoire (Leaflet + OpenStreetMap).
-   Zone = point du territoire rattaché au chef-lieu le plus proche (approximation) ; vert = au moins une sortie saisie, rouge = rien. */
+/* Cartographie : carte des districts sanitaires de Côte d'Ivoire (Leaflet + OpenStreetMap), limites officielles des districts.
+   Vert = au moins une sortie de véhicule saisie, rouge = rien. */
 window.lmSaisieMap = window.lmSaisieMap || function (el, data) {
     if (el._lm) return; el._lm = true;
     var OK = '#16a34a', BAD = '#dc2626', DIM = '#9ca3af';
