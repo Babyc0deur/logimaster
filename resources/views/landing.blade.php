@@ -63,7 +63,10 @@
         .hero-routes .hub { stroke-width:3; }
         .hero-routes .stop.on, .hero-routes .hub.on { fill:var(--c); }
         .hero-routes .veh { opacity:0; }
+
         .hero-routes .dot { fill:var(--c); stroke:#fff; stroke-width:2.6; }
+        .hero-routes .truck { fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .hero-routes .veh { filter:drop-shadow(0 2px 3px rgba(22,21,15,.35)); }
         .hero-routes .halo { fill:var(--c); opacity:.18; transform-box:fill-box; transform-origin:center; animation:vpulse 3.6s ease-in-out infinite; }
         .hero-routes .veh.stopped .halo { animation-duration:1.8s; opacity:.3; }
         @keyframes vpulse { 0%, 100% { transform:scale(.8); opacity:.1; } 50% { transform:scale(1.25); opacity:.26; } }
