@@ -26,6 +26,8 @@ class CircuitResource extends Resource
 
     protected static ?string $navigationLabel = 'Circuits';
 
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $modelLabel = 'circuit';
 
     protected static ?string $pluralModelLabel = 'Circuits';

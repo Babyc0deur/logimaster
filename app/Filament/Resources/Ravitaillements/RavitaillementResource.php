@@ -18,7 +18,7 @@ class RavitaillementResource extends Resource
     protected static ?string $tenantOwnershipRelationshipName = 'district';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBeaker;
     protected static ?string $navigationLabel = 'Ravitaillements';
-    protected static string|\UnitEnum|null $navigationGroup = 'Carburant';
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, sous le chronogramme
     protected static ?int $navigationSort = 2;
     protected static ?string $modelLabel = 'ravitaillement';
     protected static ?string $pluralModelLabel = 'Ravitaillements';

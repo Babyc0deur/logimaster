@@ -18,8 +18,8 @@ class ExpenseResource extends Resource
     protected static ?string $tenantOwnershipRelationshipName = 'district';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
     protected static ?string $navigationLabel = 'Dépenses';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
-    protected static ?int $navigationSort = 3;
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après le suivi des livraisons
+    protected static ?int $navigationSort = 6;
     protected static ?string $modelLabel = 'dépense';
     protected static ?string $pluralModelLabel = 'Dépenses';
 

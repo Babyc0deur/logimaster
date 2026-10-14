@@ -27,6 +27,10 @@ class VehicleResource extends Resource
 
     protected static ?string $navigationLabel = 'Véhicules';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
+
+    protected static ?int $navigationSort = 0;
+
     protected static ?string $modelLabel = 'véhicule';
 
     protected static ?string $pluralModelLabel = 'véhicules';

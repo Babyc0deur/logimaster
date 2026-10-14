@@ -24,6 +24,8 @@ class SortieVehiculeResource extends Resource
 
     protected static ?string $navigationLabel = 'Sorties Véhicules';
 
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $modelLabel = 'sortie';
 
     protected static ?string $pluralModelLabel = 'sorties';
