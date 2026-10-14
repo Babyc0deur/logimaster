@@ -9,7 +9,7 @@ class Expense extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['district_id', 'sortie_id', 'vehicle_id', 'type', 'beneficiaire', 'montant', 'commentaire', 'date_depense', 'motif'];
+    protected $fillable = ['district_id', 'sortie_id', 'vehicle_id', 'type', 'beneficiaire', 'montant', 'commentaire', 'date_depense', 'motif', 'client_ref', 'saisi_par'];
 
     protected function casts(): array
     {

@@ -130,7 +130,7 @@ var KEY = 'lm_state_v1';
 var DEFAULTS = { token: null, user: null, mustChange: false, sorties: [], today: null, details: {}, queue: [], notifs: { unread: 0, data: [] }, syncedAt: null, push: false, recv: {}, planning: {}, vehicules: null, vehiculesAt: null };
 var S = load();
 var deferredInstall = null, flushing = false, refreshing = false, openStop = null, errorMsg = '';
-var fuelDraft = {}, fuelPhoto = null;   // saisie en cours : conservée si l'écran se rafraîchit pendant la frappe
+var fuelDraft = {}, fuelPhoto = null, expDraft = {}, fuelTab = 'fuel';   // saisie en cours : conservée si l'écran se rafraîchit pendant la frappe
 var sheetPhoto = null;
 var weekStart = null;                    // semaine affichée dans « Planning » (lundi, AAAA-MM-JJ)                  // photo prise dans une fenêtre du bas (compteur, bon de livraison)
 
@@ -191,18 +191,21 @@ function applyLocal(op) {
     if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = ok && op.body.km_compteur != null ? op.body.km_compteur : null; st.position = ok && op.body.lat != null; } recount(p); }
     if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; p.sortie.photo_arrivee = !!op.photo; } }
     if (op.type === 'fuel') { p.ravitaillements.unshift({ facture: !!op.photo, client_ref: op.body.client_ref, litres: +op.body.litres, prix_unitaire: +op.body.prix_unitaire || null, montant: null, km_compteur: op.body.km_compteur || null, station: op.body.station || null, date: op.at.slice(0, 10), pending: true }); }
+    if (op.type === 'expense') { p.frais = p.frais || []; p.frais.unshift({ client_ref: op.body.client_ref, type: op.body.type, libelle: EXPENSE_TYPES[op.body.type] || op.body.type, montant: +op.body.montant, beneficiaire: op.body.beneficiaire || null, commentaire: op.body.commentaire || null, date: op.at.slice(0, 10), pending: true }); }
     S.sorties.forEach(function (s) { if (s.id === op.plan) { s.demarree = p.demarree; s.terminee = p.terminee; s.traites = p.traites; s.livres = p.livres; } });
 }
+var EXPENSE_TYPES = { collation: 'Collation', hebergement: 'Hébergement', chargement: 'Chargement', dechargement: 'Déchargement', peage: 'Péage', autre: 'Autre' };
 var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur', signal: 'photo' };
 function send(op) {
     return (op.photo ? photoGet(op.id) : Promise.resolve(null)).then(function (photo) {
         var body = Object.assign({}, op.body);
-        if (op.type === 'livraison' || op.type === 'fuel' || op.type === 'signal') body.done_at = op.at;
+        if (op.type === 'livraison' || op.type === 'fuel' || op.type === 'expense' || op.type === 'signal') body.done_at = op.at;
         if (photo) body[PHOTO_FIELD[op.type]] = photo;
         if (op.type === 'signal') return api('POST', '/vehicules/' + op.target + '/signalements', body);
         if (op.type === 'start') return api('POST', '/sorties/' + op.plan + '/start', body);
         if (op.type === 'finish') return api('POST', '/sorties/' + op.plan + '/finish', body);
         if (op.type === 'livraison') return api('POST', '/livraisons/' + op.target, body);
+        if (op.type === 'expense') return api('POST', '/sorties/' + op.plan + '/frais', body);
         return api('POST', '/sorties/' + op.plan + '/ravitaillements', body);
     });
 }
@@ -284,7 +287,7 @@ function shell(title, body) {
     var cp = currentPlan();
     var circuitBadge = cp && cp.demarree && !cp.terminee ? cp.traites + '/' + cp.sites : '';
     return '<header class="top"><h1>' + esc(title) + '</h1>' + syncPill() + '</header><main>' + body + '</main>' +
-        '<nav class="tabs">' + tab('home', 'Accueil', ICON.home) + tab('circuit', 'Circuit', ICON.route, true, circuitBadge) + tab('fuel', 'Carburant', ICON.fuel) +
+        '<nav class="tabs">' + tab('home', 'Accueil', ICON.home) + tab('circuit', 'Circuit', ICON.route, true, circuitBadge) + tab('fuel', 'Frais', ICON.fuel) +
         tab('alerts', 'Alertes', ICON.bell, false, S.notifs.unread || '') + tab('profile', 'Profil', ICON.user) + '</nav>';
 }
 function render() {
@@ -367,7 +370,7 @@ function homeView() {
     var circuitSub = !cp ? 'Aucun circuit en cours' : (cp.demarree ? cp.traites + ' / ' + cp.sites + ' sites traités' : 'À démarrer · ' + cp.sites + ' sites');
     var tiles = '<div class="tiles">' +
         tile('#/circuit', ICON.route, 'Mon circuit', circuitSub, '', 'main') +
-        tile('#/fuel', ICON.fuel, 'Carburant', fuelPlan ? (fuelCount ? fuelCount + ' plein' + (fuelCount > 1 ? 's' : '') + ' déclaré' + (fuelCount > 1 ? 's' : '') : 'Déclarer un plein') : 'Après le départ', '') +
+        tile('#/fuel', ICON.fuel, 'Carburant et frais', fuelPlan ? ((fuelCount || (fuelPlan.frais || []).length) ? fuelCount + ' plein' + (fuelCount > 1 ? 's' : '') + ' · ' + (fuelPlan.frais || []).length + ' frais' : 'Déclarer un plein ou un frais') : 'Après le départ', '') +
         tile('#/sorties', ICON.cal, 'Mes sorties', upcoming ? upcoming + ' à venir' : 'Mes sorties et historique', '') +
         tile('#/planning', ICON.cal, 'Planning', 'Sorties du district', '') +
         tile('#/vehicules', ICON.truck, 'Véhicules', vehSummary(), vehAlerts() || '') +
@@ -535,7 +538,7 @@ function bindCommon() {
     el = $('synctile'); if (el) el.onclick = function (e) { e.preventDefault(); toast(isOnline() ? 'Synchronisation…' : 'Pas de réseau : envoi au retour du réseau'); refresh(); };
     [].forEach.call(document.querySelectorAll('[data-do]'), function (b) { b.onclick = function () { stopAction(p, b.getAttribute('data-id'), b.getAttribute('data-do')); }; });
     [].forEach.call(document.querySelectorAll('[data-edit]'), function (b) { b.onclick = function () { openStop = b.getAttribute('data-edit'); render(); }; });
-    if (route().name === 'fuel') bindFuel();
+    if (route().name === 'fuel') { bindFuelTabs(); bindFuel(); bindExpense(); }
     if (route().name === 'alerts') bindAlerts();
     if (route().name === 'profile') bindProfile();
 }
@@ -667,7 +670,55 @@ function sheetReason(p, stopId) {
 }
 
 // ---- carburant
+function money(n) { return Number(n || 0).toLocaleString('fr-FR') + ' FCFA'; }
+function segStyle(on) { return 'flex:1;cursor:pointer;padding:10px 8px;border-radius:10px;font:600 14px inherit;border:1px solid ' + (on ? '#16150f' : 'rgba(127,127,127,.4)') + ';background:' + (on ? '#16150f' : 'transparent') + ';color:' + (on ? '#fff' : 'inherit'); }
 function fuelView() {
+    var p = currentPlan(); p = p && p.demarree ? p : null;
+    var seg = '<div class="row" style="gap:6px;margin-bottom:12px">' +
+        '<button type="button" data-tab="fuel" style="' + segStyle(fuelTab === 'fuel') + '">Carburant</button>' +
+        '<button type="button" data-tab="exp" style="' + segStyle(fuelTab === 'exp') + '">Autres frais</button></div>';
+    var total = '';
+    if (p) {
+        var carb = (p.ravitaillements || []).reduce(function (t, r) { return t + (r.montant || (r.litres && r.prix_unitaire ? r.litres * r.prix_unitaire : 0)); }, 0);
+        var autres = (p.frais || []).reduce(function (t, e) { return t + (e.montant || 0); }, 0);
+        total = '<div class="card" style="margin-bottom:12px"><div class="muted">Dépenses de la sortie</div><b>' + money(Math.round(carb + autres)) + '</b>' +
+            '<div class="muted">Carburant ' + money(Math.round(carb)) + ' · Autres frais ' + money(Math.round(autres)) + '</div></div>';
+    }
+    return shell('Carburant et frais', seg + total + (fuelTab === 'exp' ? expenseView(p) : fuelFormView()));
+}
+function expenseView(p) {
+    if (!p) return '<div class="card empty">Démarrez d\'abord un circuit pour déclarer des frais.</div>';
+    p.frais = p.frais || [];
+    var opts = Object.keys(EXPENSE_TYPES).map(function (k) { return '<option value="' + k + '"' + (expDraft.ty === k ? ' selected' : '') + '>' + esc(EXPENSE_TYPES[k]) + '</option>'; }).join('');
+    return '<div class="card"><div class="muted">Rattaché à la sortie</div><b>' + esc(p.circuit) + (p.vehicule ? ' · ' + esc(p.vehicule) : '') + '</b></div>' +
+        '<form id="ef"><label for="ty">Type de frais</label><select id="ty">' + opts + '</select>' +
+        '<label for="mt">Montant (FCFA)</label><input id="mt" type="number" inputmode="numeric" min="1" required value="' + esc(expDraft.mt || '') + '">' +
+        '<label for="bn">Bénéficiaire (facultatif)</label><input id="bn" type="text" maxlength="120" placeholder="ex. Poste de péage de Soubré" value="' + esc(expDraft.bn || '') + '">' +
+        '<label for="cm">Commentaire (facultatif)</label><input id="cm" type="text" maxlength="255" value="' + esc(expDraft.cm || '') + '">' +
+        '<p class="err" id="err"></p><button class="btn" type="submit" style="margin-top:6px">Enregistrer le frais</button></form>' +
+        (p.frais.length ? '<h3 class="section">Frais de cette sortie</h3>' + p.frais.map(function (e) {
+            return '<div class="card row"><div class="grow"><b>' + esc(e.libelle || e.type) + '</b>' + (e.pending ? '<span class="tag" style="background:var(--warn-soft);color:var(--warn)">en attente</span>' : '') +
+                '<div class="muted">' + esc([e.beneficiaire, e.commentaire].filter(Boolean).join(' · ') || 'Sans précision') + '</div></div><div class="muted"><b>' + money(e.montant) + '</b></div></div>';
+        }).join('') : '');
+}
+function bindFuelTabs() {
+    [].forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.onclick = function () { fuelTab = b.getAttribute('data-tab'); render(); }; });
+}
+function bindExpense() {
+    var f = $('ef'); if (!f) return;
+    f.onsubmit = function (ev) {
+        ev.preventDefault(); var p = currentPlan(); if (!p || !p.demarree) return;
+        var montant = parseFloat($('mt').value); if (!(montant >= 1)) { $('err').textContent = 'Indiquez le montant.'; return; }
+        var body = { client_ref: uid(), type: $('ty').value, montant: montant };
+        if ($('bn').value.trim()) body.beneficiaire = $('bn').value.trim();
+        if ($('cm').value.trim()) body.commentaire = $('cm').value.trim();
+        expDraft = {};
+        enqueue({ type: 'expense', plan: p.id, body: body }); toast(isOnline() ? 'Frais enregistré' : 'Frais enregistré, envoi au retour du réseau');
+    };
+    var keep = { ty: 'ty', mt: 'mt', bn: 'bn', cm: 'cm' };   // le brouillon survit aux rafraîchissements de l'écran
+    Object.keys(keep).forEach(function (k) { var i = $(k); if (i) i.oninput = i.onchange = function () { expDraft[k] = i.value; }; });
+}
+function fuelFormView() {
     var p = currentPlan(); p = p && p.demarree ? p : null;
     var body;
     if (!p) body = '<div class="card empty">Démarrez d\'abord un circuit pour déclarer du carburant.</div>';
@@ -676,6 +727,7 @@ function fuelView() {
         '<label for="pu">Prix du litre (FCFA) — laissez vide pour le prix du jour</label><input id="pu" type="number" inputmode="numeric" min="1" value="' + esc(fuelDraft.pu || '') + '">' +
         '<label for="km">Compteur (km)</label><input id="km" type="number" inputmode="numeric" min="0" value="' + esc(fuelDraft.km || '') + '">' +
         '<label for="st">Station</label><input id="st" type="text" maxlength="120" placeholder="ex. Total Méagui" value="' + esc(fuelDraft.st || '') + '">' +
+        '<label for="nf">N° facture / coupon (facultatif)</label><input id="nf" type="text" maxlength="60" value="' + esc(fuelDraft.nf || '') + '">' +
         '<label>Photo de la facture (facultatif)</label><input id="ph" type="file" accept="image/*" capture="environment" style="display:none">' +
         (fuelPhoto ? '<div class="card row" style="margin:0"><img src="' + fuelPhoto + '" alt="Photo de la facture" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><div class="grow"><b>Photo jointe</b><div class="muted">Envoyée avec le plein</div></div><button type="button" class="btn sec small" id="phx" style="width:auto;padding:8px 12px">Retirer</button></div>'
             : '<button type="button" class="btn sec" id="phb">Prendre une photo de la facture</button>') +
@@ -683,7 +735,7 @@ function fuelView() {
         (p.ravitaillements.length ? '<h3 class="section">Pleins de cette sortie</h3>' + p.ravitaillements.map(function (r) {
             return '<div class="card row"><div class="grow"><b>' + esc(r.litres) + ' L</b>' + (r.pending ? '<span class="tag" style="background:var(--warn-soft);color:var(--warn)">en attente</span>' : '') + (r.facture ? '<span class="tag" style="background:var(--accent-soft);color:var(--accent-text)">photo</span>' : '') + '<div class="muted">' + esc(r.station || 'Station non précisée') + (r.km_compteur ? ' · ' + esc(r.km_compteur) + ' km' : '') + '</div></div><div class="muted">' + (r.montant ? esc(Number(r.montant).toLocaleString('fr-FR')) + ' F' : '') + '</div></div>';
         }).join('') : '');
-    return shell('Carburant', body);
+    return body;
 }
 function bindFuel() {
     var f = $('ff'); if (!f) return;
@@ -694,6 +746,7 @@ function bindFuel() {
         if ($('pu').value) body.prix_unitaire = parseFloat($('pu').value);
         if ($('km').value) body.km_compteur = parseInt($('km').value, 10);
         if ($('st').value.trim()) body.station = $('st').value.trim();
+        if ($('nf').value.trim()) body.numero_facture = $('nf').value.trim();
         var photo = fuelPhoto;
         fuelDraft = {}; fuelPhoto = null;
         enqueueWithPhoto({ type: 'fuel', plan: p.id, body: body }, photo, 'Plein enregistré');

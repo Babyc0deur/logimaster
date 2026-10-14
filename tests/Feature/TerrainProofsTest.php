@@ -183,4 +183,41 @@ class TerrainProofsTest extends TestCase
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010], $this->h)->assertOk()->assertJsonPath('sortie.photo_depart', false);
         $this->postJson("/api/mobile/livraisons/{$this->stop('CSR A')->id}", ['statut' => 'livre', 'lat' => 5.4, 'lon' => -6.5], $this->h)->assertOk()->assertJsonPath('stops.0.etat', 'livre');
     }
+
+    public function test_other_expenses_are_recorded_from_the_phone_once_and_listed_with_the_trip(): void
+    {
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010], $this->h)->assertOk();
+        $url = "/api/mobile/sorties/{$this->plan->id}/frais";
+        $body = ['client_ref' => 'frais-001', 'type' => 'peage', 'montant' => 1500, 'beneficiaire' => 'Péage de Soubré', 'commentaire' => '=HYPERLINK("x")'];
+
+        $this->postJson($url, $body, $this->h)->assertCreated()->assertJsonPath('libelle', 'Péage')->assertJsonPath('montant', 1500);
+        $this->postJson($url, $body, $this->h)->assertOk();   // envoi rejoué : aucun doublon
+        $this->assertSame(1, \App\Models\Expense::where('client_ref', 'frais-001')->count());
+
+        $expense = \App\Models\Expense::where('client_ref', 'frais-001')->first();
+        $this->assertSame($this->plan->fresh()->sortie_id, $expense->sortie_id);
+        $this->assertSame($this->plan->vehicle_id, $expense->vehicle_id);
+        $this->assertSame($this->district->id, $expense->district_id);
+        $this->assertNotNull($expense->saisi_par);
+
+        $this->getJson("/api/mobile/sorties/{$this->plan->id}", $this->h)->assertOk()->assertJsonPath('frais.0.beneficiaire', 'Péage de Soubré');
+    }
+
+    public function test_expense_validation_and_start_required(): void
+    {
+        $url = "/api/mobile/sorties/{$this->plan->id}/frais";
+        $this->postJson($url, ['client_ref' => 'a', 'type' => 'peage', 'montant' => 500], $this->h)->assertStatus(409);   // circuit non démarré
+
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->h)->assertOk();
+        $this->postJson($url, ['client_ref' => 'b', 'type' => 'inconnu', 'montant' => 500], $this->h)->assertStatus(422);
+        $this->postJson($url, ['client_ref' => 'c', 'type' => 'peage', 'montant' => 0], $this->h)->assertStatus(422);
+        $this->postJson($url, ['type' => 'peage', 'montant' => 500], $this->h)->assertStatus(422);   // référence obligatoire
+    }
+
+    public function test_fuel_keeps_the_invoice_number_entered_on_the_phone(): void
+    {
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->h)->assertOk();
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'plein-1', 'litres' => 40, 'numero_facture' => 'F-2026-118'], $this->h)
+            ->assertCreated()->assertJsonPath('numero_facture', 'F-2026-118');
+    }
 }

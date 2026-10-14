@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Api\ApiController;
 use App\Domain\Mobile\SiteGeolocation;
+use App\Filament\Resources\Sorties\Schemas\SortieForm;
 use App\Models\Chronogramme;
+use App\Models\Expense;
 use App\Models\FuelPrice;
 use App\Models\LivraisonEspc;
 use App\Models\PushSubscription;
@@ -181,6 +183,47 @@ class MobileController extends ApiController
 
     // ------------------------------------------------------------------ notifications et appareils
 
+    /** Autre frais de la sortie (péage, collation, chargement…). `client_ref` (généré par le téléphone) évite les doublons si l'envoi est rejoué. */
+    public function frais(Request $request, string $id): JsonResponse
+    {
+        $plan = $this->plan($request, $id);
+        abort_if(! $plan->sortie_id, 409, 'Démarrez d\'abord le circuit.');
+        $data = $request->validate([
+            'client_ref' => ['required', 'string', 'max:64'],
+            'type' => ['required', Rule::in(array_keys(SortieForm::EXPENSE_TYPES))],
+            'montant' => ['required', 'numeric', 'min:1', 'max:99999999'],
+            'beneficiaire' => ['nullable', 'string', 'max:120'],
+            'commentaire' => ['nullable', 'string', 'max:255'],
+            'done_at' => ['nullable', 'date', 'before_or_equal:now +1 day'],
+        ]);
+
+        if ($existing = Expense::where('client_ref', $data['client_ref'])->first()) {
+            abort_unless($existing->sortie_id === $plan->sortie_id, 409, 'Référence déjà utilisée.');
+
+            return response()->json($this->expense($existing), 200);
+        }
+
+        $expense = Expense::create([
+            'district_id' => $plan->district_id, 'sortie_id' => $plan->sortie_id, 'vehicle_id' => $plan->vehicle_id,
+            'type' => $data['type'], 'montant' => $data['montant'], 'motif' => $plan->motif,
+            'beneficiaire' => trim((string) ($data['beneficiaire'] ?? '')) ?: null,
+            'commentaire' => trim((string) ($data['commentaire'] ?? '')) ?: null,
+            'date_depense' => isset($data['done_at']) ? CarbonImmutable::parse($data['done_at'])->toDateString() : today()->toDateString(),
+            'client_ref' => $data['client_ref'], 'saisi_par' => $request->user()->getKey(),
+        ]);
+
+        return response()->json($this->expense($expense), 201);
+    }
+
+    private function expense(Expense $e): array
+    {
+        return [
+            'id' => $e->id, 'client_ref' => $e->client_ref, 'type' => $e->type, 'libelle' => SortieForm::EXPENSE_TYPES[$e->type] ?? $e->type,
+            'montant' => (float) $e->montant, 'beneficiaire' => $e->beneficiaire, 'commentaire' => $e->commentaire,
+            'date' => $e->date_depense?->toDateString(),
+        ];
+    }
+
     public function notifications(Request $request)
     {
         $user = $request->user();
@@ -301,6 +344,7 @@ class MobileController extends ApiController
                 'photo_depart' => (bool) $sortie->photo_km_depart, 'photo_arrivee' => (bool) $sortie->photo_km_arrivee] : null,
             'stops' => $stops,
             'restants' => $stops->where('etat', 'planifie')->count(),
+            'frais' => $sortie ? Expense::where('sortie_id', $sortie->id)->latest('created_at')->get()->map(fn ($e) => $this->expense($e))->values() : [],
             'ravitaillements' => $sortie ? Ravitaillement::where('sortie_id', $sortie->id)->latest('date_ravitaillement')->get()->map(fn ($r) => $this->fuel($r))->values() : [],
         ];
     }
@@ -310,7 +354,7 @@ class MobileController extends ApiController
     {
         return [
             'id' => $r->id, 'client_ref' => $r->client_ref, 'litres' => (float) $r->litres, 'prix_unitaire' => (float) $r->prix_unitaire,
-            'montant' => round((float) $r->litres * (float) $r->prix_unitaire), 'km_compteur' => $r->km_compteur, 'station' => $r->station,
+            'montant' => round((float) $r->litres * (float) $r->prix_unitaire), 'km_compteur' => $r->km_compteur, 'station' => $r->station, 'numero_facture' => $r->numero_facture,
             'date' => $r->date_ravitaillement?->toDateString(), 'anomalie' => $r->anomalie, 'facture' => (bool) $r->facture_path,
         ];
     }

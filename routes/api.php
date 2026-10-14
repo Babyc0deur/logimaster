@@ -22,6 +22,7 @@ Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWri
         Route::post('sorties/{id}/start', [Api\Mobile\MobileController::class, 'start']);
         Route::post('sorties/{id}/finish', [Api\Mobile\MobileController::class, 'finish']);
         Route::post('sorties/{id}/ravitaillements', [Api\Mobile\MobileController::class, 'ravitaillement']);
+        Route::post('sorties/{id}/frais', [Api\Mobile\MobileController::class, 'frais']);
         Route::post('livraisons/{id}', [Api\Mobile\MobileController::class, 'livraison']);
         Route::get('planning', [Api\Mobile\FleetController::class, 'planning']);
         Route::get('vehicules', [Api\Mobile\FleetController::class, 'vehicules']);
