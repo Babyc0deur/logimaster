@@ -121,7 +121,11 @@ class SortieForm
                     ->schema([
                         TextInput::make('litres')->numeric()->required()->minValue(0.1)->suffix('L')->live(onBlur: true),
                         TextInput::make('prix_unitaire')->label('Prix unitaire')->numeric()->required()->suffix('FCFA/L')->live(onBlur: true)
-                            ->default(fn (Get $get) => FuelPrice::current(Vehicle::find($get('../../vehicle_id'))?->type_carburant)),
+                            ->helperText('Prérempli selon le type de carburant du véhicule ; modifiable avec confirmation.')
+                            ->default(fn (Get $get) => Vehicle::find($get('../../vehicle_id'))?->currentFuelPrice()),
+                        \Filament\Forms\Components\Toggle::make('prix_confirme')->dehydrated(false)->accepted()->columnSpanFull()
+                            ->label(fn (Get $get) => 'Je confirme ce prix, différent du prix du véhicule ('.number_format((float) Vehicle::find($get('../../vehicle_id'))?->currentFuelPrice(), 0, ',', ' ').' FCFA/L)')
+                            ->visible(fn (Get $get) => ($usual = Vehicle::find($get('../../vehicle_id'))?->currentFuelPrice()) !== null && filled($get('prix_unitaire')) && abs((float) $get('prix_unitaire') - $usual) > 0.001),
                         Text::make(fn (Get $get) => 'Montant : '.number_format((float) $get('litres') * (float) $get('prix_unitaire'), 0, ',', ' ').' FCFA'),
                         TextInput::make('station')->maxLength(120),
                         TextInput::make('numero_facture')->label('N° facture / coupon')->maxLength(60),

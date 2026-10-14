@@ -50,6 +50,7 @@ class WorkbookImportTest extends TestCase
         $region = Region::create(['pres_id' => Pres::create(['name' => 'PRES'])->id, 'name' => 'R1']);
         $this->d1 = District::create(['region_id' => $region->id, 'name' => 'ANYAMA', 'sync_id' => 'DS005', 'sync_password_hash' => 'x']);
         $this->d2 = District::create(['region_id' => $region->id, 'name' => 'ABOBO-EST', 'sync_id' => 'DS001', 'sync_password_hash' => 'x']);
+        FuelPrice::query()->delete();
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 715, 'date_effet' => '2024-01-01']);
         FuelPrice::create(['type_carburant' => 'essence', 'prix' => 875, 'date_effet' => '2024-01-01']);
     }

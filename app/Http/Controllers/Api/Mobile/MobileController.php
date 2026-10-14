@@ -165,9 +165,10 @@ class MobileController extends ApiController
             return response()->json($this->fuel($existing), 200);
         }
 
+        // prix du litre : celui envoyé par le téléphone (prérempli selon le véhicule, modifié seulement après confirmation) ; à défaut, celui du véhicule
         $vehicle = $plan->vehicle;
-        $price = $data['prix_unitaire'] ?? FuelPrice::current($vehicle->type_carburant ?? 'diesel');
-        abort_if(! $price, 422, 'Indiquez le prix du litre.');
+        $price = $data['prix_unitaire'] ?? $vehicle?->currentFuelPrice(isset($data['done_at']) ? CarbonImmutable::parse($data['done_at']) : null);
+        abort_if(! $price, 422, 'Aucun prix de carburant n\'est défini pour ce véhicule : contactez le bureau du district.');
 
         $fuel = Ravitaillement::create([
             'district_id' => $plan->district_id, 'vehicle_id' => $plan->vehicle_id, 'sortie_id' => $plan->sortie_id, 'driver_id' => $plan->driver_id,
@@ -337,6 +338,8 @@ class MobileController extends ApiController
         return $this->summary($p) + [
             'depart' => $p->circuit?->point_depart ?: $p->district?->name,
             'district' => $p->district?->name,
+            'prix_litre' => $p->vehicle?->currentFuelPrice(),
+            'type_carburant' => $p->vehicle?->type_carburant,
             'vehicule_detail' => trim(($p->vehicle?->marque ?? '').' '.($p->vehicle?->modele ?? '')) ?: null,
             'chauffeur' => $p->driver?->nom_complet,
             'equipe' => $p->personnels->map(fn ($x) => ['nom' => $x->nom_complet, 'fonction' => $x->fonction])->values(),

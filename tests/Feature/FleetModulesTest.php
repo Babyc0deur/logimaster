@@ -190,6 +190,7 @@ class FleetModulesTest extends TestCase
 
     public function test_fuel_prices_history_and_current_price(): void
     {
+        FuelPrice::query()->delete();
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 650, 'date_effet' => '2026-01-01']);
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 700, 'date_effet' => '2026-08-01']);
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 750, 'date_effet' => '2026-12-01']); // futur
@@ -298,6 +299,7 @@ class FleetModulesTest extends TestCase
         $this->refuel($v, 10, ['sortie_id' => $sortie->id]);
         Vidange::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'date' => '2026-09-01', 'km' => 100, 'prochain_km' => 5100, 'type' => 'simple']);
         $immo = Immobilisation::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'date_debut' => '2026-09-10', 'motif' => 'panne']);
+        FuelPrice::query()->delete();
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 700, 'date_effet' => '2026-01-01']);
         $plan = \App\Models\Chronogramme::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'date_prevue' => '2026-09-16']);
         $espc = $circuit->espc()->first();

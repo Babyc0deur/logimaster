@@ -9,7 +9,7 @@ return [
     */
     'default_period' => [
         'from' => env('LOGIMASTER_PERIOD_FROM', '2025-06-11') ?: null,
-        'until' => env('LOGIMASTER_PERIOD_UNTIL', '2026-10-12') ?: null,
+        'until' => env('LOGIMASTER_PERIOD_UNTIL', '') ?: null   // vide = sans limite haute,
     ],
 
     // Tableau de bord à l'arrivée : période affichée (les listes gardent la période par défaut ci-dessus)

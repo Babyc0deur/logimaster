@@ -39,6 +39,14 @@ class Vehicle extends Model
         ];
     }
 
+    /** Prix du litre appliqué à ce véhicule à une date : prix du type de carburant (essence, gasoil…), à défaut le prix propre du véhicule. */
+    public function currentFuelPrice($date = null): ?float
+    {
+        $price = FuelPrice::current($this->type_carburant, $date);
+
+        return $price ?? ($this->prix_carburant !== null ? (float) $this->prix_carburant : null);
+    }
+
     public function district()
     {
         return $this->belongsTo(District::class);

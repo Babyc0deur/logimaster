@@ -36,6 +36,8 @@ class LogimasterDemoSeeder extends Seeder
         $this->call(OrganisationSeeder::class);
         FuelPrice::firstOrCreate(['type_carburant' => 'diesel', 'date_effet' => '2024-01-01'], ['prix' => 715]);
         FuelPrice::firstOrCreate(['type_carburant' => 'essence', 'date_effet' => '2024-01-01'], ['prix' => 875]);
+        FuelPrice::firstOrCreate(['type_carburant' => 'diesel', 'date_effet' => '2026-10-01'], ['prix' => 725]);   // prix d'octobre 2026
+        FuelPrice::firstOrCreate(['type_carburant' => 'essence', 'date_effet' => '2026-10-01'], ['prix' => 905]);
 
         $anyama = District::where('name', 'ANYAMA')->firstOrFail();
         $abidjan1 = Region::where('name', 'ABIDJAN 1')->firstOrFail();

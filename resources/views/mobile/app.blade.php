@@ -724,7 +724,7 @@ function fuelFormView() {
     if (!p) body = '<div class="card empty">Démarrez d\'abord un circuit pour déclarer du carburant.</div>';
     else body = '<div class="card"><div class="muted">Rattaché à la sortie</div><b>' + esc(p.circuit) + (p.vehicule ? ' · ' + esc(p.vehicule) : '') + '</b></div>' +
         '<form id="ff"><label for="lt">Litres</label><input id="lt" type="number" inputmode="decimal" step="0.1" min="0.5" required value="' + esc(fuelDraft.lt || '') + '">' +
-        '<label for="pu">Prix du litre (FCFA) — laissez vide pour le prix du jour</label><input id="pu" type="number" inputmode="numeric" min="1" value="' + esc(fuelDraft.pu || '') + '">' +
+        '<label for="pu">Prix du litre (FCFA)' + (p.type_carburant ? ' · ' + (p.type_carburant === 'essence' ? 'essence' : p.type_carburant === 'diesel' ? 'gasoil' : esc(p.type_carburant)) : '') + '</label><input id="pu" type="number" inputmode="decimal" min="1" step="any" value="' + esc(fuelDraft.pu != null ? fuelDraft.pu : (p.prix_litre != null ? p.prix_litre : '')) + '"><div class="muted" style="margin:-4px 0 8px">Prérempli selon le véhicule' + (p.prix_litre != null ? ' (' + esc(String(p.prix_litre).replace('.', ',')) + ' FCFA)' : '') + ' : vous pouvez le modifier, une confirmation vous sera demandée.</div>' +
         '<label for="km">Compteur (km)</label><input id="km" type="number" inputmode="numeric" min="0" value="' + esc(fuelDraft.km || '') + '">' +
         '<label for="st">Station</label><input id="st" type="text" maxlength="120" placeholder="ex. Total Méagui" value="' + esc(fuelDraft.st || '') + '">' +
         '<label for="nf">N° facture / coupon (facultatif)</label><input id="nf" type="text" maxlength="60" value="' + esc(fuelDraft.nf || '') + '">' +
@@ -737,19 +737,33 @@ function fuelFormView() {
         }).join('') : '');
     return body;
 }
+function sheetConfirmPrice(usual, chosen, onYes) {
+    var fmt = function (n) { return String(n).replace('.', ','); };
+    sheet('<h3>Modifier le prix du litre ?</h3><p class="muted">Le prix du litre pour ce véhicule est de <b>' + esc(fmt(usual)) + ' FCFA</b>. Vous allez enregistrer ce plein à <b>' + esc(fmt(chosen)) + ' FCFA</b> le litre.</p>' +
+        '<button class="btn ok" id="pyes" style="margin-top:8px">Oui, utiliser ' + esc(fmt(chosen)) + ' FCFA</button><button class="btn sec" id="pno" style="margin-top:8px">Garder ' + esc(fmt(usual)) + ' FCFA</button>', function () {
+        $('pyes').onclick = function () { closeSheet(); onYes(); };
+        $('pno').onclick = function () { closeSheet(); var i = $('pu'); if (i) { i.value = usual; fuelDraft.pu = String(usual); } };
+    });
+}
 function bindFuel() {
     var f = $('ff'); if (!f) return;
     f.onsubmit = function (ev) {
         ev.preventDefault(); var p = currentPlan(); if (!p || !p.demarree) return;
         var litres = parseFloat($('lt').value); if (!(litres >= 0.5)) { $('err').textContent = 'Indiquez les litres.'; return; }
         var body = { client_ref: uid(), litres: litres };
-        if ($('pu').value) body.prix_unitaire = parseFloat($('pu').value);
+        var pu = parseFloat($('pu').value), usual = p.prix_litre != null ? +p.prix_litre : null;
+        if (pu > 0) body.prix_unitaire = pu;
         if ($('km').value) body.km_compteur = parseInt($('km').value, 10);
         if ($('st').value.trim()) body.station = $('st').value.trim();
         if ($('nf').value.trim()) body.numero_facture = $('nf').value.trim();
         var photo = fuelPhoto;
-        fuelDraft = {}; fuelPhoto = null;
-        enqueueWithPhoto({ type: 'fuel', plan: p.id, body: body }, photo, 'Plein enregistré');
+        var send = function () {
+            fuelDraft = {}; fuelPhoto = null;
+            enqueueWithPhoto({ type: 'fuel', plan: p.id, body: body }, photo, 'Plein enregistré');
+        };
+        // prix différent du prix du véhicule : confirmation avant d'enregistrer
+        if (usual != null && body.prix_unitaire != null && Math.abs(body.prix_unitaire - usual) > 0.001) return sheetConfirmPrice(usual, body.prix_unitaire, send);
+        send();
     };
     // le brouillon survit aux rafraîchissements de l'écran (synchronisation en arrière-plan)
     [].forEach.call(f.querySelectorAll('input[id]:not([type=file])'), function (i) { i.oninput = function () { fuelDraft[i.id] = i.value; }; });

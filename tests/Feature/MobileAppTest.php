@@ -54,6 +54,7 @@ class MobileAppTest extends TestCase
         $region = Region::create(['pres_id' => Pres::create(['name' => 'PRES'])->id, 'name' => 'R']);
         $this->district = District::create(['region_id' => $region->id, 'name' => 'MEAGUI', 'sync_id' => 'M', 'sync_password_hash' => 'x']);
         $this->vehicle = Vehicle::create(['district_id' => $this->district->id, 'immatriculation' => 'D55031', 'km_actuel' => 42000, 'type_carburant' => 'diesel']);
+        FuelPrice::query()->delete();
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 715, 'date_effet' => '2026-01-01']);
 
         $circuit = Circuit::create(['district_id' => $this->district->id, 'nom' => 'CIRCUIT 5', 'point_depart' => 'DDS MEAGUI']);
@@ -278,7 +279,10 @@ class MobileAppTest extends TestCase
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();
         FuelPrice::query()->delete();
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'a', 'litres' => 10], $h)->assertStatus(422);
-        $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'a', 'litres' => 10, 'prix_unitaire' => 700], $h)->assertCreated();
+        // sans prix envoyé : celui du type de carburant du véhicule ; avec un prix (modifié et confirmé sur le téléphone) : celui-là
+        FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 700, 'date_effet' => '2026-01-01']);
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'a', 'litres' => 10], $h)->assertCreated()->assertJsonPath('prix_unitaire', 700);
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'a2', 'litres' => 10, 'prix_unitaire' => 750], $h)->assertCreated()->assertJsonPath('prix_unitaire', 750);
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'b', 'litres' => 0], $h)->assertStatus(422);
     }
 

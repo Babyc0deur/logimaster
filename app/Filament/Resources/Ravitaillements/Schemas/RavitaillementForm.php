@@ -22,7 +22,7 @@ class RavitaillementForm
                 ->searchable()->preload()->required()->live()
                 ->afterStateUpdated(function (Set $set, $state) {
                     $v = Vehicle::find($state);
-                    $set('prix_unitaire', $v?->prix_carburant ?? FuelPrice::current($v?->type_carburant));
+                    $set('prix_unitaire', $v?->currentFuelPrice());
                     $set('km_compteur', $v?->km_actuel);
                 }),
             \Filament\Forms\Components\DatePicker::make('date_ravitaillement')->label('Date')->native(false)->displayFormat('d/m/Y')->default(now())->required()->maxDate(now()),
@@ -32,7 +32,11 @@ class RavitaillementForm
             TextInput::make('km_compteur')->label('Kilométrage compteur')->numeric()->minValue(0)->suffix('km'),
             TextInput::make('litres')->numeric()->required()->minValue(0.1)->suffix('L')->live(onBlur: true),
             TextInput::make('prix_unitaire')->label('Prix unitaire')->numeric()->required()->minValue(1)->suffix('FCFA/L')->live(onBlur: true)
-                ->helperText('Prérempli avec le prix du carburant du véhicule (Paramètres carburant).'),
+                ->helperText('Prérempli selon le type de carburant du véhicule (Paramètres carburant). Modifiable : une confirmation est demandée.'),
+            \Filament\Forms\Components\Toggle::make('prix_confirme')->dehydrated(false)->accepted()
+                ->label(fn (Get $get) => 'Je confirme ce prix, différent du prix du véhicule ('.number_format((float) Vehicle::find($get('vehicle_id'))?->currentFuelPrice(), 0, ',', ' ').' FCFA/L)')
+                ->visible(fn (Get $get) => ($usual = Vehicle::find($get('vehicle_id'))?->currentFuelPrice()) !== null && filled($get('prix_unitaire')) && abs((float) $get('prix_unitaire') - $usual) > 0.001)
+                ->columnSpanFull(),
             Text::make(fn (Get $get) => 'Montant total : '.number_format((float) $get('litres') * (float) $get('prix_unitaire'), 0, ',', ' ').' FCFA')
                 ->columnSpanFull(),
             TextInput::make('station')->maxLength(120),
