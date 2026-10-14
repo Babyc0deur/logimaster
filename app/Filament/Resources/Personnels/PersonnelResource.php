@@ -12,6 +12,7 @@ use App\Filament\Resources\Personnels\RelationManagers\SortiesConduitesRelationM
 use App\Models\Personnel;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -140,7 +141,17 @@ class PersonnelResource extends Resource
                 SelectFilter::make('fonction')->options(Personnel::FONCTIONS),
                 SelectFilter::make('statut')->options(['actif' => 'Actif', 'inactif' => 'Inactif']),
             ])
-            ->recordActions([ViewAction::make()->label('Fiche'), EditAction::make(), \App\Filament\Support\MobileAccessActions::credentials(), \App\Filament\Support\MobileAccessActions::resetCode()])
+            ->recordActions([
+                // boutons sans libellé : l'icône suffit, le nom s'affiche au survol
+                ViewAction::make()->label('Fiche')->iconButton()->tooltip('Fiche'),
+                EditAction::make()->iconButton()->tooltip('Modifier'),
+                \App\Filament\Support\MobileAccessActions::credentials()->iconButton()->tooltip('Accès mobile'),
+                \App\Filament\Support\MobileAccessActions::resetCode()->iconButton()->tooltip('Réinitialiser le code'),
+                DeleteAction::make()->iconButton()->tooltip('Supprimer')
+                    ->modalHeading('Supprimer cette fiche ?')
+                    ->modalDescription('La fiche est supprimée, ainsi que son accès à l’application mobile (compte, appareils et notifications).')
+                    ->modalSubmitActionLabel('Supprimer'),
+            ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 
