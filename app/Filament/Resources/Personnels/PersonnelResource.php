@@ -113,18 +113,13 @@ class PersonnelResource extends Resource
     {
         return $table
             ->defaultSort('nom_complet')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('user:id,personnel_id,email,is_active,must_change_password,last_mobile_login_at')->withCount(['sortiesEnTantQueChef', 'sortiesEnTantQuePassager', 'sortiesConduites']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('user:id,personnel_id,email,is_active,must_change_password,last_mobile_login_at'))
             ->recordUrl(fn (Personnel $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('nom_complet')->label('Nom complet')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('fonction')->badge()->formatStateUsing(fn ($state) => Personnel::FONCTIONS[$state] ?? $state)->sortable()
                     ->color(fn ($state) => match ($state) { 'chauffeur' => 'info', 'chef_mission' => 'primary', default => 'gray' }),
                 TextColumn::make('telephone')->label('Téléphone')->placeholder('—'),
-                TextColumn::make('email')->placeholder('—')->toggleable(),
-                TextColumn::make('missions')->label('Missions')
-                    ->state(fn (Personnel $p) => ($p->sorties_en_tant_que_chef_count ?? 0) + ($p->sorties_en_tant_que_passager_count ?? 0) + ($p->sorties_conduites_count ?? 0)),
-                TextColumn::make('permis_expiration')->label('Permis jusqu\'au')->date('d/m/Y')->placeholder('—')->toggleable()
-                    ->color(fn (Personnel $p) => $p->permis_expiration && $p->permis_expiration->lt(now()->addDays(30)) ? 'danger' : null),
                 TextColumn::make('identifiant')->label('Identifiant mobile')->copyable()->placeholder('—')->toggleable(),
                 TextColumn::make('acces_mobile')->label('Accès mobile')->badge()
                     ->state(fn (Personnel $p) => match (true) {
