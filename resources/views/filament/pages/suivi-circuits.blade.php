@@ -13,6 +13,30 @@
 @endphp
 
 <x-filament-panels::page>
+    <style>
+        /* circuit en serpent : une ligne se lit de gauche à droite, la suivante de droite à gauche, reliées par des coudes */
+        .sn-wrap { overflow-x:auto; padding-bottom:6px; }
+        .sn-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); row-gap:30px; min-width:780px; padding:6px 2px 8px 16px; }
+        .sn-cell { position:relative; min-width:0; padding-right:20px; }
+        .sn-cell .sn-node { position:relative; z-index:1; margin-bottom:10px; }
+        .sn-cell::before, .sn-cell::after { content:""; position:absolute; background:var(--lc, rgba(127,127,127,.4)); border-radius:2px; }
+        /* trait vers l'étape suivante, arrêté avant chaque icône */
+        .sn-cell.to-r::before { top:12px; left:32px; width:calc(100% - 36px); height:3px; }
+        .sn-cell.to-l::before { top:12px; left:calc(32px - 100%); width:calc(100% - 36px); height:3px; }
+        /* coude à droite (fin d'une ligne qui va vers la droite) : sort par le trait, descend à l'extérieur du texte, rentre par la ligne suivante */
+        .sn-cell.turn-r::before { top:12px; left:32px; width:calc(100% - 44px); height:3px; }
+        .sn-cell.turn-r::after { top:12px; left:calc(100% - 13px); width:3px; height:calc(100% + 31px); }
+        .sn-cell.from-r::after { top:12px; left:32px; width:calc(100% - 44px); height:3px; }
+        /* coude à gauche (fin d'une ligne qui va vers la gauche) */
+        .sn-cell.turn-l::before { top:12px; left:-12px; width:10px; height:3px; }
+        .sn-cell.turn-l::after { top:12px; left:-13px; width:3px; height:calc(100% + 31px); }
+        .sn-cell.from-l::after { top:12px; left:-12px; width:10px; height:3px; }
+        .sn-pulse::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid #c2410c; opacity:0; animation:sn-ring 1.8s ease-out infinite; }
+        @keyframes sn-ring { 0% { transform:scale(.8); opacity:.7; } 100% { transform:scale(1.5); opacity:0; } }
+        .sn-dot { width:9px; height:9px; border-radius:50%; background:#c2410c; display:inline-block; animation:sn-blink 1.4s ease-in-out infinite; }
+        @keyframes sn-blink { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:.35; transform:scale(.8); } }
+        @media (prefers-reduced-motion: reduce) { .sn-pulse::after, .sn-dot { animation:none; } }
+    </style>
     <div wire:poll.15s style="display:flex;flex-direction:column;gap:1rem">
     <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
         <x-filament::button size="sm" color="gray" wire:click="previousDay" icon="heroicon-m-chevron-left" aria-label="Jour précédent" />
@@ -25,12 +49,26 @@
     @forelse ($plans as $p)
         @php
             $plan = $p['plan'];
-            $etat = $p['termine'] ? 'terminé' : ($day->isToday() && $p['done'] > 0 ? 'en cours' : ($day->isFuture() ? 'planifié' : ($p['done'] > 0 ? 'en cours' : 'planifié')));
+            $running = ! $p['termine'] && $plan->sortie_id && ($plan->sortie?->statut ?? null) === 'en_cours';
+            $etat = $p['termine'] ? 'terminé' : ($running ? 'en cours' : ($day->isFuture() ? 'planifié' : ($p['done'] > 0 ? 'en cours' : 'planifié')));
+            $current = $running ? $p['stops']->search(fn ($x) => $x['etat'] === 'avenir') : false;   // prochain site à livrer
+            $n = $p['stops']->count() + 2;                                                              // départ + sites + retour
+            $C = 4;                                                                                     // étapes par ligne
+            $snake = function (int $i) use ($n, $C) {
+                $row = intdiv($i, $C);
+                $col = $row % 2 === 0 ? $i % $C : $C - 1 - ($i % $C);
+                $turnAt = fn (int $k) => $k % $C === $C - 1 && $k < $n - 1;                  // dernière étape d'une ligne : coude
+                $cls = [];
+                if ($turnAt($i)) { $cls[] = $row % 2 === 0 ? 'turn-r' : 'turn-l'; }
+                elseif ($i < $n - 1) { $cls[] = $row % 2 === 0 ? 'to-r' : 'to-l'; }
+                if ($i > 0 && $turnAt($i - 1)) { $cls[] = intdiv($i - 1, $C) % 2 === 0 ? 'from-r' : 'from-l'; }
+                return ['style' => 'grid-row:'.($row + 1).';grid-column:'.($col + 1), 'class' => implode(' ', $cls)];
+            };
         @endphp
-        <div style="{{ $card }}">
+        <div id="circuit-{{ $plan->id }}" style="{{ $card }}{{ $running ? ';border-color:#c2410c;box-shadow:0 0 0 1px #c2410c inset' : '' }}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
                 <div>
-                    <p style="margin:0;font-size:.75rem;opacity:.7">Circuit {{ $etat }} · {{ $day->translatedFormat('l j F') }}</p>
+                    <p style="margin:0;font-size:.75rem;opacity:.7;display:flex;align-items:center;gap:7px">@if ($running)<i class="sn-dot"></i><strong style="color:#c2410c;opacity:1">En cours</strong> ·@else Circuit {{ $etat }} ·@endif {{ $day->translatedFormat('l j F') }}</p>
                     <p style="margin:2px 0 0;font-size:1.15rem;font-weight:600">{{ $plan->circuit?->nom ?? ($plan->destination ?: 'Sortie sans circuit') }}</p>
                     <p style="margin:2px 0 0;font-size:.85rem;opacity:.7">
                         <x-filament::icon icon="heroicon-m-truck" style="width:14px;height:14px;display:inline;vertical-align:-2px" /> {{ $plan->vehicle?->immatriculation ?? 'Sans véhicule' }}
@@ -62,52 +100,50 @@
                     @endforeach
                 </div>
 
-                <div>
-                    {{-- Départ du district --}}
-                    <div style="display:flex;gap:14px">
-                        <div style="display:flex;flex-direction:column;align-items:center;width:28px;flex:none">
-                            <div style="{{ $node }} {{ $neutral }};color:{{ $neutral }}"><x-filament::icon icon="heroicon-m-flag" style="width:14px;height:14px" /></div>
-                            <div style="flex:1;width:3px;min-height:28px;background:rgba(127,127,127,.4);margin:2px 0"></div>
+                <div class="sn-wrap">
+                    <div class="sn-grid">
+                        {{-- Départ du district --}}
+                        @php $g = $snake(0); $first = $p['stops']->first(); @endphp
+                        <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $first && $first['etat'] !== 'avenir' ? $colors[$first['etat']][0] : 'rgba(127,127,127,.4)' }}">
+                            <div class="sn-node" style="{{ $node }} {{ $neutral }};color:{{ $neutral }}"><x-filament::icon icon="heroicon-m-flag" style="width:14px;height:14px" /></div>
+                            <strong>{{ $p['depart'] }}</strong>
+                            <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span></div>
+                            @if ($p['depart_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['depart_heure'] }}</div>@endif
                         </div>
-                        <div style="flex:1;padding-bottom:14px">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                                <strong>{{ $p['depart'] }}</strong>
-                                <span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span>
-                                @if ($p['depart_heure'])<span style="font-size:.8rem;opacity:.7;margin-left:auto">prévu {{ $p['depart_heure'] }}</span>@endif
-                            </div>
-                        </div>
-                    </div>
 
-                    @foreach ($p['stops'] as $s)
-                        @php $l = $s['livraison']; [$fg, $bg, $label, $icon] = $colors[$s['etat']]; $nextDistance = $p['stops']->get($loop->index + 1)['distance'] ?? ($loop->last ? $p['retour_km'] : null); @endphp
-                        <div style="display:flex;gap:14px;{{ $canEdit ? 'cursor:pointer' : '' }}" x-data="{ open: false }" x-on:click="open = ! open">
-                            <div style="display:flex;flex-direction:column;align-items:center;width:28px;flex:none">
-                                <div style="{{ $node }} {{ $fg }};background:{{ $bg }};color:{{ $fg }}"><x-filament::icon :icon="$icon" style="width:14px;height:14px" /></div>
-                                <div style="flex:1;width:3px;min-height:28px;background:{{ $s['etat'] === 'avenir' ? 'rgba(127,127,127,.4)' : $fg }};margin:2px 0"></div>
-                            </div>
-                            <div style="flex:1;min-width:0;padding-bottom:14px">
-                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                                    <strong>{{ $l->espc?->nom ?? 'Site supprimé' }}</strong>
-                                    <span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:{{ $bg }};color:{{ $fg }}">{{ $s['etat'] === 'alerte' ? ($l->lieu_livraison === 'transit' ? 'En transit' : 'Livrée en retard') : $colors[$s['etat']][2] }}</span>
-                                    @if ($s['heure'])<span style="font-size:.8rem;opacity:.7;margin-left:auto">prévu {{ $s['heure'] }}</span>@endif
+                        @foreach ($p['stops'] as $s)
+                            @php
+                                $l = $s['livraison']; [$fg, $bg, $label, $icon] = $colors[$s['etat']];
+                                $isNext = $current !== false && $loop->index === $current;
+                                if ($isNext) { [$fg, $bg, $icon] = ['#c2410c', 'rgba(194,65,12,.14)', 'heroicon-m-truck']; }
+                                $nextDistance = $p['stops']->get($loop->index + 1)['distance'] ?? ($loop->last ? $p['retour_km'] : null);
+                                $g = $snake($loop->index + 1);
+                                $lineColor = $s['etat'] === 'avenir' ? 'rgba(127,127,127,.4)' : $colors[$s['etat']][0];
+                            @endphp
+                            <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $lineColor }};{{ $canEdit ? 'cursor:pointer' : '' }}" x-data="{ open: false }" x-on:click="open = ! open">
+                                <div class="sn-node {{ $isNext ? 'sn-pulse' : '' }}" style="{{ $node }} {{ $fg }};background:{{ $bg }};color:{{ $fg }}"><x-filament::icon :icon="$icon" style="width:14px;height:14px" /></div>
+                                <strong style="display:block;overflow-wrap:anywhere">{{ $l->espc?->nom ?? 'Site supprimé' }}</strong>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px">
+                                    <span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:{{ $bg }};color:{{ $fg }}">{{ $isNext ? 'Prochain site' : ($s['etat'] === 'alerte' ? ($l->lieu_livraison === 'transit' ? 'En transit' : 'Livrée en retard') : $colors[$s['etat']][2]) }}</span>
+                                    @if ($s['heure'])<span style="font-size:.8rem;opacity:.7">prévu {{ $s['heure'] }}</span>@endif
                                 </div>
                                 @if ($l->statut === 'livre')
-                                    <div style="font-size:.85rem;opacity:.8;margin-top:2px">
+                                    <div style="font-size:.82rem;opacity:.8;margin-top:4px">
                                         Livrée le {{ $l->date_livraison?->format('d/m/Y') }} · {{ \App\Models\LivraisonEspc::LIEUX[$l->lieu_livraison] ?? 'sur site' }}
-                                        @if ($l->saisiPar) · <span style="opacity:.8">saisi par {{ $l->saisiPar->name }} depuis le téléphone</span> @endif
                                         @if ($l->retard_jours > 0) · <span style="color:#d97706">+{{ $l->retard_jours }} j de retard</span>@endif
                                     </div>
+                                    @if ($l->saisiPar)<div style="font-size:.75rem;opacity:.65">saisi par {{ $l->saisiPar->name }} depuis le téléphone</div>@endif
                                     @if ($l->km_compteur !== null)
-                                        <div style="font-size:.85rem;margin-top:2px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong></div>
+                                        <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong></div>
                                     @endif
                                     @if ($l->gps_ecart_m !== null && \App\Domain\Mobile\SiteGeolocation::isSuspicious($l))
-                                        <div style="font-size:.85rem;margin-top:2px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
+                                        <div style="font-size:.8rem;margin-top:3px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
                                     @elseif ($l->lat !== null)
-                                        <div style="font-size:.8rem;margin-top:2px;opacity:.65">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" style="text-decoration:underline">Position du véhicule relevée</a>{{ $l->gps_precision_m ? ' (précision '.$l->gps_precision_m.' m)' : '' }}{{ $l->gps_ecart_m !== null ? ' · '.($l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km').' du centre' : '' }}</div>
+                                        <div style="font-size:.78rem;margin-top:3px;opacity:.7">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" x-on:click.stop style="text-decoration:underline">Position du véhicule relevée</a>{{ $l->gps_precision_m ? ' (précision '.$l->gps_precision_m.' m)' : '' }}{{ $l->gps_ecart_m !== null ? ' · '.($l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km').' du centre' : '' }}</div>
                                     @endif
                                 @endif
                                 @if ($l->raison_non_livraison)
-                                    <div style="font-size:.85rem;margin-top:2px;{{ $l->statut === 'non_livre' ? 'color:#dc2626' : 'opacity:.8' }}">{{ $l->statut === 'non_livre' ? 'Raison : ' : 'Note : ' }}{{ $l->raison_non_livraison }}</div>
+                                    <div style="font-size:.8rem;margin-top:3px;{{ $l->statut === 'non_livre' ? 'color:#dc2626' : 'opacity:.8' }}">{{ $l->statut === 'non_livre' ? 'Raison : ' : 'Note : ' }}{{ $l->raison_non_livraison }}</div>
                                 @endif
                                 @if ($canEdit)
                                     <div x-show="open" x-cloak x-on:click.stop style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
@@ -117,26 +153,18 @@
                                     </div>
                                 @endif
                                 @if ($nextDistance)
-                                    <div style="font-size:.75rem;opacity:.6;margin-top:8px">
-                                        <x-filament::icon icon="heroicon-m-arrow-down" style="width:12px;height:12px;display:inline;vertical-align:-1px" />
-                                        {{ $km($nextDistance) }} km jusqu'{{ $loop->last ? 'au retour' : 'à l\'étape suivante' }}
-                                    </div>
+                                    <div style="font-size:.75rem;opacity:.6;margin-top:6px">→ {{ $km($nextDistance) }} km jusqu'{{ $loop->last ? 'au retour' : 'à l\'étape suivante' }}</div>
                                 @endif
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
 
-                    {{-- Retour : la livraison commence et se termine au district --}}
-                    <div style="display:flex;gap:14px">
-                        <div style="display:flex;flex-direction:column;align-items:center;width:28px;flex:none">
-                            <div style="{{ $node }} {{ $p['termine'] ? '#16a34a' : $neutral }};color:{{ $p['termine'] ? '#16a34a' : $neutral }}"><x-filament::icon icon="heroicon-m-home" style="width:14px;height:14px" /></div>
-                        </div>
-                        <div style="flex:1">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                                <strong>{{ $p['depart'] }}</strong>
-                                <span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">{{ $p['termine'] ? 'Retour · tournée terminée' : 'Retour' }}</span>
-                                @if ($p['retour_heure'])<span style="font-size:.8rem;opacity:.7;margin-left:auto">prévu {{ $p['retour_heure'] }}</span>@endif
-                            </div>
+                        {{-- Retour : la livraison commence et se termine au district --}}
+                        @php $g = $snake($n - 1); @endphp
+                        <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }}">
+                            <div class="sn-node" style="{{ $node }} {{ $p['termine'] ? '#16a34a' : $neutral }};color:{{ $p['termine'] ? '#16a34a' : $neutral }}"><x-filament::icon icon="heroicon-m-home" style="width:14px;height:14px" /></div>
+                            <strong>{{ $p['depart'] }}</strong>
+                            <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">{{ $p['termine'] ? 'Retour · tournée terminée' : 'Retour' }}</span></div>
+                            @if ($p['retour_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['retour_heure'] }}</div>@endif
                         </div>
                     </div>
                 </div>
