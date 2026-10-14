@@ -1,0 +1,59 @@
+name: CI
+
+# Tests, style du code et vérification des dépendances à chaque push et pull request sur main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests, style et dépendances
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3, zip, intl, gd, bcmath, mbstring, exif, gmp
+          coverage: none
+          ini-values: memory_limit=1G
+
+      - name: Cache des dépendances Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Installer les dépendances
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Préparer l'environnement de test
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Lancer les tests (PHPUnit)
+        run: php -d memory_limit=1G vendor/bin/phpunit
+
+      - name: Vérifier les dépendances (vulnérabilités connues)
+        run: composer audit --no-interaction
+
+      # Style du code (Pint) : informatif pour l'instant, n'échoue pas la CI tant que
+      # le code existant n'a pas été remis au format Pint en une passe dédiée.
+      - name: Style du code (Pint, informatif)
+        continue-on-error: true
+        run: vendor/bin/pint --test
