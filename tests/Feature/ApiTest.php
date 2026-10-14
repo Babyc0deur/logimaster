@@ -136,14 +136,14 @@ class ApiTest extends TestCase
     {
         $this->actingAsRole(User::ROLE_PRES_ADMIN);
         $id = $this->postJson('/api/users', [
-            'name' => 'Gest', 'email' => 'g@x.test', 'password' => 'password123',
+            'name' => 'Gest', 'email' => 'g@x.test', 'password' => 'motdepasse2026',
             'role' => User::ROLE_DISTRICT_MANAGER, 'district_ids' => [$this->d1->id],
         ])->assertCreated()->json('id');
         $this->assertTrue(User::find($id)->canAccessDistrict($this->d1->id));
         $this->assertFalse(User::find($id)->canAccessDistrict($this->d2->id));
 
         $this->actingAsRole(User::ROLE_REGION_MANAGER, [$this->d1]);
-        $this->postJson('/api/users', ['name' => 'X', 'email' => 'x@x.test', 'password' => 'password123', 'role' => User::ROLE_PRES_ADMIN])
+        $this->postJson('/api/users', ['name' => 'X', 'email' => 'x@x.test', 'password' => 'motdepasse2026', 'role' => User::ROLE_PRES_ADMIN])
             ->assertForbidden(); // region_manager n'a pas create_users
     }
 

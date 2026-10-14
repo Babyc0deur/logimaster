@@ -1,12 +1,13 @@
 /* Cartographie (Logimaster) : simulation du déplacement des véhicules du district sur leurs circuits, fond OpenStreetMap (Leaflet). */
 window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
     if (el._lm) return; el._lm = true;
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };   // textes saisis : jamais interprétés comme du HTML
     const KMH = 40, STOP_MIN = 10, START = 7.5 * 60, GAP = 15;   // minutes simulées
     const map = L.map(el, { scrollWheelZoom: true, zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs OpenStreetMap' }).addTo(map);
     const centre = [data.centre.lat, data.centre.lon];
     (data.origins || []).forEach(o => L.marker([o.lat, o.lon], { icon: L.divIcon({ className: '', html: '<div class="cg-hq"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) })
-        .addTo(map).bindTooltip('District de ' + o.district + (o.region ? ' · ' + o.region : '') + ' (départ et retour)', { direction: 'top' }));
+        .addTo(map).bindTooltip('District de ' + esc(o.district) + (o.region ? ' · ' + esc(o.region) : '') + ' (départ et retour)', { direction: 'top' }));
     const truck = '<svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg>';
     const all = (data.origins || [{ lat: centre[0], lon: centre[1] }]).map(o => [o.lat, o.lon]);
 
@@ -18,10 +19,10 @@ window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
         const pts = [home, ...v.stops.map(s => [s.lat, s.lon]), home];
         pts.forEach(p => all.push(p));
         const sites = v.stops.map(s => L.marker([s.lat, s.lon], { icon: L.divIcon({ className: '', html: '<div class="cg-site" style="border-color:' + v.color + ';color:' + v.color + '"></div>', iconSize: [12, 12], iconAnchor: [6, 6] }) })
-            .addTo(map).bindTooltip(s.nom + ' · ' + v.circuit, { direction: 'top' }));
+            .addTo(map).bindTooltip(esc(s.nom) + ' · ' + esc(v.circuit), { direction: 'top' }));
         const line = L.polyline(pts, { color: v.color, weight: 3, opacity: .55, dashArray: '6 7' }).addTo(map);
-        const marker = L.marker(home, { zIndexOffset: 1000, icon: L.divIcon({ className: '', html: '<div style="position:relative"><div class="cg-truck" style="background:' + v.color + '">' + truck + '</div><span class="cg-tag" style="position:absolute;left:0;top:0">' + v.immatriculation + '</span></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
-        marker.bindTooltip(v.immatriculation + ' · ' + v.modele + ' · ' + v.circuit);
+        const marker = L.marker(home, { zIndexOffset: 1000, icon: L.divIcon({ className: '', html: '<div style="position:relative"><div class="cg-truck" style="background:' + v.color + '">' + truck + '</div><span class="cg-tag" style="position:absolute;left:0;top:0">' + esc(v.immatriculation) + '</span></div>', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(map);
+        marker.bindTooltip(esc(v.immatriculation) + ' · ' + esc(v.modele) + ' · ' + esc(v.circuit));
         const o = { v, i, sites, line, marker, path: pts, legs: null };
         setPath(o, pts, null);
         return o;
@@ -88,7 +89,7 @@ window.lmCartographie = window.lmCartographie || function (el, data, geoUrl) {
 
     let speed = 60, playing = true, sim = START - 5, last = performance.now();
     const list = document.getElementById('cg-list'), clock = document.getElementById('cg-clock');
-    list.innerHTML = V.map(o => '<div class="cg-veh" data-i="' + o.i + '"><span class="cg-sw" style="background:' + o.v.color + '"></span><div style="flex:1;min-width:0"><b>' + o.v.immatriculation + '</b> <small style="display:inline">· ' + o.v.circuit + '</small>' + (data.multi ? '<small>District de ' + o.v.district + '</small>' : '') + '<small>' + o.v.modele + '</small><div class="cg-st" id="cg-st-' + o.i + '"></div><div class="cg-bar"><span id="cg-bar-' + o.i + '" style="background:' + o.v.color + ';width:0"></span></div></div></div>').join('');
+    list.innerHTML = V.map(o => '<div class="cg-veh" data-i="' + o.i + '"><span class="cg-sw" style="background:' + o.v.color + '"></span><div style="flex:1;min-width:0"><b>' + esc(o.v.immatriculation) + '</b> <small style="display:inline">· ' + esc(o.v.circuit) + '</small>' + (data.multi ? '<small>District de ' + esc(o.v.district) + '</small>' : '') + '<small>' + esc(o.v.modele) + '</small><div class="cg-st" id="cg-st-' + o.i + '"></div><div class="cg-bar"><span id="cg-bar-' + o.i + '" style="background:' + o.v.color + ';width:0"></span></div></div></div>').join('');
     list.querySelectorAll('.cg-veh').forEach(e => e.addEventListener('click', () => { const o = V[+e.dataset.i]; map.fitBounds(o.line.getBounds(), { padding: [40, 40] }); V.forEach(x => x.line.setStyle({ weight: x === o ? 5 : 3, opacity: x === o ? .9 : .3 })); o.marker.openTooltip(); }));
     document.getElementById('cg-ctrl').addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;

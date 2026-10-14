@@ -26,6 +26,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile(isSimple: true)   // profil : mot de passe et double authentification (page simple : pas de menu districts, évite le bug de facturation)
+            ->multiFactorAuthentication([
+                \Filament\Auth\MultiFactor\App\AppAuthentication::make()->brandName('Logimaster')->recoverable(),
+            ])
             ->colors([
                 'primary' => Color::hex('#c2410c'),   // orange signalisation (site, application mobile)
                 'gray'    => Color::Stone,             // gris chauds, accordés au fond papier
@@ -46,29 +50,29 @@ class AdminPanelProvider extends PanelProvider
             // Menu du profil (en haut à droite) : réglages et organisation, puis outils techniques
             ->userMenuItems([
                 \Filament\Actions\Action::make('espc')->label('Centres de santé')->icon('heroicon-o-building-office-2')
-                    ->url(fn () => \App\Filament\Resources\Espcs\EspcResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Espcs\EspcResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Espcs\EspcResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Espcs\EspcResource::canAccess()),
                 \Filament\Actions\Action::make('personnel')->label('Personnel')->icon('heroicon-o-user-group')
-                    ->url(fn () => \App\Filament\Resources\Personnels\PersonnelResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Personnels\PersonnelResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Personnels\PersonnelResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Personnels\PersonnelResource::canAccess()),
                 \Filament\Actions\Action::make('districts')->label('Districts')->icon('heroicon-o-building-office')
-                    ->url(fn () => \App\Filament\Resources\Districts\DistrictResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Districts\DistrictResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Districts\DistrictResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Districts\DistrictResource::canAccess()),
                 \Filament\Actions\Action::make('regions')->label('Régions')->icon('heroicon-o-map')
-                    ->url(fn () => \App\Filament\Resources\Regions\RegionResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Regions\RegionResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Regions\RegionResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Regions\RegionResource::canAccess()),
                 \Filament\Actions\Action::make('pres')->label('PRES')->icon('heroicon-o-globe-alt')
-                    ->url(fn () => \App\Filament\Resources\Pres\PresResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Pres\PresResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Pres\PresResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Pres\PresResource::canAccess()),
                 \Filament\Actions\Action::make('utilisateurs')->label('Utilisateurs')->icon('heroicon-o-users')
-                    ->url(fn () => \App\Filament\Resources\Users\UserResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Users\UserResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Users\UserResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Users\UserResource::canAccess()),
                 \Filament\Actions\Action::make('roles')->label('Rôles')->icon('heroicon-o-shield-check')
-                    ->url(fn () => \App\Filament\Resources\Roles\RoleResource::getUrl())
-                    ->visible(fn () => \App\Filament\Resources\Roles\RoleResource::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Resources\Roles\RoleResource::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Resources\Roles\RoleResource::canAccess()),
                 \Filament\Actions\Action::make('sauvegardes')->label('Sauvegardes')->icon('heroicon-o-circle-stack')
-                    ->url(fn () => \App\Filament\Pages\Backups::getUrl())
-                    ->visible(fn () => \App\Filament\Pages\Backups::canAccess()),
+                    ->url(fn () => \Filament\Facades\Filament::getTenant() ? \App\Filament\Pages\Backups::getUrl() : '#')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant() && \App\Filament\Pages\Backups::canAccess()),
             ])
             ->navigationGroups(['Finance', 'Carburant', 'Maintenance', 'Données', 'Administration'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

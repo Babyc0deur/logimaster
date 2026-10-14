@@ -36,6 +36,15 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
 
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->getKey() ?: $request->ip()));
-        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip().'|'.$request->input('email')));
+        // limite par IP et par compte (e-mail pour le web et l'API, identifiant pour l'application mobile)
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip().'|'.mb_strtolower((string) ($request->input('email') ?? $request->input('identifiant')))));
+
+        // règle unique des mots de passe choisis par les utilisateurs : 12 caractères, lettres et chiffres ; en production,
+        // refus des mots de passe connus comme compromis (service Have I Been Pwned, k-anonymat)
+        \Illuminate\Validation\Rules\Password::defaults(fn () => $this->app->isProduction()
+            ? \Illuminate\Validation\Rules\Password::min(12)->letters()->numbers()->uncompromised()
+            : \Illuminate\Validation\Rules\Password::min(12)->letters()->numbers());
+
+        \App\Support\AdminAudit::register();
     }
 }

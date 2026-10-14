@@ -97,7 +97,7 @@ class ScopeTest extends TestCase
         $admin = $this->user(User::ROLE_PRES_ADMIN);
         Sanctum::actingAs($admin);
         $id = $this->postJson('/api/users', [
-            'name' => 'Resp', 'email' => 'r@x.test', 'password' => 'password123', 'role' => User::ROLE_REGION_MANAGER, 'region_id' => $this->r1->id,
+            'name' => 'Resp', 'email' => 'r@x.test', 'password' => 'motdepasse2026', 'role' => User::ROLE_REGION_MANAGER, 'region_id' => $this->r1->id,
         ])->assertCreated()->json('id');
 
         $this->assertSame($this->r1->id, User::find($id)->region_id);

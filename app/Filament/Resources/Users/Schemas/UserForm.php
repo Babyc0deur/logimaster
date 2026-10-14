@@ -29,10 +29,11 @@ class UserForm
                 TextInput::make('password')
                     ->label('Mot de Passe')
                     ->password()
+                    ->rule(\Illuminate\Validation\Rules\Password::defaults())
+                    ->helperText('12 caractères minimum, avec des lettres et des chiffres. Laissez vide pour conserver le mot de passe actuel.')
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                     ->dehydrated(fn ($state) => filled($state))
-                    ->required(fn (string $context): bool => $context === 'create')
-                    ->helperText('Laissez vide pour conserver le mot de passe actuel'),
+                    ->required(fn (string $context): bool => $context === 'create'),
 
                 Select::make('roles')
                     ->label('Rôle')

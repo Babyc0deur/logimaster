@@ -42,11 +42,11 @@
                 if (window.L) { boot(); }
                 else {
                     if (!document.getElementById('leaflet-css')) {
-                        const css = document.createElement('link'); css.id = 'leaflet-css'; css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+                        const css = document.createElement('link'); css.id = 'leaflet-css'; css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='; css.crossOrigin = ''; document.head.appendChild(css);
                     }
                     const existing = document.getElementById('leaflet-js');
                     if (existing) { existing.addEventListener('load', boot); }
-                    else { const js = document.createElement('script'); js.id = 'leaflet-js'; js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.onload = boot; document.head.appendChild(js); }
+                    else { const js = document.createElement('script'); js.id = 'leaflet-js'; js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='; js.crossOrigin = ''; js.onload = boot; document.head.appendChild(js); }
                 }
              ">
             <div x-ref="map" class="cg-map"></div>

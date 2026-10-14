@@ -20,7 +20,10 @@ class LivraisonEspc extends Pivot
 
     protected $keyType = 'string';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'chronogramme_id', 'espc_id', 'ordre', 'statut', 'date_livraison', 'lieu_livraison', 'raison_non_livraison', 'commentaire',
+        'lat', 'lon', 'saisi_par', 'saisi_at', 'gps_precision_m', 'gps_ecart_m', 'km_compteur',
+    ];
 
     public const STATUTS = ['planifie' => 'Planifiée', 'livre' => 'Livrée', 'non_livre' => 'Non livrée'];
 

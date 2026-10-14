@@ -10,6 +10,7 @@
          x-init="
             const points = @js($points);
             const withLine = @js($line ?? true);
+            const esc = (v) => { const d = document.createElement('div'); d.textContent = String(v ?? ''); return d.innerHTML; };   // textes saisis : jamais interprétés comme du HTML
             const boot = () => {
                 const map = L.map($refs.map, { scrollWheelZoom: false });
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
@@ -19,10 +20,10 @@
                     const color = p.type === 'depart' ? '#10b981' : '#c2410c';
                     const icon = L.divIcon({
                         className: '',
-                        html: '<div style=&quot;background:' + color + ';color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 12px sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)&quot;>' + p.n + '</div>',
+                        html: '<div style=&quot;background:' + color + ';color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 12px sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)&quot;>' + esc(p.n) + '</div>',
                         iconSize: [26, 26], iconAnchor: [13, 13],
                     });
-                    L.marker([p.lat, p.lon], { icon }).addTo(map).bindPopup('<strong>' + p.label + '</strong>');
+                    L.marker([p.lat, p.lon], { icon }).addTo(map).bindPopup('<strong>' + esc(p.label) + '</strong>');
                 });
                 if (withLine && latlngs.length > 1) { L.polyline(latlngs, { color: '#c2410c', weight: 3, opacity: .8, dashArray: '6 6' }).addTo(map); }
                 latlngs.length > 1 ? map.fitBounds(latlngs, { padding: [30, 30] }) : map.setView(latlngs[0], 13);
@@ -30,12 +31,12 @@
             if (window.L) { boot(); }
             else {
                 if (!document.getElementById('leaflet-css')) {
-                    const css = document.createElement('link'); css.id = 'leaflet-css'; css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+                    const css = document.createElement('link'); css.id = 'leaflet-css'; css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='; css.crossOrigin = ''; document.head.appendChild(css);
                 }
                 const existing = document.getElementById('leaflet-js');
                 if (existing) { existing.addEventListener('load', boot); }
                 else {
-                    const js = document.createElement('script'); js.id = 'leaflet-js'; js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.onload = boot; document.head.appendChild(js);
+                    const js = document.createElement('script'); js.id = 'leaflet-js'; js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='; js.crossOrigin = ''; js.onload = boot; document.head.appendChild(js);
                 }
             }
          ">

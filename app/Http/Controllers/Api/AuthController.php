@@ -19,6 +19,7 @@ class AuthController extends ApiController
 
         $user = User::where('email', $data['email'])->first();
         if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->is_active) {
+            \App\Support\AdminAudit::failedLogin($data['email'], 'api', $user?->getKey());
             throw ValidationException::withMessages(['email' => ['Identifiants invalides.']]);
         }
 

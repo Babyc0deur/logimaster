@@ -45,12 +45,12 @@ class WorkbookExporter
             $first ? $writer->getCurrentSheet()->setName($name) : $writer->addNewSheetAndMakeItCurrent()->setName($name);
             $first = false;
 
-            $writer->addRow(Row::fromValues(['', $district ? "{$name} — {$district->name}" : "{$name} — modèle d'import Logimaster (ne pas modifier la ligne 2)"]));
-            $writer->addRow(Row::fromValues(['', ...$spec['headers']]));
+            $writer->addRow(\App\Support\SpreadsheetRow::from(['', $district ? "{$name} — {$district->name}" : "{$name} — modèle d'import Logimaster (ne pas modifier la ligne 2)"]));
+            $writer->addRow(\App\Support\SpreadsheetRow::from(['', ...$spec['headers']]));
 
             $rows = $district ? $this->rows($name, $district) : [];
             foreach ($rows as $i => $row) {
-                $writer->addRow(Row::fromValues([$i + 1, ...$row]));
+                $writer->addRow(\App\Support\SpreadsheetRow::from([$i + 1, ...$row]));
             }
         }
         $writer->close();

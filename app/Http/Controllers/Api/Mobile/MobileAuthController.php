@@ -30,6 +30,7 @@ class MobileAuthController extends ApiController
         $user = str_contains($login, '@') ? User::where('email', $login)->first() : Personnel::where('identifiant', $login)->first()?->user;
         if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->is_active || ! $user->can('execute_circuits') || ! $user->personnel_id) {
             // Même message dans tous les cas : on ne révèle pas si le compte existe.
+            \App\Support\AdminAudit::failedLogin($login, 'mobile', $user?->getKey());
             throw ValidationException::withMessages(['identifiant' => ['Identifiant ou code d\'accès invalide.']]);
         }
 
@@ -64,7 +65,7 @@ class MobileAuthController extends ApiController
         $user = $request->user();
         $data = $request->validate([
             'current_password' => ['required', 'string'],
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
         if (! Hash::check($data['current_password'], $user->password)) {
             throw ValidationException::withMessages(['current_password' => ['Mot de passe actuel incorrect.']]);

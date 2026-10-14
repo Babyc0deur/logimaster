@@ -141,13 +141,13 @@ class MobileAdminTest extends TestCase
         $code = $chef->fresh()->code_acces;
         $token = $this->postJson('/api/mobile/login', ['identifiant' => 'kone.ibrahim', 'password' => $code])->json('token');
 
-        $this->postJson('/api/mobile/password', ['current_password' => $code, 'password' => 'Nouveau2026', 'password_confirmation' => 'Nouveau2026'], ['Authorization' => 'Bearer '.$token])->assertOk();
+        $this->postJson('/api/mobile/password', ['current_password' => $code, 'password' => 'NouveauCode2026', 'password_confirmation' => 'NouveauCode2026'], ['Authorization' => 'Bearer '.$token])->assertOk();
 
         $this->assertNull($chef->fresh()->code_acces);
         $this->assertFalse($chef->fresh()->user->must_change_password);
         $this->assertSame('kone.ibrahim', $chef->fresh()->identifiant);
         $this->app['auth']->forgetGuards();
-        $this->postJson('/api/mobile/login', ['identifiant' => 'kone.ibrahim', 'password' => 'Nouveau2026'])->assertOk()->assertJsonPath('must_change_password', false);
+        $this->postJson('/api/mobile/login', ['identifiant' => 'kone.ibrahim', 'password' => 'NouveauCode2026'])->assertOk()->assertJsonPath('must_change_password', false);
     }
 
     public function test_office_can_reset_a_lost_code_and_read_the_credentials(): void

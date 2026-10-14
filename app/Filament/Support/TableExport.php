@@ -55,9 +55,9 @@ class TableExport
 
         $writer = new Writer;
         $writer->openToFile($path);
-        $writer->addRow(Row::fromValues($headers));
+        $writer->addRow(\App\Support\SpreadsheetRow::from($headers));
         foreach ($rows as $row) {
-            $writer->addRow(Row::fromValues($row));
+            $writer->addRow(\App\Support\SpreadsheetRow::from($row));
         }
         $writer->close();
 

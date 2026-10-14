@@ -33,6 +33,6 @@ printf 'ServerName localhost
 ' > /etc/apache2/conf-available/servername.conf && a2enconf servername >/dev/null
 
 # taches planifiees (alertes, rapports, indicateurs) : une fois par minute en arriere-plan
-( while true; do php artisan schedule:run >/dev/null 2>&1; sleep 60; done ) &
+( while true; do php artisan schedule:run 2>&1 | grep -v 'No scheduled commands are ready to run' ; sleep 60; done ) &   # erreurs des tâches planifiées visibles dans les journaux
 
 exec apache2-foreground

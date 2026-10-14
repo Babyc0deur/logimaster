@@ -72,7 +72,7 @@ class UserController extends ApiController
         return $request->validate([
             'name' => [$req, 'string', 'max:120'],
             'email' => [$req, 'email', 'max:160', Rule::unique('users', 'email')->ignore($user?->id)],
-            'password' => [$req, 'string', 'min:8'],
+            'password' => [$req, 'string', \Illuminate\Validation\Rules\Password::defaults()],
             'is_active' => ['sometimes', 'boolean'],
             'two_factor_enabled' => ['sometimes', 'boolean'],
             'role' => [$req, Rule::exists('roles', 'name')],

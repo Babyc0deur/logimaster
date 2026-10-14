@@ -10,7 +10,10 @@ class Signalement extends Model
 {
     use HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'district_id', 'vehicle_id', 'personnel_id', 'user_id', 'type', 'km', 'description', 'details', 'photo', 'statut',
+        'traite_par', 'traite_at', 'commentaire_bureau', 'cible_type', 'cible_id', 'client_ref', 'signale_at',
+    ];
 
     public const TYPES = ['vidange' => 'Vidange réalisée', 'panne' => 'Panne / immobilisation'];
 

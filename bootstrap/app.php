@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->prepend(\App\Http\Middleware\RestrictPublicExposure::class);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);   // en-têtes de sécurité HTTP (CSP, HSTS…)
         $middleware->alias([
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
             'mobile.access' => \App\Http\Middleware\EnsureMobileAccess::class,

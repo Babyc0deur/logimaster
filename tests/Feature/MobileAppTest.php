@@ -144,14 +144,14 @@ class MobileAppTest extends TestCase
         $this->getJson('/api/mobile/sorties', $h)->assertStatus(423)->assertJsonPath('code', 'password_change_required');
         $this->getJson('/api/mobile/me', $h)->assertOk();
 
-        $this->postJson('/api/mobile/password', ['current_password' => 'faux', 'password' => 'Nouveau2026', 'password_confirmation' => 'Nouveau2026'], $h)->assertStatus(422);
+        $this->postJson('/api/mobile/password', ['current_password' => 'faux', 'password' => 'NouveauCode2026', 'password_confirmation' => 'NouveauCode2026'], $h)->assertStatus(422);
         $this->postJson('/api/mobile/password', ['current_password' => 'Secret123', 'password' => 'court', 'password_confirmation' => 'court'], $h)->assertStatus(422);
         $this->postJson('/api/mobile/password', ['current_password' => 'Secret123', 'password' => 'Secret123', 'password_confirmation' => 'Secret123'], $h)->assertStatus(422);
-        $this->postJson('/api/mobile/password', ['current_password' => 'Secret123', 'password' => 'Nouveau2026', 'password_confirmation' => 'Nouveau2026'], $h)->assertOk();
+        $this->postJson('/api/mobile/password', ['current_password' => 'Secret123', 'password' => 'NouveauCode2026', 'password_confirmation' => 'NouveauCode2026'], $h)->assertOk();
 
         $this->getJson('/api/mobile/sorties', $h)->assertOk();
         $this->postJson('/api/mobile/login', ['email' => $u->email, 'password' => 'Secret123'])->assertStatus(422);
-        $this->postJson('/api/mobile/login', ['email' => $u->email, 'password' => 'Nouveau2026'])->assertOk()->assertJsonPath('must_change_password', false);
+        $this->postJson('/api/mobile/login', ['email' => $u->email, 'password' => 'NouveauCode2026'])->assertOk()->assertJsonPath('must_change_password', false);
     }
 
     public function test_logout_revokes_the_token_and_the_phone_subscription(): void

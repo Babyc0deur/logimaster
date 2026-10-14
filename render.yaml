@@ -33,6 +33,8 @@ services:
         value: /var/www/html/storage/app/database.sqlite   # sur le disque persistant
       - key: SESSION_DRIVER
         value: database
+      - key: SESSION_ENCRYPT
+        value: "true"            # contenu des sessions chiffré en base
       - key: CACHE_STORE
         value: file              # cache sur le disque : moins d'écritures concurrentes dans la base SQLite
       - key: QUEUE_CONNECTION
