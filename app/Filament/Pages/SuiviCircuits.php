@@ -125,7 +125,7 @@ class SuiviCircuits extends Page implements HasActions
 
     protected function getViewData(): array
     {
-        $plans = Chronogramme::with(['vehicle:id,immatriculation', 'driver:id,nom_complet', 'district:id,name', 'circuit.espc', 'livraisons.espc:id,nom,type', 'livraisons.saisiPar:id,name', 'sortie:id,statut'])
+        $plans = Chronogramme::with(['vehicle:id,immatriculation', 'driver:id,nom_complet', 'district:id,name', 'circuit.espc', 'livraisons.espc:id,nom,type', 'livraisons.saisiPar:id,name', 'sortie:id,statut,km_depart,km_arrivee'])
             ->where('district_id', Filament::getTenant()->getKey())->where('statut', '!=', 'annulee')
             ->whereDate('date_prevue', $this->date)->orderBy('heure_depart')->get()
             ->map(fn (Chronogramme $plan) => $this->describe($plan));

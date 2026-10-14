@@ -171,6 +171,7 @@ class TerrainProofsTest extends TestCase
         \Filament\Facades\Filament::setTenant($this->district);
 
         $this->get("/admin/{$this->district->id}/suivi-circuits?date=2026-10-14")->assertOk()
+            ->assertSee('Compteur départ')->assertSee('42 010 km')->assertSee('+40 km')->assertSee('Kilométrage parcouru')
             ->assertSee('42 050 km')->assertSee('Position du véhicule relevée')
             ->assertSee('du centre au moment de la livraison');   // M. Yao : ~5,6 km du centre
 

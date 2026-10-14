@@ -52,6 +52,12 @@
             $current = $running ? $p['stops']->search(fn ($x) => $x['etat'] === 'avenir') : false;   // prochain site à livrer (pulse)
             $here = false;                                                                              // site actuel (flèche) : dernier site traité, -1 = encore au départ
             if ($running) { $treated = $p['stops']->filter(fn ($x) => $x['etat'] !== 'avenir'); $here = $treated->isEmpty() ? -1 : $treated->keys()->last(); }
+            $kmDepart = $plan->sortie?->km_depart;                                                      // compteur au départ (saisi sur le téléphone)
+            $kmArrivee = $plan->sortie?->km_arrivee;                                                    // compteur au retour
+            $lastKm = $p['stops']->map(fn ($x) => $x['livraison']->km_compteur)->filter(fn ($v) => $v !== null)->max();
+            $kmFin = $kmArrivee ?? $lastKm;                                                             // dernier compteur connu
+            $kmParcourus = $kmDepart !== null && $kmFin !== null && $kmFin >= $kmDepart ? $kmFin - $kmDepart : null;
+            $fmtKm = fn ($v) => number_format($v, 0, ',', ' ');
             $n = $p['stops']->count() + 2;                                                              // départ + sites + retour
             $C = 4;                                                                                     // étapes par ligne
             $snake = function (int $i) use ($n, $C) {
@@ -84,7 +90,12 @@
             <div style="margin:14px 0 6px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Sites livrés</div><div style="font-size:1.15rem;font-weight:600">{{ $p['done'] }} / {{ $p['total'] }}</div></div>
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Dans les délais</div><div style="font-size:1.15rem;font-weight:600">{{ $p['onTime'] !== null ? $p['onTime'].' %' : '—' }}</div></div>
-                <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Distance</div><div style="font-size:1.15rem;font-weight:600">{{ $p['km'] ? $km($p['km']).' km' : '—' }}</div></div>
+                <div style="{{ $metric }}">
+                    <div style="font-size:.75rem;opacity:.7">Kilométrage parcouru</div>
+                    <div style="font-size:1.15rem;font-weight:600">{{ $kmParcourus !== null ? $fmtKm($kmParcourus).' km' : '—' }}</div>
+                    <div style="font-size:.72rem;opacity:.65">@if ($kmDepart !== null){{ $fmtKm($kmDepart) }} → {{ $kmFin !== null ? $fmtKm($kmFin) : '…' }} km{{ $kmArrivee === null && $kmFin !== null ? ' (dernier relevé)' : '' }}@else compteur de départ non saisi @endif</div>
+                </div>
+                <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Distance prévue</div><div style="font-size:1.15rem;font-weight:600">{{ $p['km'] ? $km($p['km']).' km' : '—' }}</div></div>
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Retour prévu</div><div style="font-size:1.15rem;font-weight:600">{{ $p['retour_heure'] ?? '—' }}</div></div>
             </div>
 
@@ -103,12 +114,13 @@
                 <div class="sn-wrap">
                     <div class="sn-grid">
                         {{-- Départ du district --}}
-                        @php $g = $snake(0); $first = $p['stops']->first(); @endphp
+                        @php $g = $snake(0); $first = $p['stops']->first(); $prevKm = $kmDepart; @endphp
                         <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $first && $first['etat'] !== 'avenir' ? $colors[$first['etat']][0] : 'rgba(127,127,127,.4)' }}">
                             <div class="sn-node" style="{{ $node }} {{ $neutral }};color:{{ $neutral }}">@if ($running && $here === -1)<i class="sn-arrow"></i>@endif<x-filament::icon icon="heroicon-m-flag" style="width:14px;height:14px" /></div>
                             <strong>{{ $p['depart'] }}</strong>
                             <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span>@if ($running && $here === -1)<span class="sn-here">Position actuelle</span>@endif</div>
                             @if ($p['depart_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['depart_heure'] }}</div>@endif
+                            @if ($kmDepart !== null)<div style="font-size:.85rem;margin-top:4px">Compteur départ : <strong>{{ $fmtKm($kmDepart) }} km</strong></div>@endif
                         </div>
 
                         @foreach ($p['stops'] as $s)
@@ -118,6 +130,8 @@
                                 if ($isNext) { [$fg, $bg, $icon] = ['#c2410c', 'rgba(194,65,12,.14)', 'heroicon-m-map-pin']; }
                                 $nextDistance = $p['stops']->get($loop->index + 1)['distance'] ?? ($loop->last ? $p['retour_km'] : null);
                                 $g = $snake($loop->index + 1);
+                                $delta = $l->km_compteur !== null && $prevKm !== null && $l->km_compteur >= $prevKm ? $l->km_compteur - $prevKm : null;   // km depuis le relevé précédent
+                                if ($l->km_compteur !== null) { $prevKm = $l->km_compteur; }
                                 $lineColor = $s['etat'] === 'avenir' ? 'rgba(127,127,127,.4)' : $colors[$s['etat']][0];
                             @endphp
                             <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $lineColor }};{{ $canEdit ? 'cursor:pointer' : '' }}" x-data="{ open: false }" x-on:click="open = ! open">
@@ -135,7 +149,7 @@
                                     </div>
                                     @if ($l->saisiPar)<div style="font-size:.75rem;opacity:.65">saisi par {{ $l->saisiPar->name }} depuis le téléphone</div>@endif
                                     @if ($l->km_compteur !== null)
-                                        <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong></div>
+                                        <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong>@if ($delta !== null) <span style="opacity:.7">· +{{ $fmtKm($delta) }} km</span>@endif</div>
                                     @endif
                                     @if ($l->gps_ecart_m !== null && \App\Domain\Mobile\SiteGeolocation::isSuspicious($l))
                                         <div style="font-size:.8rem;margin-top:3px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
@@ -166,6 +180,9 @@
                             <strong>{{ $p['depart'] }}</strong>
                             <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">{{ $p['termine'] ? 'Retour · tournée terminée' : 'Retour' }}</span></div>
                             @if ($p['retour_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['retour_heure'] }}</div>@endif
+                            @if ($kmArrivee !== null)
+                                <div style="font-size:.85rem;margin-top:4px">Compteur arrivée : <strong>{{ $fmtKm($kmArrivee) }} km</strong>@if ($kmParcourus !== null) <span style="opacity:.7">· {{ $fmtKm($kmParcourus) }} km parcourus</span>@endif</div>
+                            @endif
                         </div>
                     </div>
                 </div>
