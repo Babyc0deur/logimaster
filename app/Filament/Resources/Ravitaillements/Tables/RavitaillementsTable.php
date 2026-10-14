@@ -26,7 +26,7 @@ class RavitaillementsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('date_ravitaillement', 'desc')
             ->columns([
                 TextColumn::make('date_ravitaillement')->label('Date')->date('d/m/Y')->sortable(),

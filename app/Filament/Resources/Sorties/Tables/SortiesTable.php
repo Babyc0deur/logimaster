@@ -22,7 +22,7 @@ class SortiesTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('date_sortie', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query
                 ->withSum(['ravitaillements as carburant_sum' => fn ($q) => $q], DB::raw('litres * prix_unitaire'))

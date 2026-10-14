@@ -72,7 +72,7 @@ class LivraisonResource extends Resource
     {
         $can = fn () => auth()->user()->can('update_chronogrammes');
 
-        return $table
+        return $table->poll('30s')
             ->defaultSort(fn (Builder $query) => $query->orderByDesc(self::planDate()))
             ->columns([
                 TextColumn::make('chronogramme.date_prevue')->label('Date prévue')->date('d/m/Y')->sortable(query: fn (Builder $q, string $dir) => $q->orderBy(self::planDate(), $dir)),

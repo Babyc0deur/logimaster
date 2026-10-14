@@ -19,7 +19,7 @@ class ImmobilisationsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('date_debut', 'desc')
             ->columns([
                 TextColumn::make('vehicle.immatriculation')->label('Véhicule')->searchable(),

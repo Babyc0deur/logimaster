@@ -12,6 +12,7 @@ use Filament\Widgets\Widget;
 class IndicatorCards extends Widget
 {
     protected static bool $isLazy = false;   // rendu avec la page : un seul démarrage du framework au lieu de plusieurs requêtes différées
+    protected ?string $pollingInterval = '60s';   // les indicateurs du mois en cours suivent les saisies faites depuis les téléphones
 
     use InteractsWithPageFilters;
 

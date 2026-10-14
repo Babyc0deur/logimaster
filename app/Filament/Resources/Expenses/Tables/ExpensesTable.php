@@ -6,7 +6,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 class ExpensesTable {
     public static function configure(Table $table): Table {
-        return $table->defaultSort("date_depense", "desc")->columns([ 
+        return $table->poll('30s')->defaultSort("date_depense", "desc")->columns([ 
                 \Filament\Tables\Columns\TextColumn::make("date_depense")->date("d/m/Y")->label("Date")->sortable(),
                 \Filament\Tables\Columns\TextColumn::make("vehicle.immatriculation")->label("Véhicule")->placeholder("—")->searchable(),
                 \Filament\Tables\Columns\TextColumn::make("type")->badge(),

@@ -24,7 +24,7 @@ class VehiclesTable
 
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('immatriculation')
             ->columns([
                 TextColumn::make('immatriculation')->label('Immatriculation')->searchable()->sortable()->weight('bold'),

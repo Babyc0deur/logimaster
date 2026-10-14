@@ -22,7 +22,7 @@ class VidangesTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('date', 'desc')
             ->columns([
                 TextColumn::make('date')->date('d/m/Y')->sortable(),

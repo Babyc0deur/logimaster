@@ -21,7 +21,7 @@ class ChronogrammesTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->poll('30s')
             ->defaultSort('date_prevue', 'asc')
             ->columns([
                 TextColumn::make('date_prevue')->label('Date')->date('D d/m/Y')->sortable(),

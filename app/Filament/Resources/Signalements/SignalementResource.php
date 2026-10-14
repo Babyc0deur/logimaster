@@ -58,7 +58,7 @@ class SignalementResource extends Resource
     {
         $canTreat = fn (Signalement $s) => $s->statut === 'nouveau' && auth()->user()->can('update_vehicles');
 
-        return $table
+        return $table->poll('30s')
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['vehicle:id,immatriculation,km_actuel', 'personnel:id,nom_complet', 'traitePar:id,name']))
             ->columns([
