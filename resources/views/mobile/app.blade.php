@@ -59,11 +59,19 @@
         .g { background:var(--ok-soft); color:var(--ok); border-color:var(--ok); } .w { background:var(--warn-soft); color:var(--warn); border-color:var(--warn); }
         .r { background:var(--bad-soft); color:var(--bad); border-color:var(--bad); } .n { background:var(--surface); color:var(--muted); border-color:var(--border); }
         .b { background:var(--accent-soft); color:var(--accent-text); border-color:var(--accent); }
-        .line { margin-left:14px; border-left:2px dashed var(--border); padding-left:20px; }
-        .stop { position:relative; padding:2px 0 18px; }
-        .stop .dot { position:absolute; left:-36px; top:0; background-clip:padding-box; }
-        .stop h4 { margin:3px 0 0; font-size:16.5px; font-weight:700; }
-        .acts { display:flex; gap:8px; margin-top:10px; }
+        .line { display:flex; align-items:flex-start; overflow-x:auto; scroll-snap-type:x proximity; margin:6px -16px 4px; padding:8px 16px 14px; -webkit-overflow-scrolling:touch; }
+        .stop { position:relative; flex:none; width:178px; padding:0 14px 0 0; scroll-snap-align:center; }
+        .stop::before { content:""; position:absolute; top:14px; left:32px; right:2px; height:3px; border-radius:2px; background:var(--border); }
+        .stop.ok::before { background:var(--ok); } .stop.bad::before { background:var(--bad); } .stop.warn::before { background:var(--warn); }
+        .stop.last { width:120px; } .stop.last::before { display:none; }
+        .stop .dot { position:relative; margin-bottom:10px; background-clip:padding-box; }
+        .stop.next .dot { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .stop.next .dot::after { content:""; position:absolute; inset:-6px; border-radius:50%; border:2px solid var(--accent); opacity:0; animation:lm-ring 1.8s ease-out infinite; }
+        @keyframes lm-ring { 0% { transform:scale(.8); opacity:.75; } 100% { transform:scale(1.55); opacity:0; } }
+        .run-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block; margin-right:6px; animation:lm-blink 1.4s ease-in-out infinite; }
+        @keyframes lm-blink { 0%, 100% { opacity:1; } 50% { opacity:.3; } }
+        .stop h4 { margin:0; font-size:15.5px; font-weight:700; overflow-wrap:anywhere; }
+        .acts { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
         .acts .btn { padding:10px 4px; font-size:14px; min-height:48px; }
         .progress { height:6px; border-radius:0; background:var(--soft); overflow:hidden; margin:10px 0 6px; } .progress span { display:block; height:100%; background:var(--accent); }
         label { display:block; font:500 11.5px/1.3 var(--mono); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:16px 2px 6px; }
@@ -504,22 +512,24 @@ function circuitView(id) {
     var pct = p.sites ? Math.round(p.traites / p.sites * 100) : 0, next = null;
     p.stops.forEach(function (s) { if (!next && s.etat === 'planifie') next = s; });
     var body = '<div class="card"><div class="row"><div class="grow"><b style="font-size:18px">' + esc(p.circuit) + '</b><div class="muted">' + esc(fmtDate(p.date_prevue)) + (p.vehicule ? ' · ' + esc(p.vehicule) : '') + '</div></div>' +
-        '<span class="pill ' + (p.terminee ? '' : (p.demarree ? 'off' : 'bad')) + '">' + (p.terminee ? 'Terminé' : (p.demarree ? 'En cours' : 'À démarrer')) + '</span></div>' +
+        '<span class="pill ' + (p.terminee ? '' : (p.demarree ? 'off' : 'bad')) + '">' + (p.demarree && !p.terminee ? '<i class="run-dot"></i>' : '') + (p.terminee ? 'Terminé' : (p.demarree ? 'En cours' : 'À démarrer')) + '</span></div>' +
         '<div class="progress"><span style="width:' + pct + '%"></span></div><div class="muted">' + p.traites + ' / ' + p.sites + ' sites traités · ' + p.livres + ' livrés' + (next ? ' · prochain : ' + esc(next.espc) + (next.distance_km ? ' (' + String(next.distance_km).replace('.', ',') + ' km)' : '') : '') + '</div></div>';
     if (!p.demarree) {
         body += '<button class="btn" id="start">Démarrer le circuit</button><p class="muted" style="text-align:center">Le kilométrage de départ est relevé sur le véhicule ' + esc(p.vehicule || '') + '.</p>';
     }
-    body += '<div class="line"><div class="stop"><div class="dot b">D</div><h4>' + esc(p.depart || 'Départ') + '</h4><div class="muted">Départ</div></div>';
+    var cls = function (s) { return s.etat === 'livre' ? 'ok' : s.etat === 'transit' ? 'warn' : s.etat === 'non_livre' ? 'bad' : ''; };
+    body += '<div class="line" id="route"><div class="stop ' + (p.demarree ? 'ok' : '') + '"><div class="dot b">D</div><h4>' + esc(p.depart || 'Départ') + '</h4><div class="muted">Départ</div></div>';
     p.stops.forEach(function (s) {
         var d = DOT[s.etat] || DOT.planifie, can = p.demarree && !p.terminee, active = can && (s === next || openStop === s.id);
-        body += '<div class="stop"><div class="dot ' + d[0] + '">' + d[1] + '</div><h4>' + esc(s.espc) + (s.type ? '<span class="tag n" style="background:var(--soft);color:var(--muted)">' + esc(String(s.type).replace(/_/g, ' ')) + '</span>' : '') + '</h4>' +
-            '<div class="muted">' + LABEL[s.etat] + (s.raison ? ' · ' + esc(s.raison) : '') + '</div>' +
+        var isNext = p.demarree && !p.terminee && s === next;
+        body += '<div class="stop ' + cls(s) + (isNext ? ' next' : '') + '" data-stop="' + s.id + '"><div class="dot ' + (isNext ? 'b' : d[0]) + '">' + (isNext ? '🚚' : d[1]) + '</div><h4>' + esc(s.espc) + (s.type ? '<span class="tag n" style="background:var(--soft);color:var(--muted)">' + esc(String(s.type).replace(/_/g, ' ')) + '</span>' : '') + '</h4>' +
+            '<div class="muted">' + (isNext ? '<b style="color:var(--accent-text)">Prochain site</b>' : LABEL[s.etat]) + (s.raison ? ' · ' + esc(s.raison) : '') + (s.distance_km && isNext ? ' · ' + String(s.distance_km).replace('.', ',') + ' km' : '') + '</div>' +
             (s.km != null || s.position ? '<div class="muted">' + [s.position ? '📍 position relevée' : '', s.km != null ? Number(s.km).toLocaleString('fr-FR') + ' km' : ''].filter(Boolean).join(' · ') + '</div>' : '');
         if (can && s.etat !== 'planifie' && openStop !== s.id) body += '<button class="muted" data-edit="' + s.id + '" style="background:none;border:none;padding:4px 0;text-decoration:underline;font-size:13px;color:var(--accent)">Modifier</button>';
         if (active) body += '<div class="acts"><button class="btn ok" data-do="livre" data-id="' + s.id + '">Livré</button><button class="btn warn" data-do="transit" data-id="' + s.id + '">Transit</button><button class="btn bad" data-do="non_livre" data-id="' + s.id + '">Non livré</button></div>';
         body += '</div>';
     });
-    body += '<div class="stop"><div class="dot b">R</div><h4>' + esc(p.depart || 'Retour') + '</h4><div class="muted">Retour au district</div></div></div>';
+    body += '<div class="stop last ' + (p.terminee ? 'ok' : '') + '"><div class="dot b">R</div><h4>' + esc(p.depart || 'Retour') + '</h4><div class="muted">Retour au district</div></div></div>';
     if (p.demarree && !p.terminee) {
         body += '<button class="btn sec" id="fuelgo" style="margin-top:6px">Ajouter un plein</button>' +
             '<button class="btn ' + (p.restants ? 'sec' : '') + '" id="finish" style="margin-top:10px">Terminer la sortie</button>' + (p.restants ? '<p class="muted" style="text-align:center">' + p.restants + ' site' + (p.restants > 1 ? 's' : '') + ' non traité' + (p.restants > 1 ? 's' : '') + ' : ils resteront « à traiter » au bureau.</p>' : '');
@@ -537,6 +547,8 @@ function bindCommon() {
     el = $('wnext'); if (el) el.onclick = function () { weekStart = addDays(weekStart, 7); render(); };
     el = $('synctile'); if (el) el.onclick = function (e) { e.preventDefault(); toast(isOnline() ? 'Synchronisation…' : 'Pas de réseau : envoi au retour du réseau'); refresh(); };
     [].forEach.call(document.querySelectorAll('[data-do]'), function (b) { b.onclick = function () { stopAction(p, b.getAttribute('data-id'), b.getAttribute('data-do')); }; });
+    var cur = document.querySelector('#route .stop.next');
+    if (cur && cur.scrollIntoView) { var line = document.getElementById('route'); if (line) line.scrollLeft = Math.max(0, cur.offsetLeft - 24); }   // le prochain site reste visible
     [].forEach.call(document.querySelectorAll('[data-edit]'), function (b) { b.onclick = function () { openStop = b.getAttribute('data-edit'); render(); }; });
     if (route().name === 'fuel') { bindFuelTabs(); bindFuel(); bindExpense(); }
     if (route().name === 'alerts') bindAlerts();
