@@ -16,7 +16,7 @@
     <style>
         /* circuit en serpent : une ligne se lit de gauche à droite, la suivante de droite à gauche, reliées par des coudes */
         .sn-wrap { overflow-x:auto; padding-bottom:6px; }
-        .sn-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); row-gap:34px; min-width:780px; padding:6px 2px 8px 28px; }
+        .sn-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); row-gap:34px; min-width:780px; padding:24px 2px 8px 28px; }
         .sn-cell { position:relative; min-width:0; padding-right:22px; }
         .sn-cell .sn-node { position:relative; z-index:1; margin-bottom:10px; }
         .sn-cell::before { content:""; position:absolute; background:var(--lc, rgba(127,127,127,.4)); border-radius:99px; }
@@ -26,11 +26,14 @@
         /* coudes arrondis : un seul tracé en U (sortie, virage, retour sur la ligne suivante) */
         .sn-cell.turn-r::before { top:12px; left:32px; width:calc(100% - 40px); height:calc(100% + 37px); background:none; box-sizing:border-box; border:3px solid var(--lc, rgba(127,127,127,.4)); border-left:none; border-radius:0 16px 16px 0; }
         .sn-cell.turn-l::before { top:12px; left:-26px; width:22px; height:calc(100% + 37px); background:none; box-sizing:border-box; border:3px solid var(--lc, rgba(127,127,127,.4)); border-right:none; border-radius:16px 0 0 16px; }
+        .sn-arrow { position:absolute; top:-17px; left:50%; margin-left:-7px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:11px solid #c2410c; animation:sn-bob 1.1s ease-in-out infinite; }
+        @keyframes sn-bob { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
+        .sn-here { font-size:.72rem; font-weight:600; padding:2px 8px; border-radius:8px; background:rgba(194,65,12,.14); color:#c2410c; }
         .sn-pulse::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid #c2410c; opacity:0; animation:sn-ring 1.8s ease-out infinite; }
         @keyframes sn-ring { 0% { transform:scale(.8); opacity:.7; } 100% { transform:scale(1.5); opacity:0; } }
         .sn-dot { width:9px; height:9px; border-radius:50%; background:#c2410c; display:inline-block; animation:sn-blink 1.4s ease-in-out infinite; }
         @keyframes sn-blink { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:.35; transform:scale(.8); } }
-        @media (prefers-reduced-motion: reduce) { .sn-pulse::after, .sn-dot { animation:none; } }
+        @media (prefers-reduced-motion: reduce) { .sn-pulse::after, .sn-dot, .sn-arrow { animation:none; } }
     </style>
     <div wire:poll.15s style="display:flex;flex-direction:column;gap:1rem">
     <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
@@ -46,7 +49,9 @@
             $plan = $p['plan'];
             $running = ! $p['termine'] && $plan->sortie_id && ($plan->sortie?->statut ?? null) === 'en_cours';
             $etat = $p['termine'] ? 'terminé' : ($running ? 'en cours' : ($day->isFuture() ? 'planifié' : ($p['done'] > 0 ? 'en cours' : 'planifié')));
-            $current = $running ? $p['stops']->search(fn ($x) => $x['etat'] === 'avenir') : false;   // prochain site à livrer
+            $current = $running ? $p['stops']->search(fn ($x) => $x['etat'] === 'avenir') : false;   // prochain site à livrer (pulse)
+            $here = false;                                                                              // site actuel (flèche) : dernier site traité, -1 = encore au départ
+            if ($running) { $treated = $p['stops']->filter(fn ($x) => $x['etat'] !== 'avenir'); $here = $treated->isEmpty() ? -1 : $treated->keys()->last(); }
             $n = $p['stops']->count() + 2;                                                              // départ + sites + retour
             $C = 4;                                                                                     // étapes par ligne
             $snake = function (int $i) use ($n, $C) {
@@ -100,9 +105,9 @@
                         {{-- Départ du district --}}
                         @php $g = $snake(0); $first = $p['stops']->first(); @endphp
                         <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $first && $first['etat'] !== 'avenir' ? $colors[$first['etat']][0] : 'rgba(127,127,127,.4)' }}">
-                            <div class="sn-node" style="{{ $node }} {{ $neutral }};color:{{ $neutral }}"><x-filament::icon icon="heroicon-m-flag" style="width:14px;height:14px" /></div>
+                            <div class="sn-node" style="{{ $node }} {{ $neutral }};color:{{ $neutral }}">@if ($running && $here === -1)<i class="sn-arrow"></i>@endif<x-filament::icon icon="heroicon-m-flag" style="width:14px;height:14px" /></div>
                             <strong>{{ $p['depart'] }}</strong>
-                            <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span></div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span>@if ($running && $here === -1)<span class="sn-here">Position actuelle</span>@endif</div>
                             @if ($p['depart_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['depart_heure'] }}</div>@endif
                         </div>
 
@@ -110,16 +115,17 @@
                             @php
                                 $l = $s['livraison']; [$fg, $bg, $label, $icon] = $colors[$s['etat']];
                                 $isNext = $current !== false && $loop->index === $current;
-                                if ($isNext) { [$fg, $bg, $icon] = ['#c2410c', 'rgba(194,65,12,.14)', 'heroicon-m-truck']; }
+                                if ($isNext) { [$fg, $bg, $icon] = ['#c2410c', 'rgba(194,65,12,.14)', 'heroicon-m-map-pin']; }
                                 $nextDistance = $p['stops']->get($loop->index + 1)['distance'] ?? ($loop->last ? $p['retour_km'] : null);
                                 $g = $snake($loop->index + 1);
                                 $lineColor = $s['etat'] === 'avenir' ? 'rgba(127,127,127,.4)' : $colors[$s['etat']][0];
                             @endphp
                             <div class="sn-cell {{ $g['class'] }}" style="{{ $g['style'] }};--lc:{{ $lineColor }};{{ $canEdit ? 'cursor:pointer' : '' }}" x-data="{ open: false }" x-on:click="open = ! open">
-                                <div class="sn-node {{ $isNext ? 'sn-pulse' : '' }}" style="{{ $node }} {{ $fg }};background:{{ $bg }};color:{{ $fg }}"><x-filament::icon :icon="$icon" style="width:14px;height:14px" /></div>
+                                <div class="sn-node {{ $isNext ? 'sn-pulse' : '' }}" style="{{ $node }} {{ $fg }};background:{{ $bg }};color:{{ $fg }}">@if ($running && $loop->index === $here)<i class="sn-arrow"></i>@endif<x-filament::icon :icon="$icon" style="width:14px;height:14px" /></div>
                                 <strong style="display:block;overflow-wrap:anywhere">{{ $l->espc?->nom ?? 'Site supprimé' }}</strong>
                                 <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px">
                                     <span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:{{ $bg }};color:{{ $fg }}">{{ $isNext ? 'Prochain site' : ($s['etat'] === 'alerte' ? ($l->lieu_livraison === 'transit' ? 'En transit' : 'Livrée en retard') : $colors[$s['etat']][2]) }}</span>
+                                    @if ($running && $loop->index === $here)<span class="sn-here">Position actuelle</span>@endif
                                     @if ($s['heure'])<span style="font-size:.8rem;opacity:.7">prévu {{ $s['heure'] }}</span>@endif
                                 </div>
                                 @if ($l->statut === 'livre')
