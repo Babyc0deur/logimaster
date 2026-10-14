@@ -123,7 +123,7 @@ class MobileController extends ApiController
             default => ['statut' => 'planifie', 'date_livraison' => null, 'lieu_livraison' => null, 'raison_non_livraison' => null],
         };
         $delivered = in_array($data['statut'], ['livre', 'transit'], true);
-        $km = $delivered ? ($data['km_compteur'] ?? null) : null;
+        $km = $data['statut'] === 'planifie' ? null : ($data['km_compteur'] ?? null);   // relevé à chaque étape traitée, livrée ou non ; remis à zéro si le site repasse en « à livrer »
         $kmDepart = $plan->sortie?->km_depart;
         abort_if($km !== null && $kmDepart && $km < (int) $kmDepart, 422, 'Le kilométrage est inférieur au kilométrage de départ ('.(int) $kmDepart.' km).');
         $livraison->update($update + [

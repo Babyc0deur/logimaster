@@ -90,10 +90,18 @@
             <div style="margin:14px 0 6px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Sites livrés</div><div style="font-size:1.15rem;font-weight:600">{{ $p['done'] }} / {{ $p['total'] }}</div></div>
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Dans les délais</div><div style="font-size:1.15rem;font-weight:600">{{ $p['onTime'] !== null ? $p['onTime'].' %' : '—' }}</div></div>
-                <div style="{{ $metric }}">
-                    <div style="font-size:.75rem;opacity:.7">Kilométrage parcouru</div>
+                @php
+                    $reel = $p['termine'] && $kmArrivee !== null && $kmParcourus !== null;                      // circuit fini : distance réelle (compteur d'arrivée − compteur de départ)
+                    $ecart = $reel && $p['km'] ? $kmParcourus - (float) $p['km'] : null;                      // écart avec la distance prévue
+                    $ecartPct = $ecart !== null && (float) $p['km'] > 0 ? round($ecart / (float) $p['km'] * 100) : null;
+                @endphp
+                <div style="{{ $metric }}{{ $reel ? ';box-shadow:0 0 0 1px #16a34a inset' : '' }}">
+                    <div style="font-size:.75rem;opacity:.7">{{ $reel ? 'Distance réelle parcourue' : 'Kilométrage parcouru' }}</div>
                     <div style="font-size:1.15rem;font-weight:600">{{ $kmParcourus !== null ? $fmtKm($kmParcourus).' km' : '—' }}</div>
                     <div style="font-size:.72rem;opacity:.65">@if ($kmDepart !== null){{ $fmtKm($kmDepart) }} → {{ $kmFin !== null ? $fmtKm($kmFin) : '…' }} km{{ $kmArrivee === null && $kmFin !== null ? ' (dernier relevé)' : '' }}@else compteur de départ non saisi @endif</div>
+                    @if ($ecart !== null)
+                        <div style="font-size:.72rem;margin-top:2px;color:{{ abs($ecartPct ?? 0) > 15 ? '#d97706' : '#16a34a' }}">{{ $ecart >= 0 ? '+' : '−' }}{{ $km(number_format(abs($ecart), 1, '.', '')) }} km{{ $ecartPct !== null ? ' ('.($ecartPct >= 0 ? '+' : '−').abs($ecartPct).' %)' : '' }} par rapport au prévu</div>
+                    @endif
                 </div>
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Distance prévue</div><div style="font-size:1.15rem;font-weight:600">{{ $p['km'] ? $km($p['km']).' km' : '—' }}</div></div>
                 <div style="{{ $metric }}"><div style="font-size:.75rem;opacity:.7">Retour prévu</div><div style="font-size:1.15rem;font-weight:600">{{ $p['retour_heure'] ?? '—' }}</div></div>
@@ -157,6 +165,9 @@
                                         <div style="font-size:.78rem;margin-top:3px;opacity:.7">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" x-on:click.stop style="text-decoration:underline">Position du véhicule relevée</a>{{ $l->gps_precision_m ? ' (précision '.$l->gps_precision_m.' m)' : '' }}{{ $l->gps_ecart_m !== null ? ' · '.($l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km').' du centre' : '' }}</div>
                                     @endif
                                 @endif
+                                @if ($l->statut === 'non_livre' && $l->km_compteur !== null)
+                                    <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong>@if ($delta !== null) <span style="opacity:.7">· +{{ $fmtKm($delta) }} km</span>@endif</div>
+                                @endif
                                 @if ($l->raison_non_livraison)
                                     <div style="font-size:.8rem;margin-top:3px;{{ $l->statut === 'non_livre' ? 'color:#dc2626' : 'opacity:.8' }}">{{ $l->statut === 'non_livre' ? 'Raison : ' : 'Note : ' }}{{ $l->raison_non_livraison }}</div>
                                 @endif
@@ -181,7 +192,7 @@
                             <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">{{ $p['termine'] ? 'Retour · tournée terminée' : 'Retour' }}</span></div>
                             @if ($p['retour_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['retour_heure'] }}</div>@endif
                             @if ($kmArrivee !== null)
-                                <div style="font-size:.85rem;margin-top:4px">Compteur arrivée : <strong>{{ $fmtKm($kmArrivee) }} km</strong>@if ($kmParcourus !== null) <span style="opacity:.7">· {{ $fmtKm($kmParcourus) }} km parcourus</span>@endif</div>
+                                <div style="font-size:.85rem;margin-top:4px">Compteur arrivée : <strong>{{ $fmtKm($kmArrivee) }} km</strong>@if ($kmParcourus !== null) <span style="opacity:.7">· {{ $fmtKm($kmParcourus) }} km réellement parcourus</span>@endif</div>
                             @endif
                         </div>
                     </div>

@@ -188,7 +188,7 @@ function recount(p) { p.restants = p.stops.filter(function (s) { return s.etat =
 function applyLocal(op) {
     var p = op.plan ? S.details[op.plan] : null; if (!p) return;
     if (op.type === 'start') { p.demarree = true; p.sortie = p.sortie || { id: null, statut: 'en_cours', km_depart: (op.body && op.body.km_depart) || null, km_arrivee: null }; p.sortie.photo_depart = !!op.photo; }
-    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = ok && op.body.km_compteur != null ? op.body.km_compteur : null; st.position = ok && op.body.lat != null; } recount(p); }
+    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = op.body.statut !== 'planifie' && op.body.km_compteur != null ? op.body.km_compteur : null; st.position = ok && op.body.lat != null; } recount(p); }
     if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; p.sortie.photo_arrivee = !!op.photo; } }
     if (op.type === 'fuel') { p.ravitaillements.unshift({ facture: !!op.photo, client_ref: op.body.client_ref, litres: +op.body.litres, prix_unitaire: +op.body.prix_unitaire || null, montant: null, km_compteur: op.body.km_compteur || null, station: op.body.station || null, date: op.at.slice(0, 10), pending: true }); }
     if (op.type === 'expense') { p.frais = p.frais || []; p.frais.unshift({ client_ref: op.body.client_ref, type: op.body.type, libelle: EXPENSE_TYPES[op.body.type] || op.body.type, montant: +op.body.montant, beneficiaire: op.body.beneficiaire || null, commentaire: op.body.commentaire || null, date: op.at.slice(0, 10), pending: true }); }
@@ -659,12 +659,15 @@ function sheetDeliver(p, stopId, statut) {
 }
 function sheetReason(p, stopId) {
     var st = p.stops.filter(function (s) { return s.id === stopId; })[0];
+    var last = p.stops.reduce(function (m, s) { return s.km != null && s.km > m ? s.km : m; }, (p.sortie && p.sortie.km_depart) || 0);   // dernier compteur relevé
     sheet('<h3>Non livré : ' + esc(st ? st.espc : '') + '</h3><label for="rs">Raison (obligatoire)</label><textarea id="rs" rows="3" placeholder="Route coupée, centre fermé, panne…"></textarea><div class="row" style="margin-top:10px;flex-wrap:wrap;gap:6px">' +
-        ['Route impraticable', 'Centre fermé', 'Panne du véhicule', 'Pas de stock'].map(function (r) { return '<button class="pill off" data-r="' + esc(r) + '" style="border:none;cursor:pointer;font-size:13px">' + esc(r) + '</button>'; }).join('') + '</div><p class="err" id="err"></p><button class="btn bad" id="ok" style="margin-top:8px">Enregistrer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
+        ['Route impraticable', 'Centre fermé', 'Panne du véhicule', 'Pas de stock'].map(function (r) { return '<button class="pill off" data-r="' + esc(r) + '" style="border:none;cursor:pointer;font-size:13px">' + esc(r) + '</button>'; }).join('') + '</div><label for="kmr">Kilométrage au compteur (facultatif)</label><input id="kmr" type="number" inputmode="numeric" min="' + esc(last || 0) + '" placeholder="si vous êtes passé sur place' + (last ? ', au moins ' + esc(last) : '') + '"><p class="err" id="err"></p><button class="btn bad" id="ok" style="margin-top:8px">Enregistrer</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
         [].forEach.call(document.querySelectorAll('[data-r]'), function (b) { b.onclick = function () { $('rs').value = b.getAttribute('data-r'); }; });
         $('ok').onclick = function () {
             var v = $('rs').value.trim(); if (!v) { $('err').textContent = 'La raison est obligatoire.'; return; }
-            closeSheet(); openStop = null; getPos().then(function (pos) { if (!pos && geoError === 'refuse') toast('Localisation refusée : site enregistré sans position'); enqueue({ type: 'livraison', plan: p.id, target: stopId, body: Object.assign({ statut: 'non_livre', raison: v }, pos || {}) }); });
+            var km = $('kmr').value ? parseInt($('kmr').value, 10) : null;
+            if (km != null && (isNaN(km) || (last && km < last))) { $('err').textContent = 'Inférieur au dernier kilométrage relevé (' + last + ' km).'; return; }
+            closeSheet(); openStop = null; getPos().then(function (pos) { if (!pos && geoError === 'refuse') toast('Localisation refusée : site enregistré sans position'); var body = Object.assign({ statut: 'non_livre', raison: v }, pos || {}); if (km != null) body.km_compteur = km; enqueue({ type: 'livraison', plan: p.id, target: stopId, body: body }); });
         };
     });
 }

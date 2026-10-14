@@ -221,4 +221,21 @@ class TerrainProofsTest extends TestCase
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'plein-1', 'litres' => 40, 'numero_facture' => 'F-2026-118'], $this->h)
             ->assertCreated()->assertJsonPath('numero_facture', 'F-2026-118');
     }
+
+    public function test_a_not_delivered_site_keeps_the_odometer_reading_when_the_vehicle_went_there(): void
+    {
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", ['km_depart' => 42010], $this->h)->assertOk();
+        $stop = $this->stop('CSU B');
+
+        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'non_livre', 'raison' => 'Centre fermé', 'km_compteur' => 42040], $this->h)
+            ->assertOk()->assertJsonPath('stops.1.etat', 'non_livre')->assertJsonPath('stops.1.km', 42040);
+        $this->assertSame(42040, $stop->fresh()->km_compteur);
+
+        // le site repasse en « à livrer » : le relevé disparaît avec lui
+        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'planifie', 'km_compteur' => 42040], $this->h)->assertOk();
+        $this->assertNull($stop->fresh()->km_compteur);
+
+        // et un compteur inférieur à celui du départ reste refusé
+        $this->postJson("/api/mobile/livraisons/{$stop->id}", ['statut' => 'non_livre', 'raison' => 'Fermé', 'km_compteur' => 42000], $this->h)->assertStatus(422);
+    }
 }
