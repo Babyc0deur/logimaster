@@ -54,9 +54,11 @@
             if ($running) { $treated = $p['stops']->filter(fn ($x) => $x['etat'] !== 'avenir'); $here = $treated->isEmpty() ? -1 : $treated->keys()->last(); }
             $kmDepart = $plan->sortie?->km_depart;                                                      // compteur au départ (saisi sur le téléphone)
             $kmArrivee = $plan->sortie?->km_arrivee;                                                    // compteur au retour
-            $lastKm = $p['stops']->map(fn ($x) => $x['livraison']->km_compteur)->filter(fn ($v) => $v !== null)->max();
+            $readings = $p['stops']->map(fn ($x) => $x['livraison']->km_compteur)->filter(fn ($v) => $v !== null);
+            $lastKm = $readings->max();
+            $kmBase = $kmDepart ?? ($readings->count() >= 2 ? $readings->min() : null);                // sans compteur de départ : premier relevé
             $kmFin = $kmArrivee ?? $lastKm;                                                             // dernier compteur connu
-            $kmParcourus = $kmDepart !== null && $kmFin !== null && $kmFin >= $kmDepart ? $kmFin - $kmDepart : null;
+            $kmParcourus = $kmBase !== null && $kmFin !== null && $kmFin >= $kmBase ? $kmFin - $kmBase : null;
             $fmtKm = fn ($v) => number_format($v, 0, ',', ' ');
             $n = $p['stops']->count() + 2;                                                              // départ + sites + retour
             $C = 4;                                                                                     // étapes par ligne
@@ -98,7 +100,7 @@
                 <div style="{{ $metric }}{{ $reel ? ';box-shadow:0 0 0 1px #16a34a inset' : '' }}">
                     <div style="font-size:.75rem;opacity:.7">{{ $reel ? 'Distance réelle parcourue' : 'Kilométrage parcouru' }}</div>
                     <div style="font-size:1.15rem;font-weight:600">{{ $kmParcourus !== null ? $fmtKm($kmParcourus).' km' : '—' }}</div>
-                    <div style="font-size:.72rem;opacity:.65">@if ($kmDepart !== null){{ $fmtKm($kmDepart) }} → {{ $kmFin !== null ? $fmtKm($kmFin) : '…' }} km{{ $kmArrivee === null && $kmFin !== null ? ' (dernier relevé)' : '' }}@else compteur de départ non saisi @endif</div>
+                    <div style="font-size:.72rem;opacity:.65">@if ($kmBase !== null){{ $fmtKm($kmBase) }} → {{ $kmFin !== null ? $fmtKm($kmFin) : '…' }} km{{ $kmDepart === null ? ' (du 1er au dernier relevé)' : ($kmArrivee === null && $kmFin !== null ? ' (dernier relevé)' : '') }}@else aucun compteur saisi @endif</div>
                     @if ($ecart !== null)
                         <div style="font-size:.72rem;margin-top:2px;color:{{ abs($ecartPct ?? 0) > 15 ? '#d97706' : '#16a34a' }}">{{ $ecart >= 0 ? '+' : '−' }}{{ $km(number_format(abs($ecart), 1, '.', '')) }} km{{ $ecartPct !== null ? ' ('.($ecartPct >= 0 ? '+' : '−').abs($ecartPct).' %)' : '' }} par rapport au prévu</div>
                     @endif
@@ -129,6 +131,7 @@
                             <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span>@if ($running && $here === -1)<span class="sn-here">Position actuelle</span>@endif</div>
                             @if ($p['depart_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['depart_heure'] }}</div>@endif
                             @if ($kmDepart !== null)<div style="font-size:.85rem;margin-top:4px">Compteur départ : <strong>{{ $fmtKm($kmDepart) }} km</strong></div>@endif
+                            @if ($canEdit)<div style="margin-top:6px">{{ ($this->departKmAction)(['id' => $plan->id]) }}</div>@endif
                         </div>
 
                         @foreach ($p['stops'] as $s)
@@ -191,6 +194,7 @@
                             <strong>{{ $p['depart'] }}</strong>
                             <div><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">{{ $p['termine'] ? 'Retour · tournée terminée' : 'Retour' }}</span></div>
                             @if ($p['retour_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['retour_heure'] }}</div>@endif
+                            @if ($canEdit && $plan->sortie_id)<div style="margin-top:6px">{{ ($this->arriveeKmAction)(['id' => $plan->id]) }}</div>@endif
                             @if ($kmArrivee !== null)
                                 <div style="font-size:.85rem;margin-top:4px">Compteur arrivée : <strong>{{ $fmtKm($kmArrivee) }} km</strong>@if ($kmParcourus !== null) <span style="opacity:.7">· {{ $fmtKm($kmParcourus) }} km réellement parcourus</span>@endif</div>
                             @endif

@@ -125,4 +125,62 @@ class SuiviCircuitsTest extends TestCase
         }
         $this->assertSame('planifie', $l->fresh()->statut);
     }
+
+    public function test_the_office_can_enter_the_mileage_at_each_step_without_the_phone(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        [$a, $b] = $this->plan->livraisons()->orderBy('ordre')->get()->all();
+
+        // compteur de départ : démarre la sortie du circuit comme « Démarrer » sur le téléphone
+        Livewire::test(SuiviCircuits::class)
+            ->callAction(['departKm'], ['km_depart' => 1000], ['id' => $this->plan->id])->assertHasNoActionErrors()
+            ->callAction(['livre'], ['date_livraison' => '2026-09-10', 'lieu_livraison' => 'site', 'km_compteur' => 1012], ['id' => $a->id])->assertHasNoActionErrors()
+            ->callAction(['nonLivre'], ['raison' => 'Centre fermé', 'km_compteur' => 1030], ['id' => $b->id])->assertHasNoActionErrors();
+
+        $sortie = $this->plan->fresh()->sortie;
+        $this->assertNotNull($sortie);
+        $this->assertSame(1000, $sortie->km_depart);
+        $this->assertSame('en_cours', $sortie->statut);
+        $this->assertSame(1012, $a->fresh()->km_compteur);
+        $this->assertSame(1030, $b->fresh()->km_compteur);   // le compteur d'un site non livré est conservé
+
+        // compteur d'arrivée : termine la sortie ; les sites déjà traités le restent, aucun autre n'est marqué livré
+        Livewire::test(SuiviCircuits::class)->callAction(['arriveeKm'], ['km_arrivee' => 1045], ['id' => $this->plan->id])->assertHasNoActionErrors();
+        $this->assertSame(1045, $sortie->fresh()->km_arrivee);
+        $this->assertSame('terminee', $sortie->fresh()->statut);
+        $this->assertSame('non_livre', $b->fresh()->statut);
+
+        // la page affiche la distance réelle (45 km) à côté de la distance prévue
+        $this->get("/admin/{$this->district->id}/suivi-circuits?date=2026-09-10")->assertOk()
+            ->assertSee('Distance réelle parcourue')->assertSee('45 km')->assertSee('Distance prévue')->assertSee('Compteur départ')->assertSee('Compteur arrivée');
+    }
+
+    public function test_mileage_entered_at_the_office_is_checked_against_the_previous_reading(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        [$a, $b] = $this->plan->livraisons()->orderBy('ordre')->get()->all();
+        Livewire::test(SuiviCircuits::class)
+            ->callAction(['departKm'], ['km_depart' => 1000], ['id' => $this->plan->id])
+            ->callAction(['livre'], ['date_livraison' => '2026-09-10', 'lieu_livraison' => 'site', 'km_compteur' => 1012], ['id' => $a->id]);
+
+        // inférieur au relevé précédent : refusé, rien n'est enregistré
+        Livewire::test(SuiviCircuits::class)->callAction(['livre'], ['date_livraison' => '2026-09-10', 'lieu_livraison' => 'site', 'km_compteur' => 1005], ['id' => $b->id]);
+        $this->assertSame('planifie', $b->fresh()->statut);
+        $this->assertNull($b->fresh()->km_compteur);
+
+        // arrivée inférieure au départ : refusée
+        Livewire::test(SuiviCircuits::class)->callAction(['arriveeKm'], ['km_arrivee' => 990], ['id' => $this->plan->id]);
+        $this->assertNull($this->plan->fresh()->sortie->km_arrivee);
+    }
+
+    public function test_without_a_start_reading_the_distance_runs_from_the_first_to_the_last_reading(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        [$a, $b] = $this->plan->livraisons()->orderBy('ordre')->get()->all();
+        Livewire::test(SuiviCircuits::class)
+            ->callAction(['livre'], ['date_livraison' => '2026-09-10', 'lieu_livraison' => 'site', 'km_compteur' => 2000], ['id' => $a->id])
+            ->callAction(['livre'], ['date_livraison' => '2026-09-10', 'lieu_livraison' => 'site', 'km_compteur' => 2018], ['id' => $b->id]);
+
+        $this->get("/admin/{$this->district->id}/suivi-circuits?date=2026-09-10")->assertOk()->assertSee('Kilométrage parcouru')->assertSee('18 km')->assertSee('du 1er au dernier relevé');
+    }
 }
