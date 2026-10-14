@@ -16,21 +16,16 @@
     <style>
         /* circuit en serpent : une ligne se lit de gauche à droite, la suivante de droite à gauche, reliées par des coudes */
         .sn-wrap { overflow-x:auto; padding-bottom:6px; }
-        .sn-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); row-gap:30px; min-width:780px; padding:6px 2px 8px 16px; }
-        .sn-cell { position:relative; min-width:0; padding-right:20px; }
+        .sn-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); row-gap:34px; min-width:780px; padding:6px 2px 8px 28px; }
+        .sn-cell { position:relative; min-width:0; padding-right:22px; }
         .sn-cell .sn-node { position:relative; z-index:1; margin-bottom:10px; }
-        .sn-cell::before, .sn-cell::after { content:""; position:absolute; background:var(--lc, rgba(127,127,127,.4)); border-radius:2px; }
-        /* trait vers l'étape suivante, arrêté avant chaque icône */
+        .sn-cell::before { content:""; position:absolute; background:var(--lc, rgba(127,127,127,.4)); border-radius:99px; }
+        /* trait vers l'étape suivante : extrémités arrondies, arrêté avant chaque icône */
         .sn-cell.to-r::before { top:12px; left:32px; width:calc(100% - 36px); height:3px; }
         .sn-cell.to-l::before { top:12px; left:calc(32px - 100%); width:calc(100% - 36px); height:3px; }
-        /* coude à droite (fin d'une ligne qui va vers la droite) : sort par le trait, descend à l'extérieur du texte, rentre par la ligne suivante */
-        .sn-cell.turn-r::before { top:12px; left:32px; width:calc(100% - 44px); height:3px; }
-        .sn-cell.turn-r::after { top:12px; left:calc(100% - 13px); width:3px; height:calc(100% + 31px); }
-        .sn-cell.from-r::after { top:12px; left:32px; width:calc(100% - 44px); height:3px; }
-        /* coude à gauche (fin d'une ligne qui va vers la gauche) */
-        .sn-cell.turn-l::before { top:12px; left:-12px; width:10px; height:3px; }
-        .sn-cell.turn-l::after { top:12px; left:-13px; width:3px; height:calc(100% + 31px); }
-        .sn-cell.from-l::after { top:12px; left:-12px; width:10px; height:3px; }
+        /* coudes arrondis : un seul tracé en U (sortie, virage, retour sur la ligne suivante) */
+        .sn-cell.turn-r::before { top:12px; left:32px; width:calc(100% - 40px); height:calc(100% + 37px); background:none; box-sizing:border-box; border:3px solid var(--lc, rgba(127,127,127,.4)); border-left:none; border-radius:0 16px 16px 0; }
+        .sn-cell.turn-l::before { top:12px; left:-26px; width:22px; height:calc(100% + 37px); background:none; box-sizing:border-box; border:3px solid var(--lc, rgba(127,127,127,.4)); border-right:none; border-radius:16px 0 0 16px; }
         .sn-pulse::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid #c2410c; opacity:0; animation:sn-ring 1.8s ease-out infinite; }
         @keyframes sn-ring { 0% { transform:scale(.8); opacity:.7; } 100% { transform:scale(1.5); opacity:0; } }
         .sn-dot { width:9px; height:9px; border-radius:50%; background:#c2410c; display:inline-block; animation:sn-blink 1.4s ease-in-out infinite; }
