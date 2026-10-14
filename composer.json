@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "babyc0deur/logimaster",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Logimaster : gestion de flotte et livraisons des districts sanitaires (DDKM).",
+    "keywords": ["logimaster", "flotte", "ddkm", "laravel"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
