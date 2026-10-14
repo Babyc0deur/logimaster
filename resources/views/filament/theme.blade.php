@@ -16,6 +16,13 @@
     }
     .fi-section, .fi-ta-ctn, .fi-wi-stats-overview-stat { box-shadow: none !important; border-radius: 10px !important; --tw-ring-color: var(--lm-rule) !important; }
 
+    /* formulaires (création, modification) : même carte que les tableaux. Les formulaires déjà découpés en sections,
+       onglets ou étapes gardent leurs propres cartes ; ceux qui n'ont que des champs sont entourés d'une carte. */
+    .fi-sc-wizard, .fi-sc-tabs { background-color: var(--lm-card) !important; box-shadow: none !important; border-radius: 10px !important; --tw-ring-color: var(--lm-rule) !important; }
+    form.fi-sc-form > .fi-grid.fi-sc:first-child:not(:has(.fi-section, .fi-sc-wizard, .fi-sc-tabs)) {
+        background-color: var(--lm-card); border-radius: 10px; box-shadow: 0 0 0 1px var(--lm-rule); padding: 1.5rem;
+    }
+
     /* titres à l'empattement, étiquettes en chasse fixe */
     .fi-header-heading, .fi-simple-header-heading { font-family: "Newsreader", Georgia, serif !important; font-weight: 500 !important; letter-spacing: -.02em; }
     .fi-section-header-heading, .fi-wi-stats-overview-stat-label { letter-spacing: .01em; }
