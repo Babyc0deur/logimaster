@@ -148,9 +148,9 @@
                                             <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong></div>
                                         @endif
                                         @if ($l->gps_ecart_m !== null && \App\Domain\Mobile\SiteGeolocation::isSuspicious($l))
-                                            <div style="font-size:.8rem;margin-top:3px;color:#dc2626">⚠ Position à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre</div>
+                                            <div style="font-size:.8rem;margin-top:3px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
                                         @elseif ($l->lat !== null)
-                                            <div style="font-size:.78rem;margin-top:3px;opacity:.7">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" x-on:click.stop style="text-decoration:underline">Position relevée</a>{{ $l->gps_precision_m ? ' · '.$l->gps_precision_m.' m' : '' }}</div>
+                                            <div style="font-size:.78rem;margin-top:3px;opacity:.7">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" x-on:click.stop style="text-decoration:underline">Position du véhicule relevée</a>{{ $l->gps_precision_m ? ' · '.$l->gps_precision_m.' m' : '' }}</div>
                                         @endif
                                     @endif
                                     @if ($l->raison_non_livraison)
