@@ -147,6 +147,7 @@ class ImportDistrictWorkbooks extends Command
         $name = pathinfo($path, PATHINFO_FILENAME);
         $name = preg_replace('/logimaster(\s+version\s+\d+)?/i', ' ', $name);
         $name = preg_replace('/\b(nvel\s+version|xlsm?|copie|octobre\s*2025|\d{8})\b/i', ' ', $name);
+        $name = preg_replace('/\bmai\s+20\d\d\s+vf\s+v\d+\b/i', ' ', $name);   // « Mai 2026 vf v16062026 - DDS … »
         $name = preg_replace('/\(\d+\)/', ' ', $name);
         $name = preg_replace('/(^|[\s_-])(dds|ds|dr)(?=[\s_-]|$)/i', ' ', $name);
 

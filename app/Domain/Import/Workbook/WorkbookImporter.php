@@ -432,6 +432,12 @@ class WorkbookImporter
         $out = [];
         foreach ($records as $line => $r) {
             $out[$line] = function () use ($r) {
+                // un nom de circuit ou de personne saisi « 1-2 » peut être lu comme une date par Excel : retour au texte
+                foreach (['circuit', 'chauffeur', 'chef', 'p1', 'p2', 'p3', 'depart', 'arrivee', 'commentaire', 'motif'] as $k) {
+                    if (($r[$k] ?? null) instanceof DateTimeInterface) {
+                        $r[$k] = $r[$k]->format('j-n');
+                    }
+                }
                 $vehicle = $this->vehicle($r['immat']);
                 $date = $this->date($r['date'] ?? null, 'Date') ?? throw new ImportException('Date obligatoire.');
                 $kmDepart = $this->int($r['km_depart'] ?? null, 'Kilométrage au départ') ?? throw new ImportException('Kilométrage au départ obligatoire.');
