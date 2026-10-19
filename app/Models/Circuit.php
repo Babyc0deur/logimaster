@@ -3,20 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Circuit extends Model
 {
     use HasUuids;
 
+    public const SAISONS = ['toute_annee' => "Toute l'année", 'seche' => 'Saison sèche', 'pluvieuse' => 'Saison pluvieuse'];
+
     protected $fillable = [
-        'district_id', 'nom', 'distance_totale', 'temps_estime_min', 'frequence', 'statut',
+        'district_id', 'nom', 'distance_totale', 'temps_estime_min', 'frequence', 'saison', 'statut',
         'point_depart', 'depart_lat', 'depart_lon',
     ];
 
     protected function casts(): array
     {
         return ['distance_totale' => 'decimal:2', 'depart_lat' => 'float', 'depart_lon' => 'float'];
+    }
+
+    /** Saison (« seche » ou « pluvieuse ») d'une date : mois secs réglés par LOGIMASTER_DRY_SEASON_MONTHS. */
+    public static function saisonDe(\DateTimeInterface|string $date): string
+    {
+        $month = (int) \Carbon\Carbon::parse($date)->format('n');
+
+        return in_array($month, (array) config('logimaster.dry_season_months'), true) ? 'seche' : 'pluvieuse';
+    }
+
+    /** Circuits utilisables à une date : ceux de la saison correspondante et ceux valables toute l'année. */
+    public function scopeValablesLe(Builder $query, \DateTimeInterface|string $date): Builder
+    {
+        return $query->whereIn('saison', ['toute_annee', self::saisonDe($date)]);
     }
 
     public function district()

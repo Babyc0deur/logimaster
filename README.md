@@ -51,7 +51,9 @@ du périmètre de l'utilisateur.
   consommation théorique. Écran de détail par indicateur (tendance, historique, répartition par véhicule/site), cartes des 8
   indicateurs et donut de l'état de la flotte sur le tableau de bord.
 - **Circuits et ESPC** : étapes ordonnées avec distances, point de départ, carte (Leaflet / OpenStreetMap), fiche ESPC
-  (adresse, e-mail, GPS). **Suivi des livraisons** (un seul menu) : vue circuit — chaque sortie du jour se lit comme une ligne d'étapes (départ puis sites, avec statut, distances, retards, raisons, indicateurs et actions rapides livrée / non livrée) ; vue tableau (bouton « Vue tableau ») : statut par site (planifiée / livrée / non livrée),
+  (adresse, e-mail, GPS). **Saisonnalité** : chaque circuit est valable *toute l'année*, en *saison sèche* ou en *saison pluvieuse* (colonne, filtre,
+  import/export, API) ; le planning ne propose que les circuits de la saison de la date choisie et la génération mensuelle
+  ignore ceux de l'autre saison. Mois secs réglables : `LOGIMASTER_DRY_SEASON_MONTHS` (défaut `11,12,1,2,3`). **Suivi des livraisons** (un seul menu) : vue circuit — chaque sortie du jour se lit comme une ligne d'étapes (départ puis sites, avec statut, distances, retards, raisons, indicateurs et actions rapides livrée / non livrée) ; vue tableau (bouton « Vue tableau ») : statut par site (planifiée / livrée / non livrée),
   date, lieu (site ou transit), raison ; clôturer une sortie marque les sites livrés. API : `/api/livraisons`.
 - **Personnel** : fiche chauffeur complète (permis, véhicule principal, statistiques), chefs de mission et passagers.
 - **Finance** : budgets par mois, par poste (carburant / maintenance / autres) et par bailleur, tableau de bord avec

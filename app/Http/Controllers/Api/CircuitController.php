@@ -15,7 +15,7 @@ class CircuitController extends CrudController
 
     protected string $permission = 'circuits';
 
-    protected array $filters = ['statut', 'frequence'];
+    protected array $filters = ['statut', 'frequence', 'saison'];
 
     protected array $with = ['espc'];
 
@@ -28,6 +28,7 @@ class CircuitController extends CrudController
             'distance_totale' => ['nullable', 'numeric', 'min:0'],
             'temps_estime_min' => ['nullable', 'integer', 'min:0'],
             'frequence' => ['nullable', Rule::in(['quotidien', 'hebdomadaire', 'bimensuel', 'mensuel', 'trimestriel'])],
+            'saison' => ['sometimes', Rule::in(['toute_annee', 'seche', 'pluvieuse'])],
             'statut' => ['sometimes', Rule::in(['actif', 'inactif'])],
             'espc' => ['sometimes', 'array'],
             'espc.*.id' => ['required_with:espc', 'uuid'],

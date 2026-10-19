@@ -123,4 +123,23 @@ class ChronogrammeTest extends TestCase
             'district_id' => $this->district->id, 'vehicle_id' => $this->vehicle->id, 'date_prevue' => '2026-09-12',
         ])->assertForbidden();
     }
+
+    public function test_circuits_follow_their_season(): void
+    {
+        $this->assertSame('seche', Circuit::saisonDe('2026-01-15'));
+        $this->assertSame('pluvieuse', Circuit::saisonDe('2026-06-15'));
+
+        $d = $this->district->id;
+        Circuit::create(['district_id' => $d, 'nom' => 'Toujours', 'frequence' => 'mensuel']);
+        Circuit::create(['district_id' => $d, 'nom' => 'Sec', 'frequence' => 'mensuel', 'saison' => 'seche']);
+        Circuit::create(['district_id' => $d, 'nom' => 'Pluie', 'frequence' => 'mensuel', 'saison' => 'pluvieuse']);
+
+        $this->assertEqualsCanonicalizing(['Toujours', 'Pluie'], Circuit::valablesLe('2026-06-10')->pluck('nom')->all());
+        $this->assertEqualsCanonicalizing(['Toujours', 'Sec'], Circuit::valablesLe('2026-12-10')->pluck('nom')->all());
+
+        // le planning d'un mois de saison pluvieuse ne reprend pas le circuit de saison sèche
+        $generator = app(ChronogrammeGenerator::class);
+        $this->assertSame(2, $generator->generate($d, CarbonImmutable::parse('2026-09-01'), $this->vehicle->id, null, 1));
+        $this->assertEqualsCanonicalizing(['Toujours', 'Pluie'], Chronogramme::pluck('destination')->all());
+    }
 }

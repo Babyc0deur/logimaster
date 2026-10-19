@@ -7,6 +7,9 @@ return [
     | chargées vont de mai à octobre 2025. Les deux bornes restent modifiables par l'utilisateur dans les filtres.
     | Laisser vide (LOGIMASTER_PERIOD_FROM= / LOGIMASTER_PERIOD_UNTIL=) pour revenir au mois en cours.
     */
+    // mois de la saison sèche (les autres mois forment la saison pluvieuse)
+    'dry_season_months' => array_map('intval', explode(',', env('LOGIMASTER_DRY_SEASON_MONTHS', '11,12,1,2,3'))),
+
     'default_period' => [
         'from' => env('LOGIMASTER_PERIOD_FROM', '2025-06-11') ?: null,
         'until' => env('LOGIMASTER_PERIOD_UNTIL', '') ?: null   // vide = sans limite haute,

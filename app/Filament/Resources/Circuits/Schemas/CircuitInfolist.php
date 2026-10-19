@@ -19,6 +19,9 @@ class CircuitInfolist
                 TextEntry::make('district.name')->label('District'),
                 TextEntry::make('statut')->badge()->color(fn ($state) => $state === 'actif' ? 'success' : 'gray'),
                 TextEntry::make('frequence')->label('Fréquence')->formatStateUsing(fn ($state) => CircuitForm::FREQUENCES[$state] ?? $state)->placeholder('—'),
+                TextEntry::make('saison')->label('Saison')->badge()
+                    ->formatStateUsing(fn ($state) => Circuit::SAISONS[$state] ?? $state)
+                    ->color(fn ($state) => match ($state) { 'seche' => 'warning', 'pluvieuse' => 'info', default => 'gray' }),
                 TextEntry::make('distance_totale')->label('Distance totale')->suffix(' km')->placeholder('—'),
                 TextEntry::make('temps')->label('Temps estimé')->state(fn (Circuit $c) => $c->temps_estime_min ? sprintf('%dh%02d', intdiv($c->temps_estime_min, 60), $c->temps_estime_min % 60) : null)->placeholder('—'),
                 TextEntry::make('nb_espc')->label("Nombre d'ESPC")->state(fn (Circuit $c) => $c->espc()->count()),

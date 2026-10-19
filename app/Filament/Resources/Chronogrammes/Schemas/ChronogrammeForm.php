@@ -36,8 +36,10 @@ class ChronogrammeForm
                 ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('driver_id', $get, $record, 'Ce chauffeur a déjà une sortie à la même heure ce jour-là.')]),
             Select::make('circuit_id')
                 ->label('Circuit')
-                ->relationship('circuit', 'nom')
-                ->searchable()->preload(),
+                ->relationship('circuit', 'nom', modifyQueryUsing: fn ($query, Get $get) => $get('date_prevue') ? $query->valablesLe($get('date_prevue')) : $query)
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->saison === 'toute_annee' ? $record->nom : $record->nom.' ('.mb_strtolower(\App\Models\Circuit::SAISONS[$record->saison]).')')
+                ->helperText(fn (Get $get) => $get('date_prevue') ? 'Saison de cette date : '.mb_strtolower(\App\Models\Circuit::SAISONS[\App\Models\Circuit::saisonDe($get('date_prevue'))])." — seuls les circuits de cette saison et ceux de toute l'année sont proposés." : null)
+                ->searchable()->preload()->live(),
             Select::make('motif')
                 ->options([
                     'distribution' => 'Livraison ESPC',

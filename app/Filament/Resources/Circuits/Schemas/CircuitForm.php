@@ -24,6 +24,8 @@ class CircuitForm
                 TextInput::make('nom')->label('Nom du circuit')->required()->maxLength(120),
                 Select::make('statut')->options(['actif' => 'Actif', 'inactif' => 'Inactif'])->default('actif')->required(),
                 Select::make('frequence')->label('Fréquence')->options(self::FREQUENCES),
+                Select::make('saison')->label('Saison')->options(\App\Models\Circuit::SAISONS)->default('toute_annee')->required()
+                    ->helperText("Un circuit de saison sèche (ou pluvieuse) n'est proposé au planning que pour les dates de cette saison."),
                 TextInput::make('temps_estime_min')->label('Temps estimé')->numeric()->minValue(0)->suffix('minutes'),
                 TextInput::make('distance_totale')->label('Distance totale')->numeric()->minValue(0)->suffix('km')
                     ->helperText('Laissez vide pour la calculer à partir des distances des étapes.'),

@@ -34,6 +34,7 @@ class CircuitImport extends ImportDefinition
             ['name' => 'distance_totale', 'label' => 'Distance totale (km)', 'type' => 'decimal', 'example' => '387'],
             ['name' => 'temps_estime_min', 'label' => 'Temps estimé (minutes)', 'type' => 'int', 'example' => '360'],
             ['name' => 'frequence', 'label' => 'Fréquence', 'example' => 'hebdomadaire', 'values' => self::FREQUENCES],
+            ['name' => 'saison', 'label' => 'Saison', 'example' => 'toute_annee', 'values' => Circuit::SAISONS, 'help' => "Valeurs : toute_annee, seche ou pluvieuse (vide = toute l'année)."],
             ['name' => 'statut', 'label' => 'Statut', 'example' => 'actif', 'values' => ['actif' => 'Actif', 'inactif' => 'Inactif']],
             ['name' => 'point_depart', 'label' => 'Point de départ', 'example' => 'DDKM Anyama'],
             ['name' => 'depart_lat', 'label' => 'Latitude du départ', 'type' => 'decimal', 'example' => '5.4950'],
@@ -57,6 +58,7 @@ class CircuitImport extends ImportDefinition
             'distance_totale' => ['nullable', 'numeric', 'min:0'],
             'temps_estime_min' => ['nullable', 'integer', 'min:0'],
             'frequence' => ['nullable', 'in:'.implode(',', array_keys(self::FREQUENCES))],
+            'saison' => ['nullable', 'in:'.implode(',', array_keys(Circuit::SAISONS))],
             'statut' => ['nullable', 'in:actif,inactif'],
             'espc' => ['nullable', 'string'],
             'point_depart' => ['nullable', 'string', 'max:160'],
@@ -100,7 +102,7 @@ class CircuitImport extends ImportDefinition
     {
         return [
             'nom' => $m->nom, 'distance_totale' => $m->distance_totale, 'temps_estime_min' => $m->temps_estime_min,
-            'frequence' => $m->frequence, 'statut' => $m->statut, 'espc' => $m->espc->pluck('nom')->join('; '),
+            'frequence' => $m->frequence, 'saison' => $m->saison, 'statut' => $m->statut, 'espc' => $m->espc->pluck('nom')->join('; '),
             'point_depart' => $m->point_depart, 'depart_lat' => $m->depart_lat, 'depart_lon' => $m->depart_lon,
             'distances_etapes' => $m->espc->map(fn ($e) => $e->pivot->distance_km)->contains(fn ($d) => $d !== null)
                 ? $m->espc->map(fn ($e) => $e->pivot->distance_km !== null ? (float) $e->pivot->distance_km : 0)->join('; ') : null,

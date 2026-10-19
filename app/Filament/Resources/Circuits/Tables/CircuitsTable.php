@@ -30,6 +30,9 @@ class CircuitsTable
                 TextColumn::make('temps_estime_min')->label('Temps estimé')
                     ->formatStateUsing(fn ($state) => $state ? sprintf('%dh%02d', intdiv((int) $state, 60), (int) $state % 60) : '—')->sortable(),
                 TextColumn::make('frequence')->label('Fréquence')->badge()->formatStateUsing(fn ($state) => CircuitForm::FREQUENCES[$state] ?? $state)->placeholder('—'),
+                TextColumn::make('saison')->label('Saison')->badge()
+                    ->formatStateUsing(fn ($state) => Circuit::SAISONS[$state] ?? $state)
+                    ->color(fn ($state) => match ($state) { 'seche' => 'warning', 'pluvieuse' => 'info', default => 'gray' }),
                 TextColumn::make('respect')->label('Respect')
                     ->state(function (Circuit $c) {
                         $evalues = $c->sorties()->whereNotNull('circuit_respecte')->where('statut', '!=', 'annulee');
@@ -42,6 +45,7 @@ class CircuitsTable
             ->filters([
                 SelectFilter::make('statut')->options(['actif' => 'Actif', 'inactif' => 'Inactif']),
                 SelectFilter::make('frequence')->options(CircuitForm::FREQUENCES),
+                SelectFilter::make('saison')->options(Circuit::SAISONS),
             ])
             ->recordActions([ViewAction::make()->label('Fiche'), EditAction::make()])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);

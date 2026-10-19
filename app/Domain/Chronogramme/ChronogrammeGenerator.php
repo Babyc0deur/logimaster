@@ -19,6 +19,9 @@ class ChronogrammeGenerator
 
         foreach (Circuit::where('district_id', $districtId)->where('statut', 'actif')->get() as $circuit) {
             foreach ($this->datesFor($circuit->frequence, $month, $weekday) as $date) {
+                if ($circuit->saison !== 'toute_annee' && $circuit->saison !== Circuit::saisonDe($date)) {
+                    continue;   // circuit de l'autre saison
+                }
                 $exists = Chronogramme::where('circuit_id', $circuit->id)->whereDate('date_prevue', $date)
                     ->where('statut', '!=', 'annulee')->exists();
                 if ($exists) {
