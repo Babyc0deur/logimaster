@@ -32,4 +32,34 @@
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn, .fi-sidebar-item-active > a { background: var(--lm-ink) !important; }
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn *, .fi-sidebar-item-active > a * { color: var(--lm-paper) !important; }
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn { box-shadow: inset 3px 0 0 var(--lm-signal); }
+
+    /* menu replié (barre d'icônes) : au survol il se déploie par-dessus la page, sans la décaler (comme Vuexy) */
+    @media (min-width: 64rem) {
+        .fi-sidebar.lm-peek { position: sticky; margin-inline-end: calc(4.5rem - var(--sidebar-width)); z-index: 40; box-shadow: 0 0 2rem rgba(22, 21, 15, .18); }
+    }
 </style>
+<script>
+    (function () {
+        // Filament replie le menu en icônes ; ici on le déplie au survol en basculant seulement l'état Alpine (rien n'est enregistré)
+        var timer = null, peeking = false;
+        function store() { return window.Alpine && Alpine.store('sidebar'); }
+        function bar() { return document.querySelector('.fi-sidebar'); }
+        function desktop() { return window.matchMedia('(min-width: 64rem)').matches; }
+        function enter() {
+            var s = store(), b = bar();
+            clearTimeout(timer);
+            if (!s || !b || !desktop() || s.isOpen) return;
+            peeking = true; b.classList.add('lm-peek'); s.isOpen = true;
+        }
+        function leave() {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                var s = store(), b = bar();
+                if (!peeking || !s || !b) return;
+                peeking = false; s.isOpen = false; b.classList.remove('lm-peek');
+            }, 180);
+        }
+        document.addEventListener('mouseover', function (e) { if (e.target.closest && e.target.closest('.fi-sidebar')) enter(); });
+        document.addEventListener('mouseout', function (e) { if (e.target.closest && e.target.closest('.fi-sidebar') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.fi-sidebar'))) leave(); });
+    })();
+</script>

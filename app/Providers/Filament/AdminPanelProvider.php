@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->font('Public Sans')
             ->renderHook(\Filament\View\PanelsRenderHook::HEAD_END, fn () => view('filament.theme'))   // fond papier, titres à empattement
             ->brandName('Logimaster')
+            ->sidebarCollapsibleOnDesktop()   // bouton de repli du menu en barre d'icônes (comme Vuexy)
             ->brandLogo(fn () => view('filament.brand'))   // icône Logimaster + nom
             ->brandLogoHeight('2rem')
             ->favicon(fn () => \App\Support\Brand::favicon())
