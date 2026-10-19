@@ -36,9 +36,18 @@ class ChronogrammeForm
                 ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('driver_id', $get, $record, 'Ce chauffeur a déjà une sortie à la même heure ce jour-là.')]),
             Select::make('circuit_id')
                 ->label('Circuit')
-                ->relationship('circuit', 'nom', modifyQueryUsing: fn ($query, Get $get) => $get('date_prevue') ? $query->valablesLe($get('date_prevue')) : $query)
+                ->relationship('circuit', 'nom')
                 ->getOptionLabelFromRecordUsing(fn ($record) => $record->saison === 'toute_annee' ? $record->nom : $record->nom.' ('.mb_strtolower(\App\Models\Circuit::SAISONS[$record->saison]).')')
-                ->helperText(fn (Get $get) => $get('date_prevue') ? 'Saison de cette date : '.mb_strtolower(\App\Models\Circuit::SAISONS[\App\Models\Circuit::saisonDe($get('date_prevue'))])." — seuls les circuits de cette saison et ceux de toute l'année sont proposés." : null)
+                ->helperText(function (Get $get) {
+                    // simple rappel : le choix du circuit reste libre
+                    $circuit = $get('circuit_id') ? \App\Models\Circuit::find($get('circuit_id')) : null;
+                    if (! $circuit || $circuit->saison === 'toute_annee' || ! $get('date_prevue')) {
+                        return null;
+                    }
+
+                    return $circuit->saison === \App\Models\Circuit::saisonDe($get('date_prevue')) ? null
+                        : 'Attention : ce circuit est prévu pour la '.mb_strtolower(\App\Models\Circuit::SAISONS[$circuit->saison]).', la date choisie est en '.mb_strtolower(\App\Models\Circuit::SAISONS[\App\Models\Circuit::saisonDe($get('date_prevue'))]).'.';
+                })
                 ->searchable()->preload()->live(),
             Select::make('motif')
                 ->options([
