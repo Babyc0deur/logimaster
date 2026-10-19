@@ -124,7 +124,7 @@ class ChronogrammeTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_circuits_follow_their_season(): void
+    public function test_circuits_carry_a_season_without_restricting_the_planning(): void
     {
         $this->assertSame('seche', Circuit::saisonDe('2026-01-15'));
         $this->assertSame('pluvieuse', Circuit::saisonDe('2026-06-15'));
@@ -137,9 +137,8 @@ class ChronogrammeTest extends TestCase
         $this->assertEqualsCanonicalizing(['Toujours', 'Pluie'], Circuit::valablesLe('2026-06-10')->pluck('nom')->all());
         $this->assertEqualsCanonicalizing(['Toujours', 'Sec'], Circuit::valablesLe('2026-12-10')->pluck('nom')->all());
 
-        // le planning d'un mois de saison pluvieuse ne reprend pas le circuit de saison sèche
+        // la saison est une information : la génération du planning reprend tous les circuits actifs
         $generator = app(ChronogrammeGenerator::class);
-        $this->assertSame(2, $generator->generate($d, CarbonImmutable::parse('2026-09-01'), $this->vehicle->id, null, 1));
-        $this->assertEqualsCanonicalizing(['Toujours', 'Pluie'], Chronogramme::pluck('destination')->all());
+        $this->assertSame(3, $generator->generate($d, CarbonImmutable::parse('2026-09-01'), $this->vehicle->id, null, 1));
     }
 }
