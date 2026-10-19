@@ -20,6 +20,14 @@ php artisan storage:link --force >/dev/null 2>&1 || true
 php artisan migrate --force
 php artisan backup:restore --if-empty   # base vide (redemarrage sans disque persistant) : reprend la derniere sauvegarde externe
 php artisan logimaster:install
+# LOGIMASTER_RELOAD_DATA=true : remplace les donnees metier par database/data/snapshot.json.gz, une seule fois par version du fichier
+# (l'empreinte est gardee sur le disque persistant : les redemarrages suivants n'ecrasent pas les saisies faites depuis)
+if [ "${LOGIMASTER_RELOAD_DATA:-false}" = "true" ] && [ -f database/data/snapshot.json.gz ]; then
+    SNAP_HASH="$(sha256sum database/data/snapshot.json.gz | cut -d' ' -f1)"
+    if [ "$(cat storage/app/.snapshot-hash 2>/dev/null)" != "$SNAP_HASH" ]; then
+        php artisan data:load --force && echo "$SNAP_HASH" > storage/app/.snapshot-hash
+    fi
+fi
 php artisan data:load --if-empty   # charge database/data/snapshot.json.gz une seule fois, si le fichier existe et que la base n'a pas encore de vehicules
 php artisan organisation:pres   # 10 PRES et leurs regions (sans effet si deja en place)
 php artisan districts:geo --force   # chef-lieu de chaque district : le fichier database/data/districts_geo.json fait foi
