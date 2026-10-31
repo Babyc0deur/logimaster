@@ -52,6 +52,12 @@ class Vehicle extends Model
         return $this->belongsTo(District::class);
     }
 
+    /** Mises à disposition de ce véhicule à d'autres districts (mutualisation). */
+    public function mutualisations()
+    {
+        return $this->hasMany(VehicleMutualisation::class);
+    }
+
     public function sorties()
     {
         return $this->hasMany(SortieVehicule::class);

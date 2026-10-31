@@ -24,6 +24,8 @@ class EspcStats extends StatsOverviewWidget
             Stat::make('Livraisons', $s['livrees'].' / '.$s['planifiees'])->description('Livrées / planifiées (échues)')->icon('heroicon-o-clipboard-document-check'),
             Stat::make('Taux de respect', $s['taux'] !== null ? round($s['taux']).' %' : '—')->description('Livré au plus tard à la date prévue')->icon('heroicon-o-check-badge')
                 ->color($s['taux'] === null ? 'gray' : ($s['taux'] >= 0.9 ? 'success' : ($s['taux'] >= 0.75 ? 'warning' : 'danger'))),
+            Stat::make("Enlèvements au district", number_format((float) $this->record->expenses()->where('type', 'enlevement_espc')->sum('montant'), 0, ',', ' ').' FCFA')
+                ->description($this->record->expenses()->where('type', 'enlevement_espc')->count().' enlèvement(s) indemnisé(s)')->icon('heroicon-o-banknotes'),
             Stat::make('Retards / non livrées', $s['retards'].' / '.$s['non_livrees'])->icon('heroicon-o-exclamation-triangle')->color($s['retards'] + $s['non_livrees'] > 0 ? 'warning' : 'success'),
         ];
     }

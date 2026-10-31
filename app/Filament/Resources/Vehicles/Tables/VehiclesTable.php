@@ -67,6 +67,8 @@ class VehiclesTable
             ->recordActions([
                 ViewAction::make()->label('Voir'),
                 EditAction::make()->label('Modifier'),
+                \Filament\Actions\Action::make('activite')->label('Activité')->icon('heroicon-o-chart-bar')->color('gray')
+                    ->url(fn (Vehicle $record) => \App\Filament\Pages\ActiviteVehicule::getUrl(['vehicule' => $record->id])),
             ])
             ->recordUrl(fn (Vehicle $record) => \App\Filament\Resources\Vehicles\VehicleResource::getUrl('view', ['record' => $record]))
             ->toolbarActions([

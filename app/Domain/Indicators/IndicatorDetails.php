@@ -73,6 +73,7 @@ final class IndicatorDetails
                     ['Carburant', $num($b['carburant'] ?? 0), $pct($b['carburant'] ?? 0, $total)],
                     ['Maintenance (vidanges + immobilisations)', $num($b['maintenance'] ?? 0), $pct($b['maintenance'] ?? 0, $total)],
                     ['Autres frais', $num($b['autres_depenses'] ?? 0), $pct($b['autres_depenses'] ?? 0, $total)],
+                    ['   dont enlèvements par les ESPC', $num($b['enlevements_espc'] ?? 0), $pct($b['enlevements_espc'] ?? 0, $total)],
                 ]];
                 $tables[] = ['title' => 'Par véhicule', 'headers' => ['Véhicule', 'Montant (FCFA)', 'Part'],
                     'rows' => collect($b['par_vehicule'] ?? [])->sortDesc()->map(fn ($v, $k) => [$k, $num($v), $pct($v, $total)])->values()->all()];

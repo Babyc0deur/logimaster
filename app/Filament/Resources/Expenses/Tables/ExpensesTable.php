@@ -9,12 +9,14 @@ class ExpensesTable {
         return $table->poll('30s')->defaultSort("date_depense", "desc")->columns([ 
                 \Filament\Tables\Columns\TextColumn::make("date_depense")->date("d/m/Y")->label("Date")->sortable(),
                 \Filament\Tables\Columns\TextColumn::make("vehicle.immatriculation")->label("Véhicule")->placeholder("—")->searchable(),
-                \Filament\Tables\Columns\TextColumn::make("type")->badge(),
+                \Filament\Tables\Columns\TextColumn::make("type")->badge()->formatStateUsing(fn ($state) => \App\Models\Expense::TYPES[$state] ?? $state)
+                    ->color(fn ($state) => $state === 'enlevement_espc' ? 'warning' : 'gray'),
+                \Filament\Tables\Columns\TextColumn::make("espc.nom")->label("ESPC")->placeholder("—")->searchable()->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make("montant")->money("XOF")->sortable(),
                 \Filament\Tables\Columns\TextColumn::make("beneficiaire")->searchable(),
          ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('type')->options(fn () => \App\Models\Expense::query()->whereNotNull('type')->distinct()->orderBy('type')->pluck('type', 'type')),
+                \Filament\Tables\Filters\SelectFilter::make('type')->options(\App\Models\Expense::TYPES),
                 \Filament\Tables\Filters\Filter::make('periode')->label('Période')
                     ->schema([
                         \Filament\Forms\Components\DatePicker::make('du')->label('Du')->default(\App\Support\DashboardFilters::filterFrom()),

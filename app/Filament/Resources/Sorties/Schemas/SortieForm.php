@@ -26,7 +26,7 @@ class SortieForm
 {
     public const EXPENSE_TYPES = [
         'collation' => 'Collation', 'hebergement' => 'Hébergement', 'chargement' => 'Chargement',
-        'dechargement' => 'Déchargement', 'peage' => 'Péage', 'autre' => 'Autre',
+        'dechargement' => 'Déchargement', 'peage' => 'Péage', 'enlevement_espc' => 'Enlèvement ESPC', 'autre' => 'Autre',
     ];
 
     /** Alerte si la consommation dépasse la théorique de plus de ce pourcentage. */

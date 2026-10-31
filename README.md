@@ -61,6 +61,17 @@ du périmètre de l'utilisateur.
   (prix du véhicule prérempli, confirmation s'il est modifié) et des autres frais. Règles de contrôle : le
   kilométrage ne recule jamais, la raison est obligatoire pour un site non livré, les erreurs s'affichent sur le bon champ et rien n'est
   enregistré en cas de refus. La saisie peut être refaite pour corriger ; le plein et les frais sont des ajouts (les enregistrés sont listés dessous).
+- **Autres frais** (menu ; ex-« Dépenses ») : péages, collation, chargement, déchargement, hébergement, etc. Le type **« Enlèvement ESPC »**
+  enregistre l'indemnité de déplacement versée à un centre de santé qui vient enlever ses produits au district : l'ESPC est obligatoire,
+  le bénéficiaire se préremplit, et le frais est compté dans le **coût global** (autres frais, avec une ligne « dont enlèvements par les
+  ESPC » dans le détail de l'indicateur). La fiche de l'ESPC affiche le total reçu pour ses enlèvements.
+- **Mutualisation** (groupe Administration) : un district met un véhicule à la disposition d'un autre pour une période (avec ou sans date
+  de fin). Le district **propriétaire** crée, modifie ou termine la mise à disposition. Le district **utilisateur** la voit, et la page
+  **« Activité du véhicule »** (lien « Activité » de la liste et de la liste des véhicules) montre aux deux districts ce que le véhicule fait :
+  sorties, kilomètres, carburant, autres frais, vidanges et immobilisations, avec un résumé par district. Le propriétaire voit toute
+  l'activité ; l'utilisateur la voit pendant ses périodes seulement, et jamais les autres véhicules ni données du propriétaire. Chaque
+  sortie, plein ou frais reste rattaché au district qui l'a saisi (ses coûts, ses indicateurs). Étape 1 : mise à disposition et visibilité ;
+  la planification de sorties par le district utilisateur et la détection des conflits entre districts viennent ensuite.
 - **Personnel** : fiche chauffeur complète (permis, véhicule principal, statistiques), chefs de mission et passagers.
 - **Rapports** : PDF et Excel (DDKM, flotte, carburant, maintenance, par bailleur), envoi par e-mail, envois
   planifiés (`php artisan reports:send`, 06:00 ; `--monthly` le 1er du mois à 03:30).

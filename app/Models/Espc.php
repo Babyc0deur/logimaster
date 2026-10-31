@@ -56,6 +56,12 @@ class Espc extends Model
         ];
     }
 
+    /** Frais versés à ce centre de santé (indemnités d'enlèvement au district). */
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     public function hasGps(): bool
     {
         return $this->gps_lat !== null && $this->gps_lon !== null;
