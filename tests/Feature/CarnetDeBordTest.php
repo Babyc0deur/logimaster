@@ -143,6 +143,7 @@ class CarnetDeBordTest extends TestCase
         $this->assertSame('11:15', $rows[1]['heure_arrivee']);
         $this->assertSame('12:00', $rows[2]['heure_depart']);
         $this->assertSame('15:45', $rows[2]['heure_arrivee']);
+        $this->assertSame(['14/10/2026', '', ''], array_column($rows, 'date'));   // la date n'apparaît que sur le premier tronçon
         $this->assertSame(60, $data['totals']['distance']);
     }
 

@@ -54,7 +54,7 @@ class CarnetDeBord
             foreach (array_slice($points, 0, -1, true) as $i => $from) {
                 $to = $points[$i + 1];
                 $rows[] = [
-                    'date' => $from['date'],
+                    'date' => $i === 0 ? $date : '',   // la date figure sur le premier tronçon seulement
                     'chauffeur' => $s->driver?->nom_complet ?? '',
                     'lieu_depart' => $from['lieu'], 'heure_depart' => $from['h_dep'], 'km_depart' => $from['km'],
                     'lieu_arrivee' => $to['lieu'], 'heure_arrivee' => $to['h_arr'], 'km_arrivee' => $to['km'],
