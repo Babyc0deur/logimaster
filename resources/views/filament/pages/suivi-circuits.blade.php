@@ -131,7 +131,8 @@
                             <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(127,127,127,.15);color:{{ $neutral }}">Départ</span>@if ($running && $here === -1)<span class="sn-here">Position actuelle</span>@endif</div>
                             @if ($p['depart_heure'])<div style="font-size:.8rem;opacity:.7;margin-top:3px">prévu {{ $p['depart_heure'] }}</div>@endif
                             @if ($kmDepart !== null)<div style="font-size:.85rem;margin-top:4px">Compteur départ : <strong>{{ $fmtKm($kmDepart) }} km</strong></div>@endif
-                            @if ($canEdit)<div style="margin-top:6px">{{ ($this->departKmAction)(['id' => $plan->id]) }}</div>@endif
+                            @if ($canEdit)<div style="margin-top:6px">{{ ($this->departKmAction)(['id' => $plan->id]) }}</div>
+                            <div style="margin-top:4px"><a href="{{ \App\Filament\Pages\SaisieTournee::getUrl() }}?plan={{ $plan->id }}" style="font-size:.85rem;text-decoration:underline;color:#c2410c">Saisir toute la tournée</a></div>@endif
                         </div>
 
                         @foreach ($p['stops'] as $s)

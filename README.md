@@ -55,6 +55,12 @@ du périmètre de l'utilisateur.
   import/export, API) ; c'est une information : au planning, l'utilisateur choisit librement le circuit et la date
   (un simple rappel s'affiche si la saison du circuit ne correspond pas à la date). Mois secs réglables : `LOGIMASTER_DRY_SEASON_MONTHS` (défaut `11,12,1,2,3`). **Suivi des livraisons** (un seul menu) : vue circuit — chaque sortie du jour se lit comme une ligne d'étapes (départ puis sites, avec statut, distances, retards, raisons, indicateurs et actions rapides livrée / non livrée) ; vue tableau (bouton « Vue tableau ») : statut par site (planifiée / livrée / non livrée),
   date, lieu (site ou transit), raison ; clôturer une sortie marque les sites livrés. API : `/api/livraisons`.
+- **Saisie d'une tournée** (menu, sous le suivi des livraisons ; lien « Saisir toute la tournée » sur chaque circuit du suivi) :
+  une seule page pour recopier le carnet de bord d'une sortie. On y renseigne le compteur de départ, le statut et le kilométrage de
+  chaque site (livré, en transit, non livré avec sa raison), le compteur d'arrivée (qui termine la sortie), un plein de carburant
+  (prix du véhicule prérempli, confirmation s'il est modifié) et des autres frais. Mêmes règles que l'application mobile : le
+  kilométrage ne recule jamais, la raison est obligatoire pour un site non livré, les erreurs s'affichent sur le bon champ et rien n'est
+  enregistré en cas de refus. La saisie peut être refaite pour corriger ; le plein et les frais sont des ajouts (les enregistrés sont listés dessous).
 - **Personnel** : fiche chauffeur complète (permis, véhicule principal, statistiques), chefs de mission et passagers.
 - **Finance** : budgets par mois, par poste (carburant / maintenance / autres) et par bailleur, tableau de bord avec
   prévision et alertes de dépassement ; **factures** avec workflow brouillon → à valider → validée / rejetée → payée →
