@@ -106,6 +106,15 @@ class MaintenancePlanner
             ]);
         }
 
+        // Tournées réalisées ces 30 derniers jours dont la durée réelle dépasse 8 heures
+        foreach ($scope(\App\Models\SortieVehicule::query())->whereNotNull('heure_depart')->whereNotNull('heure_arrivee')
+            ->where('date_sortie', '>=', today()->subDays(30))->with('vehicle:id,immatriculation,district_id')->get() as $s) {
+            if (($s->duree_min ?? 0) > \App\Models\Circuit::DUREE_MAX_MIN) {
+                $alerts->push($this->alert('sortie_duree', AlertLevel::Attention, $s->vehicle,
+                    sprintf('Sortie du %s (%s) : %dh%02d de tournée, au-delà des 8 heures maximum', $s->date_sortie?->format('d/m'), $s->vehicle?->immatriculation, intdiv($s->duree_min, 60), $s->duree_min % 60)));
+            }
+        }
+
         return $alerts->sortBy(fn ($a) => $a['level']->rank())->values();
     }
 

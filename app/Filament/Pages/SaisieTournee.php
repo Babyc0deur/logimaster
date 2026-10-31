@@ -21,6 +21,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -105,6 +106,7 @@ class SaisieTournee extends Page
                 'id' => $l->id, 'nom' => $l->espc?->nom,
                 'statut' => $l->statut === 'livre' && $l->lieu_livraison === 'transit' ? 'transit' : $l->statut,
                 'km' => $l->km_compteur, 'raison' => $l->raison_non_livraison, 'date' => $l->date_livraison?->toDateString(),
+                'h_arrivee' => $l->heure_arrivee ? substr($l->heure_arrivee, 0, 5) : null, 'h_depart' => $l->heure_depart ? substr($l->heure_depart, 0, 5) : null,
             ];
         }
 
@@ -151,15 +153,20 @@ class SaisieTournee extends Page
                     ->helperText('Prérempli avec le compteur du véhicule.'),
                 TimePicker::make('heure_depart')->label('Heure de départ')->seconds(false),
                 TimePicker::make('heure_arrivee')->label("Heure d'arrivée")->seconds(false),
+                Text::make(fn (Get $get) => self::dureeMessage($get('heure_depart'), $get('heure_arrivee'), $get('sites') ?? []))->columnSpanFull(),
                 TextInput::make('km_arrivee')->label("Compteur à l'arrivée")->numeric()->integer()->minValue(0)->suffix('km')
                     ->helperText("Le renseigner termine la sortie ; les sites non traités restent « à livrer »."),
             ]),
             Section::make('Sites du circuit')->description('Dans l\'ordre de passage. Le kilométrage ne peut pas reculer d\'un site à l\'autre.')->schema([
-                Repeater::make('sites')->label('')->addable(false)->deletable(false)->reorderable(false)->columns(['default' => 1, 'lg' => 2, '2xl' => 6])->schema([
+                Repeater::make('sites')->label('')->addable(false)->deletable(false)->reorderable(false)->columns(['default' => 1, 'lg' => 3, '2xl' => 8])->schema([
                     Hidden::make('id'),
                     TextInput::make('nom')->label('Site')->disabled()->dehydrated(false)->columnSpan(['default' => 1, '2xl' => 2]),
                     Select::make('statut')->label('Statut')->options(TourEntry::STATUTS)->default('planifie')->native(false)->live()->required(),
                     TextInput::make('km')->label('Compteur')->numeric()->integer()->minValue(0)->suffix('km')
+                        ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
+                    TimePicker::make('h_arrivee')->label('Arrivée sur le site')->seconds(false)
+                        ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
+                    TimePicker::make('h_depart')->label('Départ du site')->seconds(false)
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                     DatePicker::make('date')->label('Date')->native(false)->displayFormat('d/m/Y')->maxDate(now())
                         ->visible(fn (Get $get) => in_array($get('statut'), ['livre', 'transit'], true)),
@@ -233,6 +240,28 @@ class SaisieTournee extends Page
         Notification::make()->title('Tournée enregistrée')->body(implode(' · ', $parts).'.')->success()->send();
 
         $this->fillFrom($this->plans()->findOrFail($plan->id));   // état enregistré ; le plein et les frais saisis sont vidés
+    }
+
+    /** Durée de la tournée, temps passé sur les sites, et avertissement au-delà de 8 heures. */
+    public static function dureeMessage(?string $depart, ?string $arrivee, array $sites): string
+    {
+        if (! $depart || ! $arrivee) {
+            return 'Durée de la tournée : — (renseignez les heures de départ et d\'arrivée)';
+        }
+        $total = (int) \Carbon\Carbon::parse($depart)->diffInMinutes(\Carbon\Carbon::parse($arrivee), false);
+        if ($total < 0) {
+            return 'Durée de la tournée : — (l\'arrivée précède le départ)';
+        }
+        $surPlace = 0;
+        foreach ($sites as $s) {
+            if (! empty($s['h_arrivee']) && ! empty($s['h_depart'])) {
+                $surPlace += max(0, (int) \Carbon\Carbon::parse($s['h_arrivee'])->diffInMinutes(\Carbon\Carbon::parse($s['h_depart']), false));
+            }
+        }
+        $fmt = fn (int $m) => sprintf('%dh%02d', intdiv($m, 60), $m % 60);
+        $text = 'Durée de la tournée : '.$fmt($total).($surPlace ? ' · dont '.$fmt($surPlace).' sur les sites' : '');
+
+        return $total > \App\Models\Circuit::DUREE_MAX_MIN ? "⚠ {$text} : au-delà des 8 heures maximum." : $text.' (maximum 8 h).';
     }
 
     public function backToFollowUp(): string

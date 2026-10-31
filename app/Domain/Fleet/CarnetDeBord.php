@@ -38,17 +38,17 @@ class CarnetDeBord
             $montant = (float) $s->ravitaillements->sum(fn ($r) => (float) $r->litres * (float) $r->prix_unitaire);
             $date = $s->date_sortie?->format('d/m/Y');
 
-            $points = [['lieu' => $s->point_depart ?: ($vehicle->district?->name ?? ''), 'km' => $s->km_depart, 'heure' => $s->heure_depart ? substr($s->heure_depart, 0, 5) : '', 'date' => $date]];
+            $points = [['lieu' => $s->point_depart ?: ($vehicle->district?->name ?? ''), 'km' => $s->km_depart, 'h_arr' => '', 'h_dep' => $s->heure_depart ? substr($s->heure_depart, 0, 5) : '', 'date' => $date]];
             foreach ($s->chronogramme?->livraisons ?? [] as $l) {
                 if ($l->statut !== 'planifie' && $l->km_compteur !== null) {
-                    $points[] = ['lieu' => $l->espc?->nom ?? '', 'km' => (int) $l->km_compteur, 'heure' => '', 'date' => $l->date_livraison?->format('d/m/Y') ?: $date];
+                    $points[] = ['lieu' => $l->espc?->nom ?? '', 'km' => (int) $l->km_compteur, 'h_arr' => $l->heure_arrivee ? substr($l->heure_arrivee, 0, 5) : '', 'h_dep' => $l->heure_depart ? substr($l->heure_depart, 0, 5) : '', 'date' => $l->date_livraison?->format('d/m/Y') ?: $date];
                 }
             }
             if ($s->km_arrivee !== null) {
-                $points[] = ['lieu' => $s->point_arrivee ?: ($vehicle->district?->name ?? ''), 'km' => $s->km_arrivee, 'heure' => $s->heure_arrivee ? substr($s->heure_arrivee, 0, 5) : '', 'date' => $date];
+                $points[] = ['lieu' => $s->point_arrivee ?: ($vehicle->district?->name ?? ''), 'km' => $s->km_arrivee, 'h_arr' => $s->heure_arrivee ? substr($s->heure_arrivee, 0, 5) : '', 'h_dep' => '', 'date' => $date];
             }
             if (count($points) === 1) {   // sortie en cours, sans relevé d'arrivée : le départ seul
-                $points[] = ['lieu' => $s->point_arrivee ?: ($s->destination ?: ($s->circuit?->nom ?? '')), 'km' => null, 'heure' => $s->heure_arrivee ? substr($s->heure_arrivee, 0, 5) : '', 'date' => $date];
+                $points[] = ['lieu' => $s->point_arrivee ?: ($s->destination ?: ($s->circuit?->nom ?? '')), 'km' => null, 'h_arr' => $s->heure_arrivee ? substr($s->heure_arrivee, 0, 5) : '', 'h_dep' => '', 'date' => $date];
             }
 
             foreach (array_slice($points, 0, -1, true) as $i => $from) {
@@ -56,8 +56,8 @@ class CarnetDeBord
                 $rows[] = [
                     'date' => $from['date'],
                     'chauffeur' => $s->driver?->nom_complet ?? '',
-                    'lieu_depart' => $from['lieu'], 'heure_depart' => $from['heure'], 'km_depart' => $from['km'],
-                    'lieu_arrivee' => $to['lieu'], 'heure_arrivee' => $to['heure'], 'km_arrivee' => $to['km'],
+                    'lieu_depart' => $from['lieu'], 'heure_depart' => $from['h_dep'], 'km_depart' => $from['km'],
+                    'lieu_arrivee' => $to['lieu'], 'heure_arrivee' => $to['h_arr'], 'km_arrivee' => $to['km'],
                     'distance' => $from['km'] !== null && $to['km'] !== null ? $to['km'] - $from['km'] : null,
                     'motif' => SortieVehicule::MOTIFS[$s->motif] ?? (string) $s->motif,
                     'litres' => $i === 0 ? ($litres ?: null) : null,

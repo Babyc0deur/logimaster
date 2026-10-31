@@ -92,6 +92,11 @@ class TourEntry
         });
     }
 
+    private function short(string $hour): string
+    {
+        return substr($hour, 0, 5);
+    }
+
     /** Heure « HH:MM » ou « HH:MM:SS » valide, ramenée à « HH:MM:SS » ; null si vide ou invalide. */
     private function hour(mixed $value): ?string
     {
@@ -134,6 +139,32 @@ class TourEntry
         $ha = $this->hour($data['heure_arrivee'] ?? null);
         if ($hd && $ha && substr($ha, 0, 5) < substr($hd, 0, 5)) {
             $add('heure_arrivee', "L'heure d'arrivée précède l'heure de départ.");
+        }
+
+        // les heures ne reculent jamais d'un site à l'autre : départ de la sortie ≤ arrivée au site ≤ départ du site ≤ site suivant ≤ arrivée de la sortie
+        $prev = $hd ? substr($hd, 0, 5) : null;
+        foreach ($plan->livraisons as $livraison) {
+            $row = $data['sites'][$livraison->id] ?? null;
+            if ($row === null || ($row['statut'] ?? 'planifie') === 'planifie') {
+                continue;
+            }
+            $a = $this->hour($row['h_arrivee'] ?? null);
+            $d = $this->hour($row['h_depart'] ?? null);
+            foreach (['h_arrivee' => $a, 'h_depart' => $d] as $key => $value) {
+                if (filled($row[$key] ?? null) && $value === null) {
+                    $add("sites.{$livraison->id}.{$key}", "L'heure n'est pas valide.");
+                }
+            }
+            if ($a && $prev && substr($a, 0, 5) < $prev) {
+                $add("sites.{$livraison->id}.h_arrivee", "L'arrivée ({$this->short($a)}) précède l'heure précédente ({$prev}).");
+            }
+            if ($d && $a && substr($d, 0, 5) < substr($a, 0, 5)) {
+                $add("sites.{$livraison->id}.h_depart", "Le départ du site précède l'arrivée.");
+            }
+            $prev = $d ? substr($d, 0, 5) : ($a ? substr($a, 0, 5) : $prev);
+        }
+        if ($ha && $prev && substr($ha, 0, 5) < $prev) {
+            $add('heure_arrivee', "L'heure d'arrivée ({$this->short($ha)}) précède le dernier passage sur un site ({$prev}).");
         }
 
         // le kilométrage ne recule jamais d'un site à l'autre
@@ -202,11 +233,12 @@ class TourEntry
     {
         $statut = $row['statut'] ?? 'planifie';
         if ($statut === 'planifie') {
-            return ['statut' => 'planifie', 'date_livraison' => null, 'lieu_livraison' => null, 'raison_non_livraison' => null, 'km_compteur' => null];
+            return ['statut' => 'planifie', 'date_livraison' => null, 'lieu_livraison' => null, 'raison_non_livraison' => null, 'km_compteur' => null, 'heure_arrivee' => null, 'heure_depart' => null];
         }
 
         $km = $this->int($row['km'] ?? null);
-        $common = ['km_compteur' => $km, 'saisi_par' => $by->getKey(), 'saisi_at' => now()];
+        $common = ['km_compteur' => $km, 'saisi_par' => $by->getKey(), 'saisi_at' => now(),
+            'heure_arrivee' => $this->hour($row['h_arrivee'] ?? null), 'heure_depart' => $this->hour($row['h_depart'] ?? null)];
 
         if ($statut === 'non_livre') {
             return $common + ['statut' => 'non_livre', 'date_livraison' => null, 'lieu_livraison' => null, 'raison_non_livraison' => trim((string) $row['raison'])];

@@ -68,8 +68,8 @@ class CarnetDeBordTest extends TestCase
         $this->entry([
             'km_depart' => 50000, 'km_arrivee' => 50060, 'heure_depart' => '07:30', 'heure_arrivee' => '15:45',
             'sites' => [
-                $this->stops[0] => ['statut' => 'livre', 'km' => 50020],
-                $this->stops[1] => ['statut' => 'livre', 'km' => 50040],
+                $this->stops[0] => ['statut' => 'livre', 'km' => 50020, 'h_arrivee' => '09:00', 'h_depart' => '09:40'],
+                $this->stops[1] => ['statut' => 'livre', 'km' => 50040, 'h_arrivee' => '11:15', 'h_depart' => '12:00'],
             ],
             'ravitaillement' => ['litres' => 20, 'prix_unitaire' => 700, 'km_compteur' => 50030],
         ]);
@@ -83,6 +83,37 @@ class CarnetDeBordTest extends TestCase
         $this->assertSame('07:30:00', $sortie->heure_depart);
         $this->assertSame('15:45:00', $sortie->heure_arrivee);
         $this->assertSame(495, $sortie->duree_min);
+    }
+
+    public function test_site_hours_are_saved_and_must_follow_each_other(): void
+    {
+        $this->fullTour();
+        $first = LivraisonEspc::find($this->stops[0]);
+        $this->assertSame('09:00:00', $first->heure_arrivee);
+        $this->assertSame('09:40:00', $first->heure_depart);
+
+        try {
+            $this->entry(['km_depart' => 50000, 'heure_depart' => '07:30', 'sites' => [
+                $this->stops[0] => ['statut' => 'livre', 'km' => 50020, 'h_arrivee' => '10:00', 'h_depart' => '10:30'],
+                $this->stops[1] => ['statut' => 'livre', 'km' => 50040, 'h_arrivee' => '09:00', 'h_depart' => '08:00'],
+            ]]);
+            $this->fail('Une erreur était attendue.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey("sites.{$this->stops[1]}.h_arrivee", $e->errors());
+            $this->assertArrayHasKey("sites.{$this->stops[1]}.h_depart", $e->errors());
+        }
+    }
+
+    public function test_a_tour_over_eight_hours_raises_an_alert(): void
+    {
+        $this->entry(['km_depart' => 50000, 'km_arrivee' => 50060, 'heure_depart' => '06:00', 'heure_arrivee' => '15:00', 'sites' => []]);
+
+        $alerts = \App\Domain\Fleet\AlertCenter::all([$this->vehicle->district_id])->where('type', 'sortie_duree');
+
+        $this->assertCount(1, $alerts);
+        $this->assertStringContainsString('9h00', $alerts->first()['message']);
+        $this->assertStringContainsString('⚠', \App\Filament\Pages\SaisieTournee::dureeMessage('06:00', '15:00', []));
+        $this->assertStringNotContainsString('⚠', \App\Filament\Pages\SaisieTournee::dureeMessage('07:30', '15:00', [['h_arrivee' => '09:00', 'h_depart' => '09:30']]));
     }
 
     public function test_arrival_hour_cannot_precede_departure_hour(): void
@@ -107,6 +138,10 @@ class CarnetDeBordTest extends TestCase
         $this->assertSame(['CSR A', 'CSU B', 50020, 50040, 20], [$rows[1]['lieu_depart'], $rows[1]['lieu_arrivee'], $rows[1]['km_depart'], $rows[1]['km_arrivee'], $rows[1]['distance']]);
         $this->assertSame(['CSU B', 'MEAGUI', 50040, 50060, 20], [$rows[2]['lieu_depart'], $rows[2]['lieu_arrivee'], $rows[2]['km_depart'], $rows[2]['km_arrivee'], $rows[2]['distance']]);
         $this->assertSame('07:30', $rows[0]['heure_depart']);
+        $this->assertSame('09:00', $rows[0]['heure_arrivee']);   // arrivée au premier site
+        $this->assertSame('09:40', $rows[1]['heure_depart']);    // départ du premier site
+        $this->assertSame('11:15', $rows[1]['heure_arrivee']);
+        $this->assertSame('12:00', $rows[2]['heure_depart']);
         $this->assertSame('15:45', $rows[2]['heure_arrivee']);
         $this->assertSame(60, $data['totals']['distance']);
     }
