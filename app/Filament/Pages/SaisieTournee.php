@@ -183,7 +183,7 @@ class SaisieTournee extends Page
                 Repeater::make('sites')->label('')->addable(false)->deletable(false)->reorderable(false)->columns(['default' => 1, 'lg' => 3, '2xl' => 8])->schema([
                     Hidden::make('id'),
                     TextInput::make('nom')->label('Site')->disabled()->dehydrated(false)->columnSpan(['default' => 1, '2xl' => 2]),
-                    Select::make('statut')->label('Statut')->options(TourEntry::STATUTS)->default('planifie')->native(false)->live()->required(),
+                    Select::make('statut')->label('Statut')->options(TourEntry::STATUTS)->default('planifie')->native(false)->live()->required()->columnSpan(['default' => 1, '2xl' => 2]),
                     TextInput::make('km')->label('Compteur')->numeric()->integer()->minValue(0)->suffix('km')
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                     TimePicker::make('h_arrivee')->label('Arrivée sur le site')->seconds(false)
