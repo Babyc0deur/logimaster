@@ -55,8 +55,8 @@ class CircuitEnrichisTest extends TestCase
         $c = $this->circuit(['version' => null]);   // aucune des nouvelles informations n'est obligatoire
 
         $this->assertSame('existant', $c->fresh()->version);
-        $this->assertFalse($c->urgence);
-        $this->assertNull($c->temps_estime_min);
+        $this->assertFalse($c->fresh()->urgence);
+        $this->assertNull($c->fresh()->temps_estime_min);
     }
 
     public function test_total_time_is_kept_when_no_part_is_given(): void
