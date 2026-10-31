@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sorties\Tables;
 
+use App\Filament\Pages\SaisieTournee;
 use App\Models\SortieVehicule;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -26,14 +27,22 @@ class SortiesTable
             ->defaultSort('date_sortie', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query
                 ->withSum(['ravitaillements as carburant_sum' => fn ($q) => $q], DB::raw('litres * prix_unitaire'))
-                ->withSum('expenses as autres_sum', 'montant'))
+                ->withSum('expenses as autres_sum', 'montant')
+                ->with('chronogramme.livraisons:id,chronogramme_id,statut'))
             ->columns([
                 TextColumn::make('date_sortie')->label('Date')->date('d/m/Y')->sortable(),
                 TextColumn::make('vehicle.immatriculation')->label('Véhicule')->searchable(),
                 TextColumn::make('driver.nom_complet')->label('Chauffeur')->searchable()->placeholder('—'),
+                TextColumn::make('circuit.nom')->label('Circuit')->placeholder('—')->toggleable(),
                 TextColumn::make('motif')->badge()->formatStateUsing(fn ($state) => SortieVehicule::MOTIFS[$state] ?? $state),
                 TextColumn::make('distance')->label('Distance')->suffix(' km')->placeholder('—')
                     ->state(fn (SortieVehicule $r) => $r->distance),
+                TextColumn::make('sites')->label('Sites livrés')->placeholder('—')
+                    ->state(function (SortieVehicule $r) {
+                        $l = $r->chronogramme?->livraisons;
+
+                        return $l && $l->isNotEmpty() ? $l->whereIn('statut', ['livre', 'transit'])->count().' / '.$l->count() : null;
+                    }),
                 TextColumn::make('carburant_sum')->label('Coût carburant')->money('XOF')->placeholder('0'),
                 TextColumn::make('cout_total')->label('Coût total')->money('XOF')
                     ->state(fn (SortieVehicule $r) => (float) $r->carburant_sum + (float) $r->autres_sum),
@@ -55,6 +64,9 @@ class SortiesTable
                         ->when($data['au'] ?? null, fn ($q, $v) => $q->whereDate('date_sortie', '<=', $v))),
             ])
             ->recordActions([
+                Action::make('tournee')->label('Saisir la tournée')->icon('heroicon-o-pencil-square')->color('primary')
+                    ->visible(fn (SortieVehicule $r) => $r->chronogramme !== null && $r->statut !== 'validee' && auth()->user()->can('update_chronogrammes'))
+                    ->url(fn (SortieVehicule $r) => SaisieTournee::getUrl(['plan' => $r->chronogramme->id])),
                 Action::make('compteur')->label('Compteur')->icon('heroicon-o-camera')->color('gray')
                     ->visible(fn (SortieVehicule $r) => \App\Support\PrivatePhoto::exists($r->photo_km_depart) || \App\Support\PrivatePhoto::exists($r->photo_km_arrivee))
                     ->modalHeading(fn (SortieVehicule $r) => 'Photos du compteur — '.($r->vehicle?->immatriculation ?? 'véhicule'))

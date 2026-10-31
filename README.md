@@ -55,7 +55,7 @@ du périmètre de l'utilisateur.
   import/export, API) ; c'est une information : au planning, l'utilisateur choisit librement le circuit et la date
   (un simple rappel s'affiche si la saison du circuit ne correspond pas à la date). Mois secs réglables : `LOGIMASTER_DRY_SEASON_MONTHS` (défaut `11,12,1,2,3`). **Suivi des livraisons** (un seul menu) : vue circuit — chaque sortie du jour se lit comme une ligne d'étapes (départ puis sites, avec statut, distances, retards, raisons, indicateurs et actions rapides livrée / non livrée) ; vue tableau (bouton « Vue tableau ») : statut par site (planifiée / livrée / non livrée),
   date, lieu (site ou transit), raison ; clôturer une sortie marque les sites livrés. API : `/api/livraisons`.
-- **Saisie d'une tournée** (menu, sous le suivi des livraisons ; lien « Saisir toute la tournée » sur chaque circuit du suivi) :
+- **Saisie d'une tournée** (depuis « Sorties véhicules » : bouton « Saisir une tournée » ou action sur chaque ligne ; lien « Saisir toute la tournée » sur chaque circuit du suivi) :
   une seule page pour recopier le carnet de bord d'une sortie. On y renseigne le compteur de départ, le statut et le kilométrage de
   chaque site (livré, en transit, non livré avec sa raison), le compteur d'arrivée (qui termine la sortie), un plein de carburant
   (prix du véhicule prérempli, confirmation s'il est modifié) et des autres frais. Règles de contrôle : le
@@ -95,7 +95,7 @@ du périmètre de l'utilisateur.
 
 - `/` : page de présentation (papier / encre / orange) : fonctionnement, **cartographie**, les 8 indicateurs, questions, avec l'accès à
   l'administration (`/admin`). Il n'y a plus d'application mobile (`/m`, `/api/mobile`), ni notifications push, ni mode tunnel, ni
-  comptes de convoyeurs : tout se saisit dans l'administration (menu, ou page « Saisie d'une tournée »). Les chefs de mission et
+  comptes de convoyeurs : tout se saisit dans l'administration (menu « Sorties véhicules », ou page « Saisie d'une tournée »). Les chefs de mission et
   passagers restent dans *Personnel* comme équipage d'une sortie, sans compte.
 - **Photo de la facture de carburant** : dans *Carburant* (liste des pleins), champ « Facture » (PDF, JPEG ou PNG, 10 Mo max),
   enregistrée sur le disque privé (`storage/app/private/factures`). Au bureau : « Voir la facture » (ou « Télécharger la facture »).

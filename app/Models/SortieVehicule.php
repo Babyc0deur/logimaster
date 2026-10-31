@@ -45,6 +45,12 @@ class SortieVehicule extends Model
         return $this->belongsTo(Driver::class);
     }
 
+    /** Sortie planifiée au chronogramme dont celle-ci est la réalisation (porte les sites livrés). */
+    public function chronogramme()
+    {
+        return $this->hasOne(Chronogramme::class, 'sortie_id');
+    }
+
     public function circuit()
     {
         return $this->belongsTo(Circuit::class);

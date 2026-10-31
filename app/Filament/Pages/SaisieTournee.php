@@ -38,7 +38,7 @@ class SaisieTournee extends Page
 
     protected static ?string $navigationLabel = "Saisie d'une tournée";
 
-    protected static ?int $navigationSort = 6;
+    protected static bool $shouldRegisterNavigation = false;   // accessible depuis « Sorties véhicules » et le suivi des livraisons
 
     protected static ?string $title = "Saisie d'une tournée";
 

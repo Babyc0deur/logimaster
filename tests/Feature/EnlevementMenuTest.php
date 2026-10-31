@@ -53,7 +53,7 @@ class EnlevementMenuTest extends TestCase
 
     public function test_the_menu_order_follows_the_requested_sequence(): void
     {
-        $order = [SuiviCircuits::class, SaisieTournee::class, EnlevementResource::class, ExpenseResource::class, VidangeResource::class, ImmobilisationResource::class,
+        $order = [SuiviCircuits::class, EnlevementResource::class, ExpenseResource::class, VidangeResource::class, ImmobilisationResource::class,
             SuiviSaisie::class, VehicleResource::class, MutualisationResource::class, Cartographie::class];
         $sorts = array_map(fn ($c) => $c::getNavigationSort(), $order);
 
@@ -74,7 +74,7 @@ class EnlevementMenuTest extends TestCase
         preg_match_all('/class="fi-sidebar-(?:item|group)-label[^"]*"[^>]*>\s*([^<]+?)\s*</u', $html, $m);
         $labels = array_map(fn ($l) => html_entity_decode(trim($l)), $m[1]);
 
-        $expected = ['Tableau de bord', 'Chronogramme', 'Circuits', 'Sorties Véhicules', 'Suivi des livraisons', "Saisie d'une tournée", 'Enlèvement', 'Autres frais',
+        $expected = ['Tableau de bord', 'Chronogramme', 'Circuits', 'Sorties Véhicules', 'Suivi des livraisons', 'Enlèvement', 'Autres frais',
             'Vidanges', 'Immobilisations', 'Cartographie', 'Véhicules', 'Mutualisation'];
         $found = array_values(array_filter($labels, fn ($l) => in_array($l, $expected, true)));
 
