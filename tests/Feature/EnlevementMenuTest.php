@@ -70,14 +70,17 @@ class EnlevementMenuTest extends TestCase
         $labels = array_map(fn ($l) => html_entity_decode(trim($l)), $m[1]);
         $at = fn (string $label) => array_search($label, $labels, true);
 
-        foreach (['Autres frais', 'Enlèvement', 'Cartographie', 'Véhicules', 'Mutualisation', 'Carburant'] as $label) {
+        foreach (['Autres frais', 'Enlèvement', 'Cartographie', 'Véhicules', 'Mutualisation', 'Vidanges', 'Immobilisations', 'Carburant'] as $label) {
             $this->assertNotFalse($at($label), "« {$label} » absent du menu : ".implode(' | ', $labels));
         }
         $this->assertLessThan($at('Enlèvement'), $at('Autres frais'));
         $this->assertLessThan($at('Cartographie'), $at('Enlèvement'));
         $this->assertLessThan($at('Véhicules'), $at('Cartographie'));
         $this->assertLessThan($at('Mutualisation'), $at('Véhicules'));
-        $this->assertLessThan($at('Carburant'), $at('Mutualisation'));   // le menu principal passe avant les groupes
+        $this->assertLessThan($at('Vidanges'), $at('Mutualisation'));
+        $this->assertLessThan($at('Immobilisations'), $at('Vidanges'));
+        $this->assertLessThan($at('Carburant'), $at('Immobilisations'));   // le menu principal passe avant les groupes
+        $this->assertNotContains('Vidange', $labels);                        // plus de groupe « Vidange »
     }
 
     public function test_a_pickup_is_an_expense_of_the_right_type_for_the_chosen_espc(): void

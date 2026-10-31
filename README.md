@@ -42,7 +42,7 @@ du périmètre de l'utilisateur.
   statuts Planifiée → En cours → Terminée → Validée, validation en masse, duplication.
 - **Carburant** (menu « Carburant » : tableau de bord, liste des pleins, analyse) : pleins avec facture, validation, détection d'anomalies, analyse réel vs théorique,
   prix du carburant avec historique, seuils d'alerte.
-- **Vidange** (groupe du menu : vidanges, immobilisations) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
+- **Vidanges** et **Immobilisations** (menu principal, après la mutualisation) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
   alertes 🔴/🟠/🟢 (tableau de bord), notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
 - **Indicateurs DDKM** : **8 indicateurs** sur deux lignes (coût global, utilisation des véhicules, taux d'immobilisation, respect du
   chronogramme, utilisation rationnelle du carburant, carburant par motif, respect des circuits, distance totale ; la livraison

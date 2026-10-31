@@ -18,7 +18,7 @@ class Cartographie extends Page
 
     protected static ?string $navigationLabel = 'Suivi en temps réel';
 
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 14;
 
     protected static ?string $title = 'Suivi en temps réel';
 

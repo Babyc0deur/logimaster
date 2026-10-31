@@ -18,8 +18,8 @@ class ImmobilisationResource extends Resource
     protected static ?string $tenantOwnershipRelationshipName = 'district';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrench;
     protected static ?string $navigationLabel = 'Immobilisations';
-    protected static string|\UnitEnum|null $navigationGroup = 'Vidange';
-    protected static ?int $navigationSort = 3;
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après les vidanges
+    protected static ?int $navigationSort = 13;
     protected static ?string $modelLabel = 'immobilisation';
     protected static ?string $pluralModelLabel = 'Immobilisations';
 

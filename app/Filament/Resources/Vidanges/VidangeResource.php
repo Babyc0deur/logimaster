@@ -18,8 +18,8 @@ class VidangeResource extends Resource
     protected static ?string $tenantOwnershipRelationshipName = 'district';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
     protected static ?string $navigationLabel = 'Vidanges';
-    protected static string|\UnitEnum|null $navigationGroup = 'Vidange';
-    protected static ?int $navigationSort = 2;
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après la mutualisation
+    protected static ?int $navigationSort = 12;
     protected static ?string $modelLabel = 'vidange';
     protected static ?string $pluralModelLabel = 'Vidanges';
 
