@@ -32,6 +32,7 @@ class Circuit extends Model
     {
         // Le temps estimé suit la décomposition (aller + retour + dépôt + coaching) dès qu'une composante est saisie.
         static::saving(function (Circuit $c) {
+            $c->version ??= 'existant';   // champ facultatif dans les formulaires
             $parts = array_filter([$c->temps_aller_min, $c->temps_retour_min, $c->temps_depot_min, $c->temps_coaching_min], fn ($v) => $v !== null && $v !== '');
             if ($parts) {
                 $c->temps_estime_min = (int) array_sum($parts);

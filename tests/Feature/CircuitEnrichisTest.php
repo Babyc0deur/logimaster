@@ -50,6 +50,15 @@ class CircuitEnrichisTest extends TestCase
         $this->assertFalse($c->depasseDureeMax());
     }
 
+    public function test_new_fields_are_optional(): void
+    {
+        $c = $this->circuit(['version' => null]);   // aucune des nouvelles informations n'est obligatoire
+
+        $this->assertSame('existant', $c->fresh()->version);
+        $this->assertFalse($c->urgence);
+        $this->assertNull($c->temps_estime_min);
+    }
+
     public function test_total_time_is_kept_when_no_part_is_given(): void
     {
         $this->assertSame(360, $this->circuit(['temps_estime_min' => 360])->temps_estime_min);

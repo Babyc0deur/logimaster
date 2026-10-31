@@ -27,7 +27,7 @@ class CircuitForm
                 Select::make('frequence')->label('Fréquence')->options(self::FREQUENCES),
                 Select::make('saison')->label('Saison')->options(\App\Models\Circuit::SAISONS)->default('toute_annee')->required()
                     ->helperText("Un circuit de saison sèche (ou pluvieuse) n'est proposé au planning que pour les dates de cette saison."),
-                Select::make('version')->label('Version')->options(\App\Models\Circuit::VERSIONS)->default('existant')->required()
+                Select::make('version')->label('Version')->options(\App\Models\Circuit::VERSIONS)->default('existant')
                     ->helperText('« Optimisé » : circuit révisé après analyse (ECO).'),
                 Toggle::make('urgence')->label("Circuit d'urgence")->inline(false),
                 TextInput::make('distance_totale')->label('Distance totale')->numeric()->minValue(0)->suffix('km')
