@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3efe6">
-    <meta name="description" content="Logimaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application mobile pour les agents du bureau.">
+    <meta name="description" content="Logimaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Tableau de bord et indicateurs DDKM.">
     <title>Logimaster — Flotte et livraisons des districts sanitaires</title>
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <link rel="icon" type="image/svg+xml" href="{{ \App\Support\Brand::logo() }}">
@@ -121,13 +121,6 @@
         .field li { break-inside:avoid; padding:0 0 18px; }
         .field li b { display:block; font-weight:600; margin-bottom:2px; }
         .field li span { font-size:.93rem; color:var(--ink-2); }
-        .qrcard { border:1px solid var(--ink); background:var(--card); padding:22px; }
-        .qrcard .qr { background:#fff; border:1px solid var(--rule); padding:12px; width:200px; }
-        .qrcard .qr svg { width:100%; height:auto; display:block; }
-        .qrcard h4 { font:600 1.05rem/1.3 var(--sans); margin:18px 0 6px; }
-        .qrcard p { font-size:.88rem; color:var(--ink-2); margin:0 0 10px; }
-        .qrcard .url { font:500 12.5px/1.4 var(--mono); word-break:break-all; display:block; margin-bottom:16px; color:var(--signal); }
-        .qrcard .cta { gap:8px; }
 
         .map-legend { display:grid; grid-template-columns:repeat(3, 1fr); margin-top:28px; border-top:1px solid var(--rule); }
         .map-legend div { padding:16px 18px 0 0; }
@@ -189,9 +182,7 @@
             <a class="l" href="#fonctionnement">Fonctionnement</a>
             <a class="l" href="#saisie">Cartographie</a>
             <a class="l" href="#indicateurs">Indicateurs</a>
-            <a class="l" href="#terrain">Application terrain</a>
             @if ($adminOpen)<a class="btn line sm" href="/admin">Se connecter</a>@endif
-            <a class="btn dark sm" href="#installer">Installer l'application</a>
         </nav>
     </div>
 </header>
@@ -209,17 +200,16 @@
                 <h1 class="up" style="animation-delay:.05s">Chaque sortie de véhicule, suivie <em>du planning à l'indicateur.</em></h1>
             </div>
             <div class="up" style="animation-delay:.15s">
-                <p class="lead">Du chronogramme aux livraisons, en temps réel : le bureau planifie les circuits et enregistre chaque site, depuis l'ordinateur ou le téléphone, et les indicateurs DDKM du district se calculent seuls.</p>
+                <p class="lead">Du chronogramme aux livraisons, en temps réel : le bureau planifie les circuits et enregistre chaque site, et les indicateurs DDKM du district se calculent seuls.</p>
                 <div class="cta">
                     @if ($adminOpen)<a class="btn dark" href="/admin">Accéder à l'administration <span class="arr">→</span></a>@endif
-                    <a class="btn line" href="#installer">Application mobile</a>
                 </div>
             </div>
         </div>
         <div class="facts up" style="animation-delay:.25s">
             <div><b>{{ $stats['districts'] }}</b><span>districts sanitaires</span></div>
             <div><b>8</b><span>indicateurs DDKM par mois</span></div>
-            <div><b>Ordinateur et mobile</b><span>la même saisie, au bureau ou en déplacement</span></div>
+            <div><b>Une seule saisie</b><span>jamais recopiée d'un classeur à l'autre</span></div>
         </div>
         <figure class="up" style="animation-delay:.35s">
             <div class="shot">
@@ -236,7 +226,7 @@
         <div class="sh"><span class="mono">01 — Fonctionnement</span><div><h2>Une information saisie une seule fois</h2><p>La sortie planifiée au bureau est celle que l'on suit site par site, puis celle que les indicateurs comptent. Personne ne recopie un classeur.</p></div></div>
         <ol class="steps">
             <li><span class="n">1</span><h3>Le bureau planifie</h3><p>Sorties du mois au chronogramme, véhicule, chauffeur et équipe affectés. Le superviseur valide : le planning est verrouillé.</p><span class="mono who">Gestionnaire · superviseur</span></li>
-            <li><span class="n">2</span><h3>La sortie est exécutée</h3><p>À la date prévue, le circuit et ses sites à livrer s'ouvrent au bureau ou sur l'application mobile.</p><span class="mono who">Gestionnaire du district</span></li>
+            <li><span class="n">2</span><h3>La sortie est exécutée</h3><p>À la date prévue, le circuit et ses sites à livrer s'ouvrent dans le suivi des livraisons.</p><span class="mono who">Gestionnaire du district</span></li>
             <li><span class="n">3</span><h3>Le circuit est renseigné</h3><p>Site par site : livré, en transit ou non livré avec la raison. Carburant, kilométrage et photo de la facture.</p><span class="mono who">Bureau du district</span></li>
             <li><span class="n">4</span><h3>Le district est suivi</h3><p>Suivi des livraisons, indicateurs, rapports PDF et Excel, alertes de vidange et d'immobilisation.</p><span class="mono who">District · région · national</span></li>
         </ol>
@@ -284,56 +274,11 @@
     </div>
 </section>
 
-<section id="terrain">
-    <div class="wrap">
-        <div class="sh"><span class="mono">04 — Application terrain</span><div><h2>Pour les agents du bureau, sur leur téléphone</h2><p>Une application web qui s'installe depuis le navigateur, sans magasin d'applications, sur Android comme sur iPhone. On s'y connecte avec son compte Logimaster.</p></div></div>
-        <div class="field">
-            <ul>
-                <li><b>Les sorties validées</b><span>Le planning du district choisi, du jour et des jours suivants, avec l'équipe et le circuit.</span></li>
-                <li><b>Un geste par site</b><span>Livré, en transit ou non livré avec la raison, avec le kilométrage au compteur.</span></li>
-                <li><b>Carburant</b><span>Litres, station et photo de la facture, rattachés à la sortie.</span></li>
-                <li><b>Sans réseau</b><span>Les actions restent sur le téléphone et partent au retour du réseau, avec leur heure réelle.</span></li>
-                <li><b>Frais et véhicules</b><span>Autres frais de la sortie, disponibilité des véhicules, vidanges et échéances.</span></li>
-                <li><b>Votre compte</b><span>Adresse e-mail et mot de passe de l'administration ; un administrateur national choisit le district à afficher.</span></li>
-            </ul>
-            <div class="qrcard" id="installer">
-                <div class="qr">{!! $qr !!}</div>
-                <h4>Installer l'application</h4>
-                <p>Scanner le code avec l'appareil photo. Android : « Installer l'application ». iPhone : Safari, Partager, « Sur l'écran d'accueil ».</p>
-                <span class="url">{{ $url }}</span>
-                <div class="cta">
-                    <a class="btn dark sm" href="/m">Ouvrir l'application</a>
-                    <a class="btn line sm" href="/m/installer">Affiche à imprimer</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="cartographie">
-    <div class="wrap">
-        <div class="sh"><span class="mono">05 — Suivi en temps réel</span><div><h2>Le district, sa région, ses véhicules et leurs circuits</h2><p>Une carte OpenStreetMap qui suit le district choisi : la limite de sa région, le district lui-même, et chaque véhicule sur son circuit, site par site, avec son avancement et sa prochaine étape.</p></div></div>
-        <figure>
-            <div class="shot">
-                <div class="cap"><span>Suivi en temps réel · district de Méagui</span><span>Simulation de la journée</span></div>
-                <img src="/landing/cartographie-zoom.jpg" width="1584" height="975" loading="lazy" alt="Suivi en temps réel du district de Méagui : tracés routiers des circuits, position de chaque véhicule et liste des véhicules avec leur avancement.">
-            </div>
-        </figure>
-        <div class="map-legend">
-            <div><b>Un véhicule, une couleur</b><span>Le tracé de son circuit, ses sites (pleins une fois livrés) et son étiquette d'immatriculation.</span></div>
-            <div><b>Le district choisi</b><span>La carte suit le sélecteur de district. Un clic sur un véhicule cadre son parcours et met son tracé en avant.</span></div>
-            <div><b>La journée en accéléré</b><span>Départ du chef-lieu, trajet, 10 minutes par site, retour au district ; vitesse ×30, ×60 ou ×180.</span></div>
-            <div><b>Le réseau routier réel</b><span>Fond OpenStreetMap et itinéraires calculés sur les routes ; positions GPS des centres de santé quand elles sont renseignées.</span></div>
-        </div>
-    </div>
-</section>
-
 <section id="questions">
     <div class="wrap">
-        <div class="sh"><span class="mono">06 — Questions</span><div><h2>Questions fréquentes</h2></div></div>
+        <div class="sh"><span class="mono">04 — Questions</span><div><h2>Questions fréquentes</h2></div></div>
         <div class="faq">
             <details open><summary>Comment obtient-on un accès ?</summary><p>L'administrateur crée le compte dans l'administration, avec le rôle voulu (gestionnaire de district, par exemple). La même adresse e-mail et le même mot de passe servent à l'administration et à l'application mobile.</p></details>
-            <details><summary>Et s'il n'y a pas de réseau ?</summary><p>Les livraisons, le carburant et les photos sont gardés sur le téléphone, puis envoyés au retour du réseau avec l'heure réelle de chaque action. Rien n'est perdu ni compté deux fois.</p></details>
             <details><summary>Qui voit quoi ?</summary><p>Chaque rôle a son périmètre : le gestionnaire son district, le responsable sa région, le niveau national l'ensemble. Chaque modification est journalisée.</p></details>
             <details><summary>Peut-on reprendre nos classeurs Excel ?</summary><p>Oui. L'import lit les classeurs Logimaster existants (sites, véhicules, circuits, activité) et harmonise les noms, marques, bailleurs et circuits.</p></details>
         </div>
@@ -345,7 +290,6 @@
         <h2>Ouvrir le tableau de bord de votre district</h2>
         <div class="cta">
             @if ($adminOpen)<a class="btn dark" href="/admin">Se connecter <span class="arr">→</span></a>@endif
-            <a class="btn line" href="/m">Application mobile</a>
         </div>
     </div>
 </div>
@@ -354,7 +298,7 @@
 <footer>
     <div class="wrap">
         <span>Logimaster · gestion de flotte et livraisons des districts sanitaires</span>
-        <span><a href="#fonctionnement">Fonctionnement</a><a href="/m">Application mobile</a><a href="/m/installer">Affiche d'installation</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
+        <span><a href="#fonctionnement">Fonctionnement</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
     </div>
 </footer>
 

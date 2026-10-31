@@ -7,29 +7,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('auth/login', [Api\AuthController::class, 'login'])->middleware('throttle:login');
 
-// Application mobile du bureau (PWA) : comptes de l'administration, jeton à capacité « mobile » uniquement
-Route::post('mobile/login', [Api\Mobile\MobileAuthController::class, 'login'])->middleware('throttle:login');
-Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWrites::class])->group(function () {
-    Route::middleware('mobile.access:allow-temporary-password')->group(function () {
-        Route::get('me', [Api\Mobile\MobileAuthController::class, 'me']);
-        Route::post('logout', [Api\Mobile\MobileAuthController::class, 'logout']);
-        Route::post('password', [Api\Mobile\MobileAuthController::class, 'changePassword']);
-    });
-    Route::middleware('mobile.access')->group(function () {
-        Route::get('sorties', [Api\Mobile\MobileController::class, 'sorties']);
-        Route::get('sorties/{id}', [Api\Mobile\MobileController::class, 'sortie']);
-        Route::post('sorties/{id}/start', [Api\Mobile\MobileController::class, 'start']);
-        Route::post('sorties/{id}/finish', [Api\Mobile\MobileController::class, 'finish']);
-        Route::post('sorties/{id}/ravitaillements', [Api\Mobile\MobileController::class, 'ravitaillement']);
-        Route::post('sorties/{id}/frais', [Api\Mobile\MobileController::class, 'frais']);
-        Route::post('livraisons/{id}', [Api\Mobile\MobileController::class, 'livraison']);
-        Route::get('planning', [Api\Mobile\FleetController::class, 'planning']);
-        Route::get('vehicules', [Api\Mobile\FleetController::class, 'vehicules']);
-        Route::get('notifications', [Api\Mobile\MobileController::class, 'notifications']);
-        Route::post('notifications/read', [Api\Mobile\MobileController::class, 'readNotifications']);
-    });
-});
-
 Route::middleware(['auth:sanctum', EnsureActiveUser::class, 'throttle:api', AuditApiWrites::class])->group(function () {
     Route::get('auth/me', [Api\AuthController::class, 'me']);
     Route::post('auth/logout', [Api\AuthController::class, 'logout']);

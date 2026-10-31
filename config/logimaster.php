@@ -33,12 +33,6 @@ return [
     ],
 
     /*
-    | Adresse que le téléphone ouvre pour installer l'application mobile (QR code). Doit être joignable depuis le téléphone
-    | et en HTTPS (installation de l'application). Défaut : APP_URL/m.
-    */
-    'mobile_url' => env('LOGIMASTER_MOBILE_URL'),
-
-    /*
     | Sauvegardes : base de données + photos (factures, compteurs, bons de livraison) dans une archive zip, envoyée chaque nuit
     | vers le disque « backups » (stockage externe S3) s'il est configuré, sinon dans storage/app/backups (même serveur : à éviter).
     */

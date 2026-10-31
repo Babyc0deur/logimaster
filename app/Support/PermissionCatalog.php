@@ -32,7 +32,6 @@ final class PermissionCatalog
         'organisation' => ['Organisation', 'PRES, régions, districts'],
         'users' => ['Utilisateurs', 'Comptes du bureau'],
         'administration' => ['Administration', 'Journal d\'audit, paramètres'],
-        'mobile' => ['Application mobile', 'Exécution des circuits sur téléphone (agents du bureau)'],
         'autres' => ['Autres', 'Permissions non classées'],
     ];
 
@@ -44,7 +43,6 @@ final class PermissionCatalog
         'manage_districts' => ['organisation', 'Gérer (créer, modifier)'],
         'view_audit_logs' => ['administration', 'Voir le journal d\'audit'],
         'manage_settings' => ['administration', 'Gérer les paramètres'],
-        'execute_circuits' => ['mobile', 'Exécuter les circuits (téléphone)'],
     ];
 
     private const ACTIONS = [

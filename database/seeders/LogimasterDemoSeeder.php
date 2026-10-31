@@ -139,7 +139,7 @@ class LogimasterDemoSeeder extends Seeder
         }
     }
 
-    /** Sortie validée du jour : de quoi essayer le parcours complet (avec le compte district@logimaster.test sur l'application mobile). */
+    /** Sortie validée du jour : de quoi essayer le parcours complet (suivi des livraisons, saisie d'une tournée). */
     private function seedMobile(District $district, $vehicles, Driver $driver, Circuit $circuit): void
     {
         $chef = Personnel::where('district_id', $district->id)->where('nom_complet', 'Koné Ibrahim')->first();

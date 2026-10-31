@@ -59,17 +59,17 @@ class SecurityHardeningTest extends TestCase
         $this->assertFalse(Validator::make(['password' => 'Logimaster2026'], $rule)->fails());
     }
 
-    public function test_failed_logins_are_recorded_for_api_and_mobile(): void
+    public function test_failed_logins_are_recorded_for_the_api(): void
     {
         $this->seed(LogimasterRoleSeeder::class);
         User::factory()->create(['email' => 'agent@exemple.org', 'is_active' => true]);
 
         $this->postJson('/api/auth/login', ['email' => 'agent@exemple.org', 'password' => 'mauvais'])->assertStatus(422);
-        $this->postJson('/api/mobile/login', ['email' => 'inconnu.agent@exemple.org', 'password' => 'mauvais'])->assertStatus(422);
+        $this->postJson('/api/auth/login', ['email' => 'inconnu.agent@exemple.org', 'password' => 'mauvais'])->assertStatus(422);
 
         $logs = AuditLog::where('action', 'connexion refusée')->get();
         $this->assertCount(2, $logs);
-        $this->assertSame(['api', 'mobile'], $logs->pluck('metadata.canal')->sort()->values()->all());
+        $this->assertSame(['api', 'api'], $logs->pluck('metadata.canal')->values()->all());
         $this->assertNotNull($logs->firstWhere('metadata.canal', 'api')->user_id);
     }
 

@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);   // en-têtes de sécurité HTTP (CSP, HSTS…)
         $middleware->alias([
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
-            'mobile.access' => \App\Http\Middleware\EnsureMobileAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

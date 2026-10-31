@@ -35,9 +35,7 @@ class LogimasterRoleSeeder extends Seeder
             'view_districts', 'manage_districts', 'view_audit_logs', 'manage_settings',
         ];
 
-        $mobile = ['execute_circuits'];
-
-        foreach ([...$operational, ...$reporting, ...$admin, ...$mobile] as $name) {
+        foreach ([...$operational, ...$reporting, ...$admin] as $name) {
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
 
@@ -51,7 +49,7 @@ class LogimasterRoleSeeder extends Seeder
 
         // Gestion complète de son district
         Role::firstOrCreate(['name' => User::ROLE_DISTRICT_MANAGER, 'guard_name' => 'web'])
-            ->syncPermissions([...$operational, ...$reporting, ...$mobile, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'validate_factures', 'pay_factures', 'view_reports', 'create_reports']);
+            ->syncPermissions([...$operational, ...$reporting, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'validate_factures', 'pay_factures', 'view_reports', 'create_reports']);
 
         // Lecture seule multi-district (bailleurs)
         Role::firstOrCreate(['name' => User::ROLE_SUPERVISEUR, 'guard_name' => 'web'])

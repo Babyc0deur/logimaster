@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\District;
 use Throwable;
 
-/** Page d'accueil publique : présentation, installation de l'application mobile (QR code) et accès à l'administration. */
+/** Page d'accueil publique : présentation et accès à l'administration. */
 class LandingController extends Controller
 {
     public function __invoke(\Illuminate\Http\Request $request)
@@ -17,8 +17,6 @@ class LandingController extends Controller
         }
 
         return view('landing', [
-            'url' => MobileAppController::appUrl(),
-            'qr' => MobileAppController::qrSvg(null, 200),
             'stats' => ['districts' => $districts ?: 113],
             'adminOpen' => true,
         ]);

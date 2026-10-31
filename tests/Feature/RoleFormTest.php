@@ -44,7 +44,7 @@ class RoleFormTest extends TestCase
         $this->assertSame($all->count(), $all->unique()->count());
         $this->assertSame(['Voir', 'Créer', 'Modifier', 'Supprimer'], array_values($groups['vehicles']['options']));
         $this->assertSame('Valider', $groups['chronogrammes']['options']['validate_chronogrammes']);
-        $this->assertArrayHasKey('execute_circuits', $groups['mobile']['options']);
+        $this->assertArrayNotHasKey('mobile', $groups);   // plus de permission pour l'application mobile
     }
 
     public function test_editing_a_role_keeps_and_saves_its_permissions_per_item(): void
