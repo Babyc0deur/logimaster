@@ -65,7 +65,7 @@ class FilamentPermissionsTest extends TestCase
     public function test_district_manager_works_on_operations_but_not_on_administration(): void
     {
         $this->as(User::ROLE_DISTRICT_MANAGER);
-        foreach (['/vehicles', '/vehicles/create', '/drivers/create', '/chronogrammes/create', '/personnels/create', '/expenses/create', '/carburant', '/calendrier-maintenance', ''] as $path) {
+        foreach (['/vehicles', '/vehicles/create', '/drivers/create', '/chronogrammes/create', '/personnels/create', '/expenses/create', '/carburant', ''] as $path) {
             $this->assertSame(200, $this->code($path), "district_manager → {$path}");
         }
         foreach (['/roles', '/users', '/audit-logs', '/seuils-alerte', '/fuel-prices', '/objectifs-indicateurs'] as $path) {

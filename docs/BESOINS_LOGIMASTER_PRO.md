@@ -64,7 +64,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 ### 3.5 Maintenance et vidange
 | Besoin | État | Remarque |
 |---|---|---|
-| Type d'entretien, dernier et prochain entretien (date, km) | ✔ | Vidanges, échéances, calendrier de maintenance |
+| Type d'entretien, dernier et prochain entretien (date, km) | ✔ | Vidanges, échéances |
 | Nature des réparations, pièces remplacées | ✖ | Pas de détail par pièce |
 | Coût, prestataire / garage | ◐ | Coût et prestataire sur les immobilisations ; à étendre aux autres interventions |
 | Historique des interventions | ✔ | Onglets du véhicule |

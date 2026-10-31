@@ -101,51 +101,11 @@ class MaintenancePlanner
         return $alerts->sortBy(fn ($a) => $a['level']->rank())->values();
     }
 
-    /**
-     * Événements du calendrier de maintenance entre deux dates.
-     *
-     * @param  array<int, string>|null  $districtIds
-     * @return Collection<int, array{date: string, type: string, label: string, level: AlertLevel}>
-     */
-    public function events(?array $districtIds, CarbonImmutable $from, CarbonImmutable $to): Collection
-    {
-        $events = collect();
-        $vehicles = Vehicle::query()->when($districtIds !== null, fn ($q) => $q->whereIn('district_id', $districtIds))->get();
-
-        foreach ($vehicles as $v) {
-            foreach (['date_ct' => 'Contrôle technique', 'date_assurance' => 'Assurance'] as $field => $label) {
-                if ($v->$field && $v->$field->between($from->startOfDay(), $to->endOfDay())) {
-                    $events->push($this->event($v->$field, $field, "{$label} — {$v->immatriculation}", AlertLevel::forDays((int) today()->diffInDays($v->$field, false))));
-                }
-            }
-            if ($v->km_vidange !== null) {
-                $date = $this->estimateDateForKm($v, $v->km_vidange);
-                if ($date && $date->between($from->startOfDay(), $to->endOfDay())) {
-                    $events->push($this->event($date, 'vidange', "Vidange estimée — {$v->immatriculation} ({$v->km_vidange} km)", AlertLevel::forKm($v->km_vidange - $v->km_actuel)));
-                }
-            }
-        }
-
-        $vidanges = \App\Models\Vidange::with('vehicle:id,immatriculation')
-            ->when($districtIds !== null, fn ($q) => $q->whereIn('district_id', $districtIds))
-            ->whereNotNull('prochaine_date')->whereBetween('prochaine_date', [$from->toDateString(), $to->toDateString()])->get();
-        foreach ($vidanges as $vd) {
-            $events->push($this->event($vd->prochaine_date, 'revision', "Maintenance planifiée — {$vd->vehicle?->immatriculation} ({$vd->type})", AlertLevel::forDays((int) today()->diffInDays($vd->prochaine_date, false))));
-        }
-
-        return $events->sortBy('date')->values();
-    }
-
     private function alert(string $type, AlertLevel $level, ?Vehicle $v, string $message): array
     {
         return [
             'type' => $type, 'level' => $level, 'district_id' => $v?->district_id, 'vehicle_id' => $v?->id,
             'message' => ($v ? "{$v->immatriculation} · " : '').$message,
         ];
-    }
-
-    private function event($date, string $type, string $label, AlertLevel $level): array
-    {
-        return ['date' => $date->format('Y-m-d'), 'type' => $type, 'label' => $label, 'level' => $level];
     }
 }

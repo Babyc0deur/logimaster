@@ -65,7 +65,6 @@ Route::middleware(['auth:sanctum', EnsureActiveUser::class, 'throttle:api', Audi
     Route::get('fuel/analysis', [Api\FleetInsightsController::class, 'fuelAnalysis']);
     Route::get('fuel-prices', [Api\FleetInsightsController::class, 'fuelPrices']);
     Route::post('fuel-prices', [Api\FleetInsightsController::class, 'storeFuelPrice']);
-    Route::get('maintenance/calendar', [Api\FleetInsightsController::class, 'maintenanceCalendar']);
     Route::get('settings', [Api\FleetInsightsController::class, 'settings']);
     Route::put('settings', [Api\FleetInsightsController::class, 'updateSettings']);
 

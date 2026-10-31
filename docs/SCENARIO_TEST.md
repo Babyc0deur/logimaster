@@ -26,7 +26,7 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 1. Ouvrir `/admin`. ✔ Écran de connexion Logimaster.
 2. Se connecter avec un mauvais mot de passe. ✔ Message d'erreur, pas d'accès ; l'échec est visible dans le journal d'audit.
 3. Se connecter avec `district@logimaster.test` / `password`. ✔ Tableau de bord du district ; menu limité à ce district.
-4. Vérifier le menu : ✔ groupes « Carburant » (tableau de bord, **Carburant**, analyse), « Vidange » (calendrier, vidanges, immobilisations), « Données », « Administration ».
+4. Vérifier le menu : ✔ groupes « Carburant » (tableau de bord, **Carburant**, analyse), « Vidange » (vidanges, immobilisations), « Données », « Administration ».
 5. Vérifier l'absence : ✔ aucun menu Finance, Budgets, Factures ni « Suivi en temps réel ».
 
 ## 3. Comptes du bureau

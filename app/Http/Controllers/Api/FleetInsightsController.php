@@ -10,7 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-/** Carburant (analyse, prix, seuils) et calendrier de maintenance. */
+/** Carburant (analyse, prix, seuils). */
 class FleetInsightsController extends ApiController
 {
     /** Analyse de consommation d'un mois : par véhicule, par motif, série 12 mois, projection. */
@@ -77,20 +77,5 @@ class FleetInsightsController extends ApiController
         }
 
         return $this->settings($request);
-    }
-
-    /** Événements de maintenance entre deux dates (défaut : mois courant) avec niveau d'alerte. */
-    public function maintenanceCalendar(Request $request, MaintenancePlanner $planner)
-    {
-        $this->requirePermission($request, 'view_vidanges');
-        $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date', 'after_or_equal:from']]);
-        $from = CarbonImmutable::parse($request->query('from', now()->startOfMonth()));
-        $to = CarbonImmutable::parse($request->query('to', $from->endOfMonth()));
-
-        return [
-            'from' => $from->toDateString(), 'to' => $to->toDateString(),
-            'events' => $planner->events($this->requestedDistrictIds($request), $from, $to)
-                ->map(fn ($e) => ['level' => $e['level']->value] + $e)->values(),
-        ];
     }
 }

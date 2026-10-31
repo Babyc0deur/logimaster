@@ -42,8 +42,8 @@ du périmètre de l'utilisateur.
   statuts Planifiée → En cours → Terminée → Validée, validation en masse, duplication.
 - **Carburant** (menu « Carburant » : tableau de bord, liste des pleins, analyse) : pleins avec facture, validation, détection d'anomalies, analyse réel vs théorique,
   prix du carburant avec historique, seuils d'alerte.
-- **Vidange** (groupe du menu : calendrier, vidanges, immobilisations) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
-  calendrier mensuel, alertes 🔴/🟠/🟢, notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
+- **Vidange** (groupe du menu : vidanges, immobilisations) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
+  alertes 🔴/🟠/🟢 (tableau de bord), notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
 - **Indicateurs DDKM** : **8 indicateurs** sur deux lignes (coût global, utilisation des véhicules, taux d'immobilisation, respect du
   chronogramme, utilisation rationnelle du carburant, carburant par motif, respect des circuits, distance totale ; la livraison
   ESPC n'est plus calculée). Snapshots (`php artisan indicators:compute`, planifié 01:00 + clôture mensuelle ; `indicators:backfill`
@@ -132,7 +132,7 @@ Filament mémorise en session les filtres déjà choisis : se reconnecter pour r
 ## Permissions
 
 Les ressources et pages Filament appliquent les mêmes permissions que l'API : une politique par modèle (`app/Policies`,
-adossée à `view_/create_/update_/delete_{module}`), les pages (tableau de bord, carburant, calendrier des vidanges…)
+adossée à `view_/create_/update_/delete_{module}`), les pages (tableau de bord, carburant, saisie d'une tournée…)
 exigent leur permission de consultation, et les rôles ne sont accessibles qu'au national. Un rôle en lecture seule
 (région, superviseur bailleur) ne voit ni les boutons ni les URL de création ou de modification.
 

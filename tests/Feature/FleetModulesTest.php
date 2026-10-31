@@ -127,7 +127,7 @@ class FleetModulesTest extends TestCase
         $this->postJson('/api/vidanges', ['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'date' => '2026-09-15', 'km' => 2100, 'type' => 'inconnu'])->assertStatus(422);
     }
 
-    public function test_immobilisation_duration_status_and_calendar_events(): void
+    public function test_immobilisation_duration_and_status(): void
     {
         $v = $this->vehicle(['immatriculation' => 'CAL1', 'date_ct' => '2026-09-30']); // J-15 → attention
         $closed = Immobilisation::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'date_debut' => '2026-09-01', 'date_fin' => '2026-09-05', 'motif' => 'carrosserie', 'statut' => 'terminee']);
@@ -136,8 +136,7 @@ class FleetModulesTest extends TestCase
         $this->assertSame(6, $open->duree_jours); // du 10 au 15 inclus
 
         $this->user(User::ROLE_DISTRICT_MANAGER, [$this->d1]);
-        $this->getJson('/api/maintenance/calendar?from=2026-09-01&to=2026-09-30')->assertOk()
-            ->assertJsonPath('events.0.type', 'date_ct')->assertJsonPath('events.0.level', 'attention');
+        $this->getJson('/api/maintenance/calendar?from=2026-09-01&to=2026-09-30')->assertNotFound();   // le calendrier de maintenance n'existe plus
         $this->patchJson("/api/immobilisations/{$open->id}", ['statut' => 'terminee', 'motif' => 'autre'])->assertOk();
         $this->patchJson("/api/immobilisations/{$open->id}", ['statut' => 'resolu'])->assertStatus(422);
     }
@@ -317,7 +316,7 @@ class FleetModulesTest extends TestCase
             '/sorties/sortie-vehicules', '/sorties/sortie-vehicules/create', "/sorties/sortie-vehicules/{$sortie->id}/edit",
             '/ravitaillements', '/ravitaillements/create', '/vidanges', '/vidanges/create',
             '/immobilisations', '/immobilisations/create', "/immobilisations/{$immo->id}/edit",
-            '/carburant', '/analyse-consommation', '/calendrier-maintenance', '/fuel-prices', '/seuils-alerte', '/expenses', '/roles', '/users',
+            '/carburant', '/analyse-consommation', '/fuel-prices', '/seuils-alerte', '/expenses', '/roles', '/users',
         ];
         foreach ($pages as $path) {
             $response = $this->get($t.$path);
