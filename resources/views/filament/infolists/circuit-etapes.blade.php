@@ -27,6 +27,7 @@
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                     <strong>{{ $r['nom'] }}</strong>
                     @if ($r['type'])<span style="font-size:.75rem;opacity:.65">{{ $r['type'] }}</span>@endif
+                    @if ($r['via'])<span style="font-size:.75rem;opacity:.75">livré via {{ $r['via'] }}</span>@endif
                     @if ($r['statut'] === 'inactif')<span style="font-size:.75rem;padding:2px 8px;border-radius:8px;background:rgba(156,163,175,.18);color:#6b7280">Inactif</span>@endif
                     @if (! $r['gps'])<span style="font-size:.75rem;opacity:.6">sans GPS</span>@endif
                     <span style="font-size:.78rem;opacity:.7;margin-left:auto">

@@ -26,6 +26,15 @@ class EspcController extends CrudController
             'telephone' => ['nullable', 'string', 'max:30'],
             'adresse' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:160'],
+            'distance_aller_retour_km' => ['nullable', 'numeric', 'min:0'],
+            'colis_mois' => ['nullable', 'integer', 'min:0'],
+            'poids_mois_kg' => ['nullable', 'numeric', 'min:0'],
+            'type_voie' => ['nullable', Rule::in(array_keys(\App\Models\Espc::TYPES_VOIE))],
+            'etat_voie' => ['nullable', Rule::in(array_keys(\App\Models\Espc::ETATS_VOIE))],
+            'etat_voie_pluie' => ['nullable', Rule::in(array_keys(\App\Models\Espc::ETATS_VOIE))],
+            'mois_mauvais' => ['nullable', 'array'],
+            'mois_mauvais.*' => ['integer', 'between:1,12'],
+            'point_transit' => ['sometimes', 'boolean'],
             'statut' => ['sometimes', Rule::in(['actif', 'inactif'])],
         ];
     }

@@ -12,14 +12,37 @@ class Circuit extends Model
 
     public const SAISONS = ['toute_annee' => "Toute l'année", 'seche' => 'Saison sèche', 'pluvieuse' => 'Saison pluvieuse'];
 
+    public const VERSIONS = ['existant' => 'Existant', 'optimise' => 'Optimisé'];
+
+    /** Durée maximale d'une tournée (minutes) : au-delà, le circuit déclenche une alerte. */
+    public const DUREE_MAX_MIN = 480;
+
     protected $fillable = [
         'district_id', 'nom', 'distance_totale', 'temps_estime_min', 'frequence', 'saison', 'statut',
         'point_depart', 'depart_lat', 'depart_lon',
+        'temps_aller_min', 'temps_retour_min', 'temps_depot_min', 'temps_coaching_min', 'version', 'urgence',
     ];
 
     protected function casts(): array
     {
-        return ['distance_totale' => 'decimal:2', 'depart_lat' => 'float', 'depart_lon' => 'float'];
+        return ['distance_totale' => 'decimal:2', 'depart_lat' => 'float', 'depart_lon' => 'float', 'urgence' => 'boolean'];
+    }
+
+    protected static function booted(): void
+    {
+        // Le temps estimé suit la décomposition (aller + retour + dépôt + coaching) dès qu'une composante est saisie.
+        static::saving(function (Circuit $c) {
+            $parts = array_filter([$c->temps_aller_min, $c->temps_retour_min, $c->temps_depot_min, $c->temps_coaching_min], fn ($v) => $v !== null && $v !== '');
+            if ($parts) {
+                $c->temps_estime_min = (int) array_sum($parts);
+            }
+        });
+    }
+
+    /** Tournée de plus de 8 heures. */
+    public function depasseDureeMax(): bool
+    {
+        return (int) $this->temps_estime_min > self::DUREE_MAX_MIN;
     }
 
     /** Saison (« seche » ou « pluvieuse ») d'une date : mois secs réglés par LOGIMASTER_DRY_SEASON_MONTHS. */
@@ -44,7 +67,7 @@ class Circuit extends Model
     /** Étapes dans l'ordre de passage ; distance_km = distance depuis l'étape précédente. */
     public function espc()
     {
-        return $this->belongsToMany(Espc::class, 'circuit_espc')->withPivot(['ordre', 'distance_km'])->orderBy('circuit_espc.ordre');
+        return $this->belongsToMany(Espc::class, 'circuit_espc')->withPivot(['ordre', 'distance_km', 'livre_via_espc_id'])->orderBy('circuit_espc.ordre');
     }
 
     public function sorties()
@@ -72,7 +95,7 @@ class Circuit extends Model
             $estimated = $declared === null && $prev && $e->hasGps() ? \App\Support\Geo::roadEstimateKm($prev[0], $prev[1], $e->gps_lat, $e->gps_lon) : null;
             $cumul += $declared ?? $estimated ?? 0;
             $rows[] = [
-                'ordre' => $i + 1, 'nom' => $e->nom, 'type' => $e->type, 'distance' => $declared, 'estimee' => $estimated,
+                'ordre' => $i + 1, 'nom' => $e->nom, 'type' => $e->type, 'via' => $e->pivot->livre_via_espc_id ? $this->espc->firstWhere('id', $e->pivot->livre_via_espc_id)?->nom : null, 'distance' => $declared, 'estimee' => $estimated,
                 'cumul' => round($cumul, 1), 'gps' => $e->hasGps(), 'statut' => $e->statut,
             ];
             $prev = $e->hasGps() ? [$e->gps_lat, $e->gps_lon] : $prev;

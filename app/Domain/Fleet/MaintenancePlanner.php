@@ -98,6 +98,14 @@ class MaintenancePlanner
             }
         }
 
+        // Circuits actifs dont la tournée dépasse 8 heures
+        foreach ($scope(\App\Models\Circuit::query())->where('statut', 'actif')->where('temps_estime_min', '>', \App\Models\Circuit::DUREE_MAX_MIN)->get() as $c) {
+            $alerts->push([
+                'type' => 'circuit_duree', 'level' => AlertLevel::Attention, 'district_id' => $c->district_id, 'vehicle_id' => null, 'circuit_id' => $c->id,
+                'message' => sprintf('Circuit « %s » : tournée de %dh%02d, au-delà des 8 heures maximum', $c->nom, intdiv($c->temps_estime_min, 60), $c->temps_estime_min % 60),
+            ]);
+        }
+
         return $alerts->sortBy(fn ($a) => $a['level']->rank())->values();
     }
 

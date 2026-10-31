@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -28,7 +29,12 @@ class CircuitsTable
                 TextColumn::make('espc_count')->label("Nb d'ESPC")->sortable(),
                 TextColumn::make('distance_totale')->label('Distance')->suffix(' km')->numeric(1)->sortable()->placeholder('—'),
                 TextColumn::make('temps_estime_min')->label('Temps estimé')
-                    ->formatStateUsing(fn ($state) => $state ? sprintf('%dh%02d', intdiv((int) $state, 60), (int) $state % 60) : '—')->sortable(),
+                    ->formatStateUsing(fn ($state) => $state ? sprintf('%dh%02d', intdiv((int) $state, 60), (int) $state % 60) : '—')->sortable()
+                    ->color(fn ($state) => (int) $state > Circuit::DUREE_MAX_MIN ? 'danger' : null)
+                    ->tooltip(fn ($state) => (int) $state > Circuit::DUREE_MAX_MIN ? 'Plus de 8 heures' : null),
+                TextColumn::make('version')->label('Version')->badge()->formatStateUsing(fn ($state) => Circuit::VERSIONS[$state] ?? $state)
+                    ->color(fn ($state) => $state === 'optimise' ? 'success' : 'gray')->toggleable(),
+                TextColumn::make('urgence')->label('Urgence')->badge()->formatStateUsing(fn ($state) => $state ? 'Urgence' : '—')->color(fn ($state) => $state ? 'danger' : 'gray')->toggleable(),
                 TextColumn::make('frequence')->label('Fréquence')->badge()->formatStateUsing(fn ($state) => CircuitForm::FREQUENCES[$state] ?? $state)->placeholder('—'),
                 TextColumn::make('saison')->label('Saison')->badge()
                     ->formatStateUsing(fn ($state) => Circuit::SAISONS[$state] ?? $state)
@@ -46,6 +52,8 @@ class CircuitsTable
                 SelectFilter::make('statut')->options(['actif' => 'Actif', 'inactif' => 'Inactif']),
                 SelectFilter::make('frequence')->options(CircuitForm::FREQUENCES),
                 SelectFilter::make('saison')->options(Circuit::SAISONS),
+                SelectFilter::make('version')->options(Circuit::VERSIONS),
+                TernaryFilter::make('urgence')->label('Urgence'),
             ])
             ->recordActions([ViewAction::make()->label('Fiche'), EditAction::make()])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);

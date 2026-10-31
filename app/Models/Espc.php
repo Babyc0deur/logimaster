@@ -11,11 +11,18 @@ class Espc extends Model
 
     protected $table = 'espc';
 
-    protected $fillable = ['district_id', 'nom', 'type', 'gps_lat', 'gps_lon', 'responsable', 'telephone', 'statut', 'adresse', 'email', 'gps_source', 'gps_releve_at'];
+    protected $fillable = ['district_id', 'nom', 'type', 'gps_lat', 'gps_lon', 'responsable', 'telephone', 'statut', 'adresse', 'email', 'gps_source', 'gps_releve_at',
+        'distance_aller_retour_km', 'colis_mois', 'poids_mois_kg', 'type_voie', 'etat_voie', 'etat_voie_pluie', 'mois_mauvais', 'point_transit'];
+
+    public const TYPES_VOIE = ['route' => 'Route', 'piste' => 'Piste', 'fleuve' => 'Fleuve', 'piste_fleuve' => 'Piste et fleuve'];
+
+    public const ETATS_VOIE = ['bon' => 'Bon', 'moyen' => 'Moyen', 'mauvais' => 'Mauvais', 'impraticable' => 'Impraticable'];
+
+    public const MOIS = [1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août', 9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'];
 
     protected function casts(): array
     {
-        return ['gps_lat' => 'float', 'gps_lon' => 'float', 'gps_releve_at' => 'datetime'];
+        return ['gps_lat' => 'float', 'gps_lon' => 'float', 'gps_releve_at' => 'datetime', 'mois_mauvais' => 'array', 'point_transit' => 'boolean'];
     }
 
     public function district()
@@ -25,7 +32,7 @@ class Espc extends Model
 
     public function circuits()
     {
-        return $this->belongsToMany(Circuit::class, 'circuit_espc')->withPivot(['ordre', 'distance_km']);
+        return $this->belongsToMany(Circuit::class, 'circuit_espc')->withPivot(['ordre', 'distance_km', 'livre_via_espc_id']);
     }
 
     public function livraisons()

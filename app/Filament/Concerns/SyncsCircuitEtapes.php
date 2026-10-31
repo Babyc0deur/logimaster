@@ -10,7 +10,7 @@ trait SyncsCircuitEtapes
     /** @return array<int, array{espc_id: string, distance_km: mixed}> */
     protected function loadEtapes(): array
     {
-        return $this->getRecord()->espc->map(fn ($e) => ['espc_id' => $e->id, 'distance_km' => $e->pivot->distance_km])->values()->all();
+        return $this->getRecord()->espc->map(fn ($e) => ['espc_id' => $e->id, 'distance_km' => $e->pivot->distance_km, 'livre_via_espc_id' => $e->pivot->livre_via_espc_id])->values()->all();
     }
 
     protected function saveEtapes(array $etapes): void
@@ -25,7 +25,14 @@ trait SyncsCircuitEtapes
             if (! Espc::where('district_id', $circuit->district_id)->whereKey($etape['espc_id'])->exists()) {
                 continue;
             }
-            $sync[$etape['espc_id']] = ['ordre' => $i + 1, 'distance_km' => ($etape['distance_km'] ?? '') === '' ? null : $etape['distance_km']];
+            $sync[$etape['espc_id']] = ['ordre' => $i + 1, 'distance_km' => ($etape['distance_km'] ?? '') === '' ? null : $etape['distance_km'],
+                'livre_via_espc_id' => ($etape['livre_via_espc_id'] ?? '') ?: null];
+        }
+        // « Livré via » : le point de transit doit être un autre site du même circuit.
+        foreach ($sync as $id => $row) {
+            if ($row['livre_via_espc_id'] === $id || ($row['livre_via_espc_id'] && ! isset($sync[$row['livre_via_espc_id']]))) {
+                $sync[$id]['livre_via_espc_id'] = null;
+            }
         }
         $circuit->espc()->sync($sync);
 
