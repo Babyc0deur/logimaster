@@ -15,6 +15,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
@@ -81,6 +82,7 @@ class SortieForm
                         .($circuit->distance_totale ? " · Distance prévue : {$circuit->distance_totale} km" : '');
                 }),
                 TextInput::make('point_depart')->label('Point de départ')->maxLength(160),
+                TimePicker::make('heure_depart')->label('Heure de départ')->seconds(false),
                 TextInput::make('km_depart')->label('Kilométrage départ')->numeric()->required()->minValue(0)->live(onBlur: true)->suffix('km'),
                 Repeater::make('etapes')->label('Étapes')->addActionLabel('+ Ajouter une étape')->defaultItems(0)->columnSpanFull()
                     ->schema([
@@ -89,6 +91,12 @@ class SortieForm
                             ->gte(fn (Get $get) => $get('../../km_depart')),
                     ])->columns(2),
                 TextInput::make('point_arrivee')->label("Point d'arrivée")->maxLength(160),
+                TimePicker::make('heure_arrivee')->label("Heure d'arrivée")->seconds(false)
+                    ->rule(fn (Get $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
+                        if ($value && $get('heure_depart') && substr((string) $value, 0, 5) < substr((string) $get('heure_depart'), 0, 5)) {
+                            $fail("L'heure d'arrivée précède l'heure de départ.");
+                        }
+                    }),
                 TextInput::make('km_arrivee')->label('Kilométrage arrivée')->numeric()->live(onBlur: true)->suffix('km')
                     ->gt(fn (Get $get) => $get('km_depart') ?: 0)
                     ->validationMessages(['gt' => "Le kilométrage d'arrivée doit être supérieur au kilométrage de départ."]),

@@ -67,6 +67,21 @@ class VehiclesTable
             ->recordActions([
                 ViewAction::make()->label('Voir'),
                 EditAction::make()->label('Modifier'),
+                \Filament\Actions\Action::make('carnet')->label('Carnet de bord')->icon('heroicon-o-book-open')->color('gray')
+                    ->modalHeading(fn (Vehicle $record) => 'Carnet de bord — '.$record->immatriculation)->modalSubmitActionLabel('Télécharger')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('mois')->label('Mois')->required()->native(false)
+                            ->options(fn () => collect(range(0, 17))->mapWithKeys(fn ($i) => [now()->startOfMonth()->subMonths($i)->format('Y-m') => \Illuminate\Support\Str::ucfirst(now()->startOfMonth()->subMonths($i)->translatedFormat('F Y'))])->all())
+                            ->default(now()->format('Y-m')),
+                        \Filament\Forms\Components\Radio::make('format')->label('Format')->options(['pdf' => 'PDF (à imprimer)', 'xlsx' => 'Excel'])->default('pdf')->inline(),
+                    ])
+                    ->action(function (Vehicle $record, array $data) {
+                        $month = \Carbon\CarbonImmutable::createFromFormat('Y-m-d', $data['mois'].'-01')->startOfMonth();
+
+                        return ($data['format'] ?? 'pdf') === 'xlsx'
+                            ? \App\Domain\Fleet\CarnetDeBord::xlsx($record, $month)
+                            : \App\Domain\Fleet\CarnetDeBord::pdf($record, $month);
+                    }),
                 \Filament\Actions\Action::make('activite')->label('Activité')->icon('heroicon-o-chart-bar')->color('gray')
                     ->url(fn (Vehicle $record) => \App\Filament\Pages\ActiviteVehicule::getUrl(['vehicule' => $record->id])),
             ])

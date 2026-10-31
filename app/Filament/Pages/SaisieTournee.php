@@ -15,6 +15,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -112,6 +113,8 @@ class SaisieTournee extends Page
             'plan_id' => $plan->id,
             'km_depart' => $plan->sortie?->km_depart ?? $plan->vehicle?->km_actuel,
             'km_arrivee' => $plan->sortie?->km_arrivee,
+            'heure_depart' => $plan->sortie?->heure_depart ?? $plan->heure_depart,
+            'heure_arrivee' => $plan->sortie?->heure_arrivee,
             'sites' => $sites,
             'ravitaillement' => ['prix_unitaire' => $plan->vehicle?->currentFuelPrice()],
             'frais' => [],
@@ -140,12 +143,14 @@ class SaisieTournee extends Page
     public function form(Schema $schema): Schema
     {
         return $schema->statePath('data')->components([
-            Section::make('Sortie')->columns(3)->schema([
+            Section::make('Sortie')->columns(['default' => 1, 'md' => 3])->schema([
                 Select::make('plan_id')->label('Sortie planifiée')->options(fn () => $this->planOptions())->searchable()->required()->live()
                     ->afterStateUpdated(fn () => $this->loadPlan())
                     ->helperText('Les 60 derniers jours et la semaine à venir.'),
                 TextInput::make('km_depart')->label('Compteur au départ')->numeric()->integer()->minValue(0)->suffix('km')
                     ->helperText('Prérempli avec le compteur du véhicule.'),
+                TimePicker::make('heure_depart')->label('Heure de départ')->seconds(false),
+                TimePicker::make('heure_arrivee')->label("Heure d'arrivée")->seconds(false),
                 TextInput::make('km_arrivee')->label("Compteur à l'arrivée")->numeric()->integer()->minValue(0)->suffix('km')
                     ->helperText("Le renseigner termine la sortie ; les sites non traités restent « à livrer »."),
             ]),
@@ -208,6 +213,7 @@ class SaisieTournee extends Page
         try {
             $result = app(TourEntry::class)->apply($plan, [
                 'km_depart' => $state['km_depart'] ?? null, 'km_arrivee' => $state['km_arrivee'] ?? null,
+                'heure_depart' => $state['heure_depart'] ?? null, 'heure_arrivee' => $state['heure_arrivee'] ?? null,
                 'sites' => $sites, 'ravitaillement' => $state['ravitaillement'] ?? null, 'frais' => $state['frais'] ?? [],
             ], auth()->user());
         } catch (ValidationException $e) {

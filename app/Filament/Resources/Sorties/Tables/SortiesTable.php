@@ -37,6 +37,8 @@ class SortiesTable
                 TextColumn::make('motif')->badge()->formatStateUsing(fn ($state) => SortieVehicule::MOTIFS[$state] ?? $state),
                 TextColumn::make('distance')->label('Distance')->suffix(' km')->placeholder('—')
                     ->state(fn (SortieVehicule $r) => $r->distance),
+                TextColumn::make('duree')->label('Durée')->placeholder('—')->toggleable()
+                    ->state(fn (SortieVehicule $r) => $r->duree_min !== null ? sprintf('%dh%02d', intdiv($r->duree_min, 60), $r->duree_min % 60) : null),
                 TextColumn::make('sites')->label('Sites livrés')->placeholder('—')
                     ->state(function (SortieVehicule $r) {
                         $l = $r->chronogramme?->livraisons;

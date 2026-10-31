@@ -49,6 +49,10 @@ class TourEntry
             if ($kmDepart !== null && (int) $sortie->km_depart !== $kmDepart) {
                 $sortie->update(['km_depart' => $kmDepart]);
             }
+            $heures = array_filter(['heure_depart' => $this->hour($data['heure_depart'] ?? null), 'heure_arrivee' => $this->hour($data['heure_arrivee'] ?? null)]);
+            if ($heures) {
+                $sortie->update($heures);
+            }
 
             $treated = 0;
             foreach ($plan->livraisons as $livraison) {
@@ -88,6 +92,16 @@ class TourEntry
         });
     }
 
+    /** Heure « HH:MM » ou « HH:MM:SS » valide, ramenée à « HH:MM:SS » ; null si vide ou invalide. */
+    private function hour(mixed $value): ?string
+    {
+        if (! is_string($value) || ! preg_match('/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/', trim($value), $m)) {
+            return null;
+        }
+
+        return $m[1].':'.$m[2].(($m[3] ?? ':00'));
+    }
+
     // ------------------------------------------------------------------ validation
 
     /** @return array<string, array<int, string>> */
@@ -109,6 +123,17 @@ class TourEntry
         $kmArrivee = $this->int($data['km_arrivee'] ?? null);
         if ($kmArrivee !== null && $kmDepart !== null && $kmArrivee < $kmDepart) {
             $add('km_arrivee', "Le compteur d'arrivée ({$kmArrivee} km) est inférieur au compteur de départ ({$kmDepart} km).");
+        }
+
+        foreach (['heure_depart' => 'de départ', 'heure_arrivee' => "d'arrivée"] as $key => $label) {
+            if (filled($data[$key] ?? null) && $this->hour($data[$key]) === null) {
+                $add($key, "L'heure {$label} n'est pas valide.");
+            }
+        }
+        $hd = $this->hour($data['heure_depart'] ?? null) ?? $plan->sortie?->heure_depart;
+        $ha = $this->hour($data['heure_arrivee'] ?? null);
+        if ($hd && $ha && substr($ha, 0, 5) < substr($hd, 0, 5)) {
+            $add('heure_arrivee', "L'heure d'arrivée précède l'heure de départ.");
         }
 
         // le kilométrage ne recule jamais d'un site à l'autre

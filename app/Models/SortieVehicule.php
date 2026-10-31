@@ -17,7 +17,7 @@ class SortieVehicule extends Model
         'circuit_id', 'km_depart', 'km_arrivee', 'motif', 'destination',
         'circuit_respecte', 'commentaires', 'statut', 'version',
         'date_sortie', 'chef_mission_id', 'point_depart', 'point_arrivee', 'etapes', 'validated_at', 'validated_by',
-        'photo_km_depart', 'photo_km_arrivee',
+        'photo_km_depart', 'photo_km_arrivee', 'heure_depart', 'heure_arrivee',
     ];
 
     protected function casts(): array
@@ -116,6 +116,17 @@ class SortieVehicule extends Model
     public function getDistanceAttribute(): ?int
     {
         return $this->km_arrivee !== null ? $this->km_arrivee - $this->km_depart : null;
+    }
+
+    /** Durée de la sortie en minutes (même journée), null si une heure manque ou si l'arrivée précède le départ. */
+    public function getDureeMinAttribute(): ?int
+    {
+        if (! $this->heure_depart || ! $this->heure_arrivee) {
+            return null;
+        }
+        $diff = (int) \Carbon\Carbon::parse($this->heure_depart)->diffInMinutes(\Carbon\Carbon::parse($this->heure_arrivee), false);
+
+        return $diff >= 0 ? $diff : null;
     }
 
     public function getCoutCarburantAttribute(): float

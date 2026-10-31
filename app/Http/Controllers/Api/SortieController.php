@@ -35,6 +35,8 @@ class SortieController extends CrudController
             'circuit_id' => ['nullable', 'uuid', $this->existsInScope($request, 'circuits')],
             'point_depart' => ['nullable', 'string', 'max:160'],
             'point_arrivee' => ['nullable', 'string', 'max:160'],
+            'heure_depart' => ['nullable', 'date_format:H:i'],
+            'heure_arrivee' => ['nullable', 'date_format:H:i'],
             'etapes' => ['sometimes', 'array'],
             'etapes.*.lieu' => ['required_with:etapes', 'string', 'max:160'],
             'etapes.*.km' => ['nullable', 'integer', 'min:0'],
