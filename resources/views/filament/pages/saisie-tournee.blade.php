@@ -7,6 +7,7 @@
         <div style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap">
             <x-filament::button type="submit">Enregistrer la tournée</x-filament::button>
             <x-filament::button tag="a" color="gray" :href="$this->backToFollowUp()">Voir le suivi des livraisons</x-filament::button>
+            <x-filament::button tag="a" color="gray" :href="\App\Filament\Resources\Sorties\SortieVehiculeResource::getUrl()">Liste des sorties</x-filament::button>
         </div>
     </form>
 

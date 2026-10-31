@@ -72,15 +72,30 @@ class SaisieTournee extends Page
             ->with(['circuit:id,nom', 'vehicle:id,immatriculation,type_carburant,km_actuel,prix_carburant', 'sortie']);
     }
 
-    /** @return array<string, string> */
-    private function planOptions(): array
+    private function planLabel(Chronogramme $p): string
     {
-        $from = today()->subDays(60)->toDateString();
-        $to = today()->addDays(7)->toDateString();
+        return $p->date_prevue->format('d/m/Y').' · '.($p->circuit?->nom ?? ($p->destination ?: 'Sortie')).' · '.($p->vehicle?->immatriculation ?? 'sans véhicule');
+    }
 
-        return $this->plans()->whereBetween('date_prevue', [$from, $to])->orderByDesc('date_prevue')->orderBy('heure_depart')->get()
-            ->mapWithKeys(fn (Chronogramme $p) => [$p->id => $p->date_prevue->format('d/m/Y').' · '.($p->circuit?->nom ?? ($p->destination ?: 'Sortie')).' · '.($p->vehicle?->immatriculation ?? 'sans véhicule')])
-            ->all();
+    /** Sorties les plus récentes (toutes dates, jusqu'à une semaine à venir), ou celles qui correspondent à la recherche (circuit, véhicule, date). @return array<string, string> */
+    private function planOptions(?string $search = null): array
+    {
+        $query = $this->plans()->whereDate('date_prevue', '<=', today()->addDays(7)->toDateString());
+        if (filled($search)) {
+            $term = trim($search);
+            // une date saisie « jj/mm/aaaa » (ou partielle) est convertie au format de la base
+            $iso = preg_match('#^(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?$#', $term, $m)
+                ? (isset($m[3]) ? sprintf('%04d-%02d-%02d', strlen($m[3]) === 2 ? 2000 + (int) $m[3] : (int) $m[3], $m[2], $m[1]) : sprintf('-%02d-%02d', $m[2], $m[1]))
+                : $term;
+            $query->where(fn ($q) => $q
+                ->whereHas('circuit', fn ($c) => $c->where('nom', 'like', "%{$term}%"))
+                ->orWhereHas('vehicle', fn ($v) => $v->where('immatriculation', 'like', "%{$term}%"))
+                ->orWhere('destination', 'like', "%{$term}%")
+                ->orWhere('date_prevue', 'like', "%{$iso}%"));
+        }
+
+        return $query->orderByDesc('date_prevue')->orderBy('heure_depart')->limit(100)->get()
+            ->mapWithKeys(fn (Chronogramme $p) => [$p->id => $this->planLabel($p)])->all();
     }
 
     private function current(): ?Chronogramme
@@ -147,8 +162,10 @@ class SaisieTournee extends Page
         return $schema->statePath('data')->components([
             Section::make('Sortie')->columns(['default' => 1, 'md' => 3])->schema([
                 Select::make('plan_id')->label('Sortie planifiée')->options(fn () => $this->planOptions())->searchable()->required()->live()
+                    ->getSearchResultsUsing(fn (string $search) => $this->planOptions($search))
+                    ->getOptionLabelUsing(fn ($value) => ($p = $this->plans()->find($value)) ? $this->planLabel($p) : null)
                     ->afterStateUpdated(fn () => $this->loadPlan())
-                    ->helperText('Les 60 derniers jours et la semaine à venir.'),
+                    ->helperText('Les 100 plus récentes ; pour une ancienne tournée, cherchez par date (jj/mm/aaaa), circuit ou véhicule.'),
                 TextInput::make('km_depart')->label('Compteur au départ')->numeric()->integer()->minValue(0)->suffix('km')
                     ->helperText('Prérempli avec le compteur du véhicule.'),
                 TimePicker::make('heure_depart')->label('Heure de départ')->seconds(false),

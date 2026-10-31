@@ -68,6 +68,23 @@ class SaisieTourneeTest extends TestCase
         return Livewire::withQueryParams(['plan' => $this->plan->id])->test(SaisieTournee::class);
     }
 
+    public function test_old_runs_are_found_by_date_circuit_or_vehicle_and_can_be_opened(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        $old = Chronogramme::create(['district_id' => $this->district->id, 'vehicle_id' => $this->plan->vehicle_id, 'circuit_id' => $this->plan->circuit_id, 'date_prevue' => '2025-07-03', 'validation_statut' => 'valide']);
+
+        $component = $this->page()->instance();
+        $options = fn (?string $q = null) => (fn () => $this->planOptions($q))->call($component);
+
+        $this->assertArrayHasKey($old->id, $options());                 // plus de 60 jours : toujours proposée
+        $this->assertSame([$old->id], array_keys($options('03/07/2025')));
+        $this->assertArrayHasKey($old->id, $options('CIRCUIT 5'));
+        $this->assertArrayHasKey($old->id, $options('D55031'));
+        $this->assertSame([], $options('03/08/2025'));
+
+        Livewire::withQueryParams(['plan' => $old->id])->test(SaisieTournee::class)->assertSet('data.plan_id', $old->id);
+    }
+
     public function test_the_page_opens_on_the_run_with_the_vehicle_odometer_and_all_the_sites(): void
     {
         $this->as(User::ROLE_DISTRICT_MANAGER);
