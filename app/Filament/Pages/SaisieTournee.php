@@ -120,7 +120,7 @@ class SaisieTournee extends Page
             $sites['site-'.$l->id] = [
                 'id' => $l->id, 'nom' => $l->espc?->nom,
                 'statut' => $l->statut === 'livre' && $l->lieu_livraison === 'transit' ? 'transit' : $l->statut,
-                'km' => $l->km_compteur, 'raison' => $l->raison_non_livraison, 'date' => $l->date_livraison?->toDateString(),
+                'km' => $l->km_compteur, 'raison' => $l->raison_non_livraison,
                 'h_arrivee' => $l->heure_arrivee ? substr($l->heure_arrivee, 0, 5) : null, 'h_depart' => $l->heure_depart ? substr($l->heure_depart, 0, 5) : null,
             ];
         }
@@ -130,6 +130,9 @@ class SaisieTournee extends Page
             'plan_id' => $plan->id,
             'km_depart' => $plan->sortie?->km_depart ?? $plan->vehicle?->km_actuel,
             'km_arrivee' => $plan->sortie?->km_arrivee,
+            // une tournée se fait dans la journée : une seule date pour tous les sites (jamais après aujourd'hui)
+            'date' => ($plan->livraisons->firstWhere(fn ($l) => $l->date_livraison !== null)?->date_livraison ?? $plan->sortie?->date_sortie ?? $plan->date_prevue)
+                ->clone()->min(today())->toDateString(),
             'heure_depart' => $plan->sortie?->heure_depart ?? $plan->heure_depart,
             'heure_arrivee' => $plan->sortie?->heure_arrivee,
             'sites' => $sites,
@@ -161,6 +164,8 @@ class SaisieTournee extends Page
     {
         return $schema->statePath('data')->components([
             Section::make('Sortie')->columns(['default' => 1, 'md' => 3])->schema([
+                DatePicker::make('date')->label('Date de la tournée')->native(false)->displayFormat('d/m/Y')->maxDate(now())->required()
+                    ->helperText('Date des livraisons de tous les sites : la tournée se fait dans la journée.'),
                 Select::make('plan_id')->label('Sortie planifiée')->options(fn () => $this->planOptions())->searchable()->required()->live()
                     ->getSearchResultsUsing(fn (string $search) => $this->planOptions($search))
                     ->getOptionLabelUsing(fn ($value) => ($p = $this->plans()->find($value)) ? $this->planLabel($p) : null)
@@ -185,8 +190,6 @@ class SaisieTournee extends Page
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                     TimePicker::make('h_depart')->label('Départ du site')->seconds(false)
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
-                    DatePicker::make('date')->label('Date')->native(false)->displayFormat('d/m/Y')->maxDate(now())
-                        ->visible(fn (Get $get) => in_array($get('statut'), ['livre', 'transit'], true)),
                     TextInput::make('raison')->label(fn (Get $get) => $get('statut') === 'non_livre' ? 'Raison (obligatoire)' : 'Note')->maxLength(500)
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                 ]),
@@ -226,7 +229,8 @@ class SaisieTournee extends Page
         // sites indexés par identifiant de livraison ; les clés des lignes du formulaire servent à rattacher les erreurs au bon champ
         $sites = [];
         foreach ($state['sites'] ?? [] as $row) {
-            $sites[$row['id']] = $row;
+            $sites[$row['id']] = $row + ['date' => $state['date'] ?? null];
+            $sites[$row['id']]['date'] = $state['date'] ?? null;
         }
         $siteKeys = [];
         foreach ($this->data['sites'] ?? [] as $key => $row) {

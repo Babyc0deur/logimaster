@@ -129,6 +129,22 @@ class SaisieTourneeTest extends TestCase
         $this->assertSame([1, 1], [Ravitaillement::count(), Expense::count()]);
     }
 
+    public function test_one_date_at_the_top_applies_to_every_delivered_site(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        $page = $this->page();
+        $keys = array_keys($page->get('data.sites'));
+
+        $page->assertSet('data.date', fn ($v) => str_starts_with((string) $v, '2026-10-14'));   // proposée : la date prévue
+        $page->set('data.date', '2026-10-12')
+            ->set("data.sites.{$keys[0]}.statut", 'livre')->set("data.sites.{$keys[0]}.km", 50010)
+            ->set("data.sites.{$keys[1]}.statut", 'transit')->set("data.sites.{$keys[1]}.km", 50020)
+            ->call('save')->assertHasNoErrors();
+
+        $dates = LivraisonEspc::where('chronogramme_id', $this->plan->id)->where('statut', 'livre')->get()->map(fn ($l) => $l->date_livraison->toDateString())->unique()->all();
+        $this->assertSame(['2026-10-12'], $dates);
+    }
+
     public function test_errors_are_attached_to_the_right_site_field(): void
     {
         $this->as(User::ROLE_DISTRICT_MANAGER);
