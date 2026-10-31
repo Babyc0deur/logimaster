@@ -42,7 +42,7 @@ du périmètre de l'utilisateur.
   statuts Planifiée → En cours → Terminée → Validée, validation en masse, duplication.
 - **Carburant** (menu « Carburant » : tableau de bord, liste des pleins, analyse) : pleins avec facture, validation, détection d'anomalies, analyse réel vs théorique,
   prix du carburant avec historique, seuils d'alerte.
-- **Vidanges** et **Immobilisations** (menu principal, après la mutualisation) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
+- **Vidanges** et **Immobilisations** (menu principal, après les autres frais) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
   alertes 🔴/🟠/🟢 (tableau de bord), notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
 - **Indicateurs DDKM** : **8 indicateurs** sur deux lignes (coût global, utilisation des véhicules, taux d'immobilisation, respect du
   chronogramme, utilisation rationnelle du carburant, carburant par motif, respect des circuits, distance totale ; la livraison
@@ -65,7 +65,7 @@ du périmètre de l'utilisateur.
   enregistre l'indemnité de déplacement versée à un centre de santé qui vient enlever ses produits au district : l'ESPC est obligatoire,
   le bénéficiaire se préremplit, et le frais est compté dans le **coût global** (autres frais, avec une ligne « dont enlèvements par les
   ESPC » dans le détail de l'indicateur). La fiche de l'ESPC affiche le total reçu pour ses enlèvements.
-- **Enlèvement** (menu principal, avant la cartographie) : la même chose en un écran dédié. Liste des enlèvements par les ESPC (date, centre de
+- **Enlèvement** (menu principal, après la saisie d'une tournée) : la même chose en un écran dédié. Liste des enlèvements par les ESPC (date, centre de
   santé, indemnité, bénéficiaire, total de la période), filtres par centre de santé et par période, et « Enregistrer un enlèvement ». Chaque
   enlèvement est un frais de type « Enlèvement ESPC » : il apparaît aussi dans « Autres frais » et dans le coût global.
 - **Mutualisation** (menu principal, après les véhicules) : un district met un véhicule à la disposition d'un autre pour une période (avec ou sans date

@@ -29,7 +29,7 @@ class VehicleResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après la cartographie
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 12;
 
     protected static ?string $modelLabel = 'véhicule';
 

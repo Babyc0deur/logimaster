@@ -44,7 +44,7 @@ class MutualisationResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après les véhicules
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 13;
 
     protected static ?string $modelLabel = 'mise à disposition';
 

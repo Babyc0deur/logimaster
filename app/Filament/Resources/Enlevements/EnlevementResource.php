@@ -43,9 +43,9 @@ class EnlevementResource extends Resource
 
     protected static ?string $navigationLabel = 'Enlèvement';
 
-    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, avant la cartographie
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après la saisie d'une tournée
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 7;
 
     protected static ?string $modelLabel = 'enlèvement';
 

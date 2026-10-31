@@ -19,7 +19,7 @@ class ImmobilisationResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrench;
     protected static ?string $navigationLabel = 'Immobilisations';
     protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après les vidanges
-    protected static ?int $navigationSort = 13;
+    protected static ?int $navigationSort = 10;
     protected static ?string $modelLabel = 'immobilisation';
     protected static ?string $pluralModelLabel = 'Immobilisations';
 

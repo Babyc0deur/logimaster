@@ -3,13 +3,17 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Cartographie;
+use App\Filament\Pages\SaisieTournee;
+use App\Filament\Pages\SuiviCircuits;
 use App\Filament\Pages\SuiviSaisie;
 use App\Filament\Resources\Enlevements\EnlevementResource;
 use App\Filament\Resources\Enlevements\Pages\CreateEnlevement;
 use App\Filament\Resources\Enlevements\Pages\ListEnlevements;
 use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Filament\Resources\Immobilisations\ImmobilisationResource;
 use App\Filament\Resources\Mutualisations\MutualisationResource;
 use App\Filament\Resources\Vehicles\VehicleResource;
+use App\Filament\Resources\Vidanges\VidangeResource;
 use App\Models\District;
 use App\Models\Espc;
 use App\Models\Expense;
@@ -22,7 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
-/** Menu « Enlèvement » (avant la cartographie) ; véhicules et mutualisation juste après la cartographie. */
+/** Ordre du menu principal : enlèvement, autres frais, vidanges, immobilisations, cartographie, véhicules, mutualisation. */
 class EnlevementMenuTest extends TestCase
 {
     use RefreshDatabase;
@@ -47,16 +51,17 @@ class EnlevementMenuTest extends TestCase
         Expense::creating(fn (Expense $e) => $e->district_id ??= $this->district->id);
     }
 
-    public function test_the_menu_order_is_expenses_then_pickup_then_cartography_then_vehicles_then_mutualisation(): void
+    public function test_the_menu_order_follows_the_requested_sequence(): void
     {
-        $order = [ExpenseResource::class, EnlevementResource::class, SuiviSaisie::class, VehicleResource::class, MutualisationResource::class, Cartographie::class];
+        $order = [SuiviCircuits::class, SaisieTournee::class, EnlevementResource::class, ExpenseResource::class, VidangeResource::class, ImmobilisationResource::class,
+            SuiviSaisie::class, VehicleResource::class, MutualisationResource::class, Cartographie::class];
         $sorts = array_map(fn ($c) => $c::getNavigationSort(), $order);
 
         $this->assertSame($sorts, collect($sorts)->sort()->values()->all());
         $this->assertSame(count($sorts), count(array_unique($sorts)));
 
-        // dans le menu principal, hors groupe
-        foreach ([EnlevementResource::class, VehicleResource::class, MutualisationResource::class] as $class) {
+        // tous dans le menu principal, hors groupe
+        foreach ([EnlevementResource::class, ExpenseResource::class, VidangeResource::class, ImmobilisationResource::class, VehicleResource::class, MutualisationResource::class] as $class) {
             $this->assertNull($class::getNavigationGroup(), $class);
         }
         $this->assertSame('Enlèvement', EnlevementResource::getNavigationLabel());
@@ -68,19 +73,15 @@ class EnlevementMenuTest extends TestCase
         $html = $this->get("/admin/{$this->district->id}")->assertOk()->getContent();
         preg_match_all('/class="fi-sidebar-(?:item|group)-label[^"]*"[^>]*>\s*([^<]+?)\s*</u', $html, $m);
         $labels = array_map(fn ($l) => html_entity_decode(trim($l)), $m[1]);
-        $at = fn (string $label) => array_search($label, $labels, true);
 
-        foreach (['Autres frais', 'Enlèvement', 'Cartographie', 'Véhicules', 'Mutualisation', 'Vidanges', 'Immobilisations', 'Carburant'] as $label) {
-            $this->assertNotFalse($at($label), "« {$label} » absent du menu : ".implode(' | ', $labels));
-        }
-        $this->assertLessThan($at('Enlèvement'), $at('Autres frais'));
-        $this->assertLessThan($at('Cartographie'), $at('Enlèvement'));
-        $this->assertLessThan($at('Véhicules'), $at('Cartographie'));
-        $this->assertLessThan($at('Mutualisation'), $at('Véhicules'));
-        $this->assertLessThan($at('Vidanges'), $at('Mutualisation'));
-        $this->assertLessThan($at('Immobilisations'), $at('Vidanges'));
-        $this->assertLessThan($at('Carburant'), $at('Immobilisations'));   // le menu principal passe avant les groupes
-        $this->assertNotContains('Vidange', $labels);                        // plus de groupe « Vidange »
+        $expected = ['Tableau de bord', 'Chronogramme', 'Circuits', 'Sorties Véhicules', 'Suivi des livraisons', "Saisie d'une tournée", 'Enlèvement', 'Autres frais',
+            'Vidanges', 'Immobilisations', 'Cartographie', 'Véhicules', 'Mutualisation'];
+        $found = array_values(array_filter($labels, fn ($l) => in_array($l, $expected, true)));
+
+        $this->assertSame($expected, array_slice($found, 0, count($expected)), 'Menu : '.implode(' | ', $labels));
+        $this->assertLessThan(array_search('Carburant', $labels, true), array_search('Mutualisation', $labels, true));   // le menu principal passe avant les groupes
+        $this->assertNotContains('Vidange', $labels);
+        $this->assertNotContains('Suivi en temps réel', $labels);
     }
 
     public function test_a_pickup_is_an_expense_of_the_right_type_for_the_chosen_espc(): void
