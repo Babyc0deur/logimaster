@@ -71,11 +71,11 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 
 ## 6 ter. Enlèvement par les ESPC et mutualisation
 
-1. Admin → **Autres frais** → créer, type « Enlèvement ESPC ». ✔ Le champ « Centre de santé (ESPC) » apparaît et est obligatoire ; le bénéficiaire se préremplit.
-2. Enregistrer une indemnité de 2 500 FCFA. ✔ La ligne apparaît avec le libellé « Enlèvement ESPC » et le centre de santé ; filtre par type possible.
+1. Admin → menu **Enlèvement** (avant Cartographie) → « Enregistrer un enlèvement ». ✔ Le centre de santé est obligatoire ; le bénéficiaire se préremplit. (Même saisie possible dans **Autres frais** avec le type « Enlèvement ESPC ».)
+2. Enregistrer une indemnité de 2 500 FCFA. ✔ La ligne apparaît dans la liste des enlèvements (avec le total de la période) et aussi dans **Autres frais** avec le libellé « Enlèvement ESPC ».
 3. Ouvrir la fiche de l'ESPC. ✔ « Enlèvements au district » indique le total reçu.
 4. Tableau de bord → détail de « Coût global » (après recalcul). ✔ La ligne « dont enlèvements par les ESPC » est visible.
-5. Admin (gestionnaire d'un district) → **Mutualisation** → mettre un véhicule à disposition d'un autre district. ✔ Refus si la période chevauche une autre mise à disposition du même véhicule ou si la fin précède le début.
+5. Admin (gestionnaire d'un district) → menu **Mutualisation** (après Véhicules, eux-mêmes après Cartographie) → mettre un véhicule à disposition d'un autre district. ✔ Refus si la période chevauche une autre mise à disposition du même véhicule ou si la fin précède le début.
 6. Se connecter comme gestionnaire du district utilisateur. ✔ Le véhicule apparaît dans sa liste « Mutualisation » (sens « Emprunté », sans bouton Modifier) ; un troisième district ne voit rien.
 7. Lien **Activité** du véhicule. ✔ Les deux districts voient ses sorties, kilomètres, carburant, frais, vidanges et immobilisations, avec un résumé par district ; l'utilisateur ne voit que les dates de la mise à disposition.
 

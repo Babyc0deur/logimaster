@@ -42,9 +42,9 @@ class MutualisationResource extends Resource
 
     protected static ?string $navigationLabel = 'Mutualisation';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après les véhicules
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $modelLabel = 'mise à disposition';
 

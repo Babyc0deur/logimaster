@@ -65,7 +65,10 @@ du périmètre de l'utilisateur.
   enregistre l'indemnité de déplacement versée à un centre de santé qui vient enlever ses produits au district : l'ESPC est obligatoire,
   le bénéficiaire se préremplit, et le frais est compté dans le **coût global** (autres frais, avec une ligne « dont enlèvements par les
   ESPC » dans le détail de l'indicateur). La fiche de l'ESPC affiche le total reçu pour ses enlèvements.
-- **Mutualisation** (groupe Administration) : un district met un véhicule à la disposition d'un autre pour une période (avec ou sans date
+- **Enlèvement** (menu principal, avant la cartographie) : la même chose en un écran dédié. Liste des enlèvements par les ESPC (date, centre de
+  santé, indemnité, bénéficiaire, total de la période), filtres par centre de santé et par période, et « Enregistrer un enlèvement ». Chaque
+  enlèvement est un frais de type « Enlèvement ESPC » : il apparaît aussi dans « Autres frais » et dans le coût global.
+- **Mutualisation** (menu principal, après les véhicules) : un district met un véhicule à la disposition d'un autre pour une période (avec ou sans date
   de fin). Le district **propriétaire** crée, modifie ou termine la mise à disposition. Le district **utilisateur** la voit, et la page
   **« Activité du véhicule »** (lien « Activité » de la liste et de la liste des véhicules) montre aux deux districts ce que le véhicule fait :
   sorties, kilomètres, carburant, autres frais, vidanges et immobilisations, avec un résumé par district. Le propriétaire voit toute

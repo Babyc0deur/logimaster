@@ -27,9 +27,9 @@ class VehicleResource extends Resource
 
     protected static ?string $navigationLabel = 'Véhicules';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
+    protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après la cartographie
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $modelLabel = 'véhicule';
 

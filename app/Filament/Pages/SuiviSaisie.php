@@ -23,7 +23,7 @@ class SuiviSaisie extends Page
 
     protected static ?string $navigationLabel = 'Cartographie';
 
-    protected static ?int $navigationSort = 8;   // après les dépenses
+    protected static ?int $navigationSort = 9;   // après l'enlèvement
 
     protected static ?string $title = 'Cartographie';
 
