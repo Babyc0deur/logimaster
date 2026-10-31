@@ -23,7 +23,7 @@ Comptes de démonstration (mot de passe `password`, à changer hors local) :
 | `pres_admin` | pres@logimaster.test | National, tous les droits |
 | `region_manager` | region@logimaster.test | Districts de la région Abidjan 1 (rattachement par `users.region_id`) |
 | `district_manager` | district@logimaster.test | Anyama (CRUD, soumission des plannings) |
-| `superviseur_bailleur` | bailleur@logimaster.test | 9 districts d'Abidjan ; validation des plannings et des factures |
+| `superviseur_bailleur` | bailleur@logimaster.test | 9 districts d'Abidjan ; validation des plannings |
 
 Le sélecteur de district (au-dessus du menu) et les filtres du tableau de bord ne proposent que les districts
 du périmètre de l'utilisateur.
@@ -31,7 +31,7 @@ du périmètre de l'utilisateur.
 ## Modules
 
 - **Véhicules** : fiche complète (caractéristiques, affectation, bailleur, documents avec échéances), formulaire en 4 étapes,
-  onglets historique / maintenance / carburant / statistiques, exports Excel & PDF.
+  onglets historique / vidanges / carburant / statistiques, exports Excel & PDF.
 - **Chronogramme** : planning des sorties (circuit + date + sites), vue semaine (véhicules × jours) et vue mois, couleurs par
   motif, **glisser-déposer** pour reprogrammer (refus du passé, des doubles réservations et des plans verrouillés), clic sur
   un jour pour créer, génération selon la fréquence des circuits, duplication, démarrage de la sortie.
@@ -40,9 +40,9 @@ du périmètre de l'utilisateur.
   notifications in-app. API : `POST /api/chronogrammes/{submit,validate,refuse,reopen}`.
 - **Sorties** : formulaire complet (équipage, étapes, carburant, autres frais), coûts et alerte de surconsommation,
   statuts Planifiée → En cours → Terminée → Validée, validation en masse, duplication.
-- **Carburant** : ravitaillements (facture, validation, détection d'anomalies), tableau de bord, analyse réel vs théorique,
+- **Carburant** (menu « Carburant » : tableau de bord, liste des pleins, analyse) : pleins avec facture, validation, détection d'anomalies, analyse réel vs théorique,
   prix du carburant avec historique, seuils d'alerte.
-- **Maintenance** : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
+- **Vidange** (groupe du menu : calendrier, vidanges, immobilisations) : vidanges (prochaine échéance et date estimées), immobilisations (durée, impact, statistiques),
   calendrier mensuel, alertes 🔴/🟠/🟢, notifications in-app (`php artisan fleet:alerts`, planifié à 07:00).
 - **Indicateurs DDKM** : **8 indicateurs** sur deux lignes (coût global, utilisation des véhicules, taux d'immobilisation, respect du
   chronogramme, utilisation rationnelle du carburant, carburant par motif, respect des circuits, distance totale ; la livraison
@@ -58,14 +58,11 @@ du périmètre de l'utilisateur.
 - **Saisie d'une tournée** (menu, sous le suivi des livraisons ; lien « Saisir toute la tournée » sur chaque circuit du suivi) :
   une seule page pour recopier le carnet de bord d'une sortie. On y renseigne le compteur de départ, le statut et le kilométrage de
   chaque site (livré, en transit, non livré avec sa raison), le compteur d'arrivée (qui termine la sortie), un plein de carburant
-  (prix du véhicule prérempli, confirmation s'il est modifié) et des autres frais. Mêmes règles que l'application mobile : le
+  (prix du véhicule prérempli, confirmation s'il est modifié) et des autres frais. Règles de contrôle : le
   kilométrage ne recule jamais, la raison est obligatoire pour un site non livré, les erreurs s'affichent sur le bon champ et rien n'est
   enregistré en cas de refus. La saisie peut être refaite pour corriger ; le plein et les frais sont des ajouts (les enregistrés sont listés dessous).
 - **Personnel** : fiche chauffeur complète (permis, véhicule principal, statistiques), chefs de mission et passagers.
-- **Finance** : budgets par mois, par poste (carburant / maintenance / autres) et par bailleur, tableau de bord avec
-  prévision et alertes de dépassement ; **factures** avec workflow brouillon → à valider → validée / rejetée → payée →
-  archivée (séparation des tâches : le créateur ne valide pas sa propre facture).
-- **Rapports** : PDF et Excel (DDKM, flotte, carburant, maintenance, financier, bailleur), envoi par e-mail, envois
+- **Rapports** : PDF et Excel (DDKM, flotte, carburant, maintenance, par bailleur), envoi par e-mail, envois
   planifiés (`php artisan reports:send`, 06:00 ; `--monthly` le 1er du mois à 03:30).
 
 - **Cartographie** (menu, sous le chronogramme ; anciennement « Suivi de la saisie ») : carte de la Côte d'Ivoire avec les **limites
@@ -73,38 +70,22 @@ du périmètre de l'utilisateur.
   **33 régions** (traits orange). Chaque district est vert (au moins une sortie saisie, hors annulées) ou rouge, pour un mois ou
   l'année ; le point blanc est son chef-lieu. Filtres année, mois et région ; **taux de remplissage** = mois renseignés / mois
   écoulés (carte, carte de chiffres et colonne « Taux » du tableau des 12 mois par district).
-- **Suivi en temps réel** (ancienne « Cartographie ») : simulation, sur OpenStreetMap, du déplacement des véhicules du district
-  choisi dans le menu, chacun sur son circuit (départ du chef-lieu à 07:30, 40 km/h, 10 min par site, itinéraires OSRM public
-  de démonstration). Limite de la région et districts voisins en traits fins, district teinté ; un clic sur un véhicule cadre son
-  parcours. Sites sans GPS : positions de démonstration autour du chef-lieu.
-- **Paramètres** (dernier groupe du menu) : centres de santé (ESPC), chefs de mission et passagers, districts.
+- **Suivi en temps réel** : **désactivé** (ni menu, ni page). La simulation du déplacement des véhicules sur OpenStreetMap
+  est conservée dans le code ; `LOGIMASTER_LIVE_TRACKING=true` dans `.env` la réactive.
+- **Paramètres** (dernier groupe du menu) : centres de santé (ESPC), personnel (chauffeurs, chefs de mission, passagers), districts.
 - **Administration** (permission `manage_settings`) : seuils d'alerte, prix du carburant, **objectifs des
   8 indicateurs** (couleurs des cartes, rapports et recommandations), **districts** (liste du périmètre, création et
   édition par le national avec `manage_districts`), **journal d'audit** en lecture seule (`view_audit_logs`).
 
-## Page d'accueil et application mobile
+## Page d'accueil
 
-- `/` : page de présentation (papier / encre / orange) : fonctionnement, **cartographie**, les 8 indicateurs, application
-  mobile, suivi en temps réel, questions, avec le QR code d'installation et l'accès à l'administration (`/admin`).
-- `/m` : **application mobile du bureau**, installable (PWA), réservée aux comptes de l'administration qui ont la permission
-  « exécuter les circuits » (administrateur national, gestionnaire de district). On s'y connecte avec la même adresse e-mail et le
-  même mot de passe que l'administration ; un compte national ou régional choisit le district à afficher. On y voit les sorties
-  **validées** du district, on exécute le circuit site par site (livré / transit / non livré, avec le kilométrage), on déclare le
-  carburant et les autres frais et on termine la sortie ; le bureau le voit aussitôt dans « Suivi des livraisons ». Planning du
-  district et véhicules (disponibilité, vidange, échéances) en lecture. Fonctionne hors réseau (actions envoyées au retour du réseau).
-  Le jeton de connexion mobile ne donne accès qu'à `/api/mobile/*`, jamais à l'API complète.
-- `/m/installer` : affiche à imprimer avec le QR code. Le QR pointe vers `LOGIMASTER_MOBILE_URL` (HTTPS obligatoire pour
-  l'installation ; défaut `APP_URL/m`).
-- **Plus de comptes de convoyeurs** : les chefs de mission et passagers n'ont plus d'accès. Ils restent dans *Personnel* comme
-  équipage d'une sortie (champ « Équipe » du chronogramme), sans compte ni mot de passe. Il n'y a ni notification push, ni mode tunnel,
-  ni position GPS relevée à la livraison, ni signalements de pannes depuis le téléphone : tout se saisit dans l'administration
-  (Immobilisations, Vidanges) ou dans l'application mobile du bureau.
-- **Photo de la facture de carburant** : dans l'onglet Carburant, « Prendre une photo de la facture ». L'image est réduite
-  (1400 px, JPEG ≈ 100-200 Ko) avant l'envoi, gardée sur le téléphone (IndexedDB) tant qu'il n'y a pas de réseau, puis
-  enregistrée sur le disque privé (`storage/app/private/factures`). Contrôle sur le contenu (JPEG, PNG ou WebP, 4 Mo max).
-  Au bureau : *Ravitaillements* → « Voir la facture » (ou « Télécharger la facture »). Le serveur doit accepter des envois
-  de quelques centaines de Ko : `.claude/launch.json` lance `php -S` (via `server.php`) avec `post_max_size=12M` ; avec
-  `php artisan serve` ou Herd, vérifier `post_max_size` et le dossier temporaire de PHP.
+- `/` : page de présentation (papier / encre / orange) : fonctionnement, **cartographie**, les 8 indicateurs, questions, avec l'accès à
+  l'administration (`/admin`). Il n'y a plus d'application mobile (`/m`, `/api/mobile`), ni notifications push, ni mode tunnel, ni
+  comptes de convoyeurs : tout se saisit dans l'administration (menu, ou page « Saisie d'une tournée »). Les chefs de mission et
+  passagers restent dans *Personnel* comme équipage d'une sortie, sans compte.
+- **Photo de la facture de carburant** : dans *Carburant* (liste des pleins), champ « Facture » (PDF, JPEG ou PNG, 10 Mo max),
+  enregistrée sur le disque privé (`storage/app/private/factures`). Au bureau : « Voir la facture » (ou « Télécharger la facture »).
+
 ## Organisation et géographie
 
 - **Organisation** : **10 PRES** réelles, auxquelles sont rattachées les 33 régions (`app/Domain/Organisation/PresMapping.php`, commande
@@ -121,23 +102,23 @@ SQLite est réglé pour la performance (WAL, `busy_timeout`, index composites) ;
 Variables à définir sur Render : `APP_NAME=Logimaster`, `CACHE_STORE=file`, `BACKUP_S3_*`
 (sauvegardes), `SENTRY_LARAVEL_DSN` (erreurs). Un **disque persistant** est nécessaire pour conserver la base entre deux déploiements.
 
-## Module Finance (retiré)
+## Finance (supprimé)
 
-Budgets, factures, tableau de bord financier, rapport financier et alertes de budget sont **retirés** de l'application
-(menus, API `/api/budgets`, `/api/factures`, `/api/finance/*` en 404, type de rapport « financier »). Le code et les données
-sont conservés : `LOGIMASTER_FINANCE=true` dans `.env` les réactive. Les **Dépenses** (onglet « AUTRES FRAIS » des classeurs)
-restent, car elles alimentent l'indicateur de coût global.
+Budgets, factures, tableau de bord financier, rapport financier, alertes de budget et leurs permissions sont **supprimés** (code, API
+et tables, par migration). Les **Autres frais** (onglet « AUTRES FRAIS » des classeurs, ex-« Dépenses ») restent, car elles alimentent l'indicateur de coût
+global ; le rapport « par bailleur » reste aussi (coûts par bailleur et par véhicule, sans budgets). L'étiquette Git `avant-retrait-mobile`
+précède ces retraits (`git tag`).
 
 ## Période par défaut
 
-Les filtres (tableau de bord, indicateurs, finance, carburant) s'ouvrent sur **mai à octobre 2025**, la période des données
+Les filtres (tableau de bord, indicateurs, carburant) s'ouvrent sur **mai à octobre 2025**, la période des données
 réelles chargées : réglable dans `.env` (`LOGIMASTER_PERIOD_FROM`, `LOGIMASTER_PERIOD_UNTIL` ; valeurs vides = mois en cours).
 Filament mémorise en session les filtres déjà choisis : se reconnecter pour revoir les valeurs par défaut.
 
 ## Permissions
 
 Les ressources et pages Filament appliquent les mêmes permissions que l'API : une politique par modèle (`app/Policies`,
-adossée à `view_/create_/update_/delete_{module}`), les pages (tableau de bord, carburant, calendrier de maintenance…)
+adossée à `view_/create_/update_/delete_{module}`), les pages (tableau de bord, carburant, calendrier des vidanges…)
 exigent leur permission de consultation, et les rôles ne sont accessibles qu'au national. Un rôle en lecture seule
 (région, superviseur bailleur) ne voit ni les boutons ni les URL de création ou de modification.
 
@@ -176,9 +157,8 @@ exigent leur permission de consultation, et les rôles ne sont accessibles qu'au
 
 ## Reste à faire
 
-2FA admin et verrouillage de compte, bibliothèque de documents, PostgreSQL ; GPS des centres de santé (pour des positions
-réelles dans le suivi en temps réel) ; service d'itinéraires fiable à la place du serveur OSRM de démonstration ; démarrage mobile limité
-au jour planifié ; dépôt GitHub à passer en privé avant les données réelles.
+Verrouillage de compte, bibliothèque de documents, PostgreSQL ; service d'itinéraires fiable à la place du serveur OSRM de démonstration
+(si le suivi en temps réel est réactivé).
 
 Hors périmètre (décision du projet) : synchronisation hors ligne (`/api/sync/*`), applications mobile et desktop,
-temps réel (Reverb, Horizon, Scramble), optimisation de circuits.
+temps réel (Reverb, Horizon, Scramble), optimisation de circuits, module Finance.

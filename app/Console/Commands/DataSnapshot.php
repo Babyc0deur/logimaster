@@ -22,7 +22,7 @@ class DataSnapshot extends Command
     public const TABLES = [
         'pres', 'regions', 'districts', 'vehicles', 'drivers', 'personnels', 'circuits', 'espc', 'circuit_espc',
         'chronogrammes', 'chronogramme_personnel', 'sorties_vehicules', 'sortie_personnel', 'livraisons_espc',
-        'ravitaillements', 'vidanges', 'immobilisations', 'expenses', 'budgets', 'factures', 'fuel_prices',
+        'ravitaillements', 'vidanges', 'immobilisations', 'expenses', 'fuel_prices',
         'settings', 'district_devices', 'documents',
     ];
 

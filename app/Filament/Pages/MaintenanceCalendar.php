@@ -23,7 +23,7 @@ class MaintenanceCalendar extends Page
 
     protected static ?string $navigationLabel = 'Calendrier maintenance';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Maintenance';
+    protected static string|\UnitEnum|null $navigationGroup = 'Vidange';
 
     protected static ?int $navigationSort = 1;
 

@@ -48,20 +48,8 @@ Route::middleware(['auth:sanctum', EnsureActiveUser::class, 'throttle:api', Audi
     Route::apiResource('immobilisations', Api\ImmobilisationController::class)->parameters(['immobilisations' => 'id']);
     Route::apiResource('vidanges', Api\VidangeController::class)->parameters(['vidanges' => 'id']);
 
-    // Finance & documents
+    // Documents
     Route::apiResource('expenses', Api\ExpenseController::class)->parameters(['expenses' => 'id']);
-    Route::middleware('module:finance')->group(function () {
-        Route::apiResource('budgets', Api\BudgetController::class)->parameters(['budgets' => 'id']);
-        Route::get('finance/summary', [Api\FinanceController::class, 'summary']);
-        Route::post('factures/{id}/submit', [Api\FactureController::class, 'submit']);
-        Route::post('factures/{id}/validate', [Api\FactureController::class, 'validateFacture']);
-        Route::post('factures/{id}/reject', [Api\FactureController::class, 'reject']);
-        Route::post('factures/{id}/pay', [Api\FactureController::class, 'pay']);
-        Route::post('factures/{id}/archive', [Api\FactureController::class, 'archive']);
-        Route::post('factures/{id}/fichier', [Api\FactureController::class, 'upload']);
-        Route::get('factures/{id}/fichier', [Api\FactureController::class, 'download']);
-        Route::apiResource('factures', Api\FactureController::class)->parameters(['factures' => 'id']);
-    });
     Route::get('documents', [Api\DocumentController::class, 'index']);
     Route::post('documents', [Api\DocumentController::class, 'store']);
     Route::get('documents/{id}/download', [Api\DocumentController::class, 'download']);

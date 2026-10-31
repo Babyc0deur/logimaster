@@ -51,6 +51,7 @@ class CartographieTest extends TestCase
         $user->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($user);
         Filament::setTenant($d);
+        config(['logimaster.modules.suivi_temps_reel' => true]);   // module désactivé par défaut
         Livewire::test(Cartographie::class)->assertOk()->assertSee('Heure simulée')->assertSee('D1');
     }
 
@@ -78,6 +79,22 @@ class CartographieTest extends TestCase
         $user->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($user);
         Filament::setTenant($ds[0]);
+        config(['logimaster.modules.suivi_temps_reel' => true]);   // module désactivé par défaut
         Livewire::test(Cartographie::class)->assertSee('VA')->assertDontSee('VB');
+    }
+
+    public function test_live_tracking_is_disabled_by_default_without_menu_nor_page(): void
+    {
+        $this->seed(LogimasterRoleSeeder::class);
+        $this->assertFalse((bool) config('logimaster.modules.suivi_temps_reel'));
+        $this->assertFalse(Cartographie::canAccess());
+        $this->assertFalse(Cartographie::shouldRegisterNavigation());
+
+        config(['logimaster.modules.suivi_temps_reel' => true]);
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole(User::ROLE_PRES_ADMIN);
+        $this->actingAs($admin, 'web');
+        $this->assertTrue(Cartographie::canAccess());
+        $this->assertTrue(Cartographie::shouldRegisterNavigation());
     }
 }

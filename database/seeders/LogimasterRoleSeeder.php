@@ -13,7 +13,7 @@ class LogimasterRoleSeeder extends Seeder
     /** Modules métier soumis au CRUD complet. */
     public const OPERATIONAL_MODULES = [
         'vehicles', 'drivers', 'circuits', 'espc', 'sorties', 'chronogrammes', 'ravitaillements',
-        'immobilisations', 'vidanges', 'documents', 'expenses', 'budgets', 'factures', 'personnels',
+        'immobilisations', 'vidanges', 'documents', 'expenses', 'personnels',
     ];
 
     public function run(): void
@@ -31,7 +31,7 @@ class LogimasterRoleSeeder extends Seeder
         $reporting = ['view_dashboard', 'view_indicators'];
         $admin = [
             'view_users', 'create_users', 'update_users', 'delete_users', 'validate_sorties', 'validate_ravitaillements',
-            'validate_factures', 'pay_factures', 'validate_chronogrammes', 'view_reports', 'create_reports',
+            'validate_chronogrammes', 'view_reports', 'create_reports',
             'view_districts', 'manage_districts', 'view_audit_logs', 'manage_settings',
         ];
 
@@ -49,7 +49,7 @@ class LogimasterRoleSeeder extends Seeder
 
         // Gestion complète de son district
         Role::firstOrCreate(['name' => User::ROLE_DISTRICT_MANAGER, 'guard_name' => 'web'])
-            ->syncPermissions([...$operational, ...$reporting, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'validate_factures', 'pay_factures', 'view_reports', 'create_reports']);
+            ->syncPermissions([...$operational, ...$reporting, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'view_reports', 'create_reports']);
 
         // Lecture seule multi-district (bailleurs)
         Role::firstOrCreate(['name' => User::ROLE_SUPERVISEUR, 'guard_name' => 'web'])

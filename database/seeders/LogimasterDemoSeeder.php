@@ -5,10 +5,8 @@ namespace Database\Seeders;
 use App\Models\Chronogramme;
 use App\Models\Circuit;
 use App\Models\District;
-use App\Models\Budget;
 use App\Models\Driver;
 use App\Models\Expense;
-use App\Models\Facture;
 use App\Models\Immobilisation;
 use App\Models\LivraisonEspc;
 use App\Models\Personnel;
@@ -123,7 +121,6 @@ class LogimasterDemoSeeder extends Seeder
         $this->seedPersonnel($district);
         $this->seedMobile($district, $vehicles, $driver, $circuit);
         $this->seedLivraisons($district);
-        \App\Support\Modules::enabled('finance') && $this->seedFinance($district, $vehicles);
         $this->seedMaintenance($district, $vehicles);
     }
 
@@ -165,48 +162,6 @@ class LogimasterDemoSeeder extends Seeder
         $rows->get(0)?->update(['statut' => 'livre', 'date_livraison' => $past->date_prevue->toDateString(), 'lieu_livraison' => 'site']);
         $rows->get(1)?->update(['statut' => 'livre', 'date_livraison' => $past->date_prevue->addDay()->toDateString(), 'lieu_livraison' => 'transit']);
         $rows->get(2)?->update(['statut' => 'non_livre', 'raison_non_livraison' => 'Route inondée, site inaccessible']);
-    }
-
-    private function seedFinance(District $district, $vehicles): void
-    {
-        $month = now()->startOfMonth()->toDateString();
-        foreach ([['carburant', 450000], ['maintenance', 300000], ['autres', 100000]] as [$poste, $montant]) {
-            Budget::firstOrCreate(['district_id' => $district->id, 'period' => $month, 'poste' => $poste, 'bailleur' => ''], ['montant_alloue' => $montant]);
-        }
-        Budget::firstOrCreate(['district_id' => $district->id, 'period' => $month, 'poste' => 'carburant', 'bailleur' => 'GAVI'], ['montant_alloue' => 200000]);
-
-        if (Expense::where('district_id', $district->id)->doesntExist()) {
-            foreach ([['peage', 'Péage autoroute', 3000, 2], ['reparation', 'Garage Central', 45000, 6], ['autres', 'Frais de mission', 15000, 9]] as [$type, $benef, $montant, $ago]) {
-                Expense::create(['district_id' => $district->id, 'vehicle_id' => $vehicles[0]->id, 'type' => $type, 'beneficiaire' => $benef,
-                    'montant' => $montant, 'date_depense' => now()->subDays($ago)->toDateString(), 'motif' => 'distribution']);
-            }
-        }
-
-        $admin = User::where('email', 'pres@logimaster.test')->first();
-        $creator = User::where('email', 'district@logimaster.test')->first();
-        $mois = now()->format('Ym');
-        foreach ([
-            ["FAC-{$mois}-001", 'carburant', 'TotalEnergies', 120000, 'brouillon'],
-            ["FAC-{$mois}-002", 'maintenance', 'Garage Central', 85000, 'a_valider'],
-            ["FAC-{$mois}-003", 'maintenance', 'Pneus Plus', 60000, 'validee'],
-            ["FAC-{$mois}-004", 'carburant', 'TotalEnergies', 98000, 'payee'],
-            ["FAC-{$mois}-005", 'autres', 'Imprimerie Moderne', 25000, 'rejetee'],
-        ] as [$num, $cat, $fournisseur, $montant, $statut]) {
-            if (Facture::where('district_id', $district->id)->where('numero', $num)->exists()) {
-                continue;
-            }
-            $f = Facture::create(['district_id' => $district->id, 'numero' => $num, 'categorie' => $cat, 'fournisseur' => $fournisseur, 'montant' => $montant,
-                'date_facture' => now()->subDays(5)->toDateString(), 'vehicle_id' => $vehicles[0]->id, 'bailleur' => $cat === 'carburant' ? 'GAVI' : null,
-                'cree_par' => $creator?->id]);
-            $at = now()->subDays(3);
-            $f->update(match ($statut) {
-                'a_valider' => ['statut' => $statut, 'soumise_at' => $at],
-                'validee' => ['statut' => $statut, 'soumise_at' => $at, 'valide_par' => $admin?->id, 'valide_at' => $at],
-                'payee' => ['statut' => $statut, 'soumise_at' => $at, 'valide_par' => $admin?->id, 'valide_at' => $at, 'paye_par' => $admin?->id, 'paye_at' => now()->subDay(), 'mode_paiement' => 'virement', 'reference_paiement' => 'VIR-0001'],
-                'rejetee' => ['statut' => $statut, 'soumise_at' => $at, 'valide_par' => $admin?->id, 'valide_at' => $at, 'motif_rejet' => 'Justificatif illisible'],
-                default => [],
-            });
-        }
     }
 
     private function seedMaintenance(District $district, $vehicles): void

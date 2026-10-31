@@ -17,11 +17,11 @@ class ExpenseResource extends Resource
     protected static ?string $model = Expense::class;
     protected static ?string $tenantOwnershipRelationshipName = 'district';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
-    protected static ?string $navigationLabel = 'Dépenses';
+    protected static ?string $navigationLabel = 'Autres frais';
     protected static string|\UnitEnum|null $navigationGroup = null;   // menu principal, après le suivi des livraisons
     protected static ?int $navigationSort = 7;
-    protected static ?string $modelLabel = 'dépense';
-    protected static ?string $pluralModelLabel = 'Dépenses';
+    protected static ?string $modelLabel = 'frais';
+    protected static ?string $pluralModelLabel = 'Autres frais';
 
     public static function form(Schema $schema): Schema
     {

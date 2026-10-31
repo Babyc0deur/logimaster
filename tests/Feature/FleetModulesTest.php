@@ -305,7 +305,6 @@ class FleetModulesTest extends TestCase
         $espc = $circuit->espc()->first();
         $plan->espc()->attach($espc->id, ['ordre' => 1]);
         $personnel = \App\Models\Personnel::create(['district_id' => $this->d1->id, 'matricule' => 'P1', 'nom_complet' => 'Agent']);
-        $facture = \App\Models\Facture::create(['district_id' => $this->d1->id, 'numero' => 'F1', 'categorie' => 'carburant', 'fournisseur' => 'X', 'montant' => 1000, 'date_facture' => '2026-09-01']);
 
         $t = "/admin/{$this->d1->id}";
         $pages = [
@@ -314,7 +313,7 @@ class FleetModulesTest extends TestCase
             '/circuits', '/circuits/create', "/circuits/{$circuit->id}", "/circuits/{$circuit->id}/edit",
             '/espcs', '/espcs/create', "/espcs/{$espc->id}", "/espcs/{$espc->id}/edit", '/livraisons',
             '/personnels', '/personnels/create', "/personnels/{$personnel->id}", "/personnels/{$personnel->id}/edit",
-            '/finance', '/budgets', '/factures', '/factures/create', "/factures/{$facture->id}", '/reports', '/report-schedules', '/import-classeur', '/chronogrammes', '/chronogrammes/create', "/chronogrammes/{$plan->id}/edit",
+            '/reports', '/report-schedules', '/import-classeur', '/chronogrammes', '/chronogrammes/create', "/chronogrammes/{$plan->id}/edit",
             '/sorties/sortie-vehicules', '/sorties/sortie-vehicules/create', "/sorties/sortie-vehicules/{$sortie->id}/edit",
             '/ravitaillements', '/ravitaillements/create', '/vidanges', '/vidanges/create',
             '/immobilisations', '/immobilisations/create', "/immobilisations/{$immo->id}/edit",

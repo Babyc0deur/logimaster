@@ -35,7 +35,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 |---|---|---|
 | Véhicules disponibles / indisponibles | ✔ | Donut de l'état de la flotte, taux d'immobilisation |
 | Motif, date de début, durée de l'indisponibilité | ✔ | Immobilisations (motif, dates, durée, coût, prestataire, facture) |
-| Localisation du véhicule | ◐ | Position relevée à chaque livraison depuis le mobile ; le « temps réel » est une simulation |
+| Localisation du véhicule | ✖ | Aucune localisation réelle (le suivi en temps réel, une simulation, est désactivé) |
 
 ### 3.2 Utilisation
 | Besoin | État | Remarque |
@@ -48,7 +48,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 ### 3.3 Kilométrage
 | Besoin | État | Remarque |
 |---|---|---|
-| Départ, arrivée, parcouru par sortie | ✔ | Compteurs saisis au bureau et sur mobile |
+| Départ, arrivée, parcouru par sortie | ✔ | Compteurs saisis au bureau (suivi des livraisons, saisie d'une tournée) |
 | Cumulé, par véhicule, sur une période | ✔ | Distance totale par motif et par véhicule |
 | Comparaison entre véhicules | ◐ | Répartition par véhicule ; pas de classement comparatif |
 | Calculs automatiques (écart, moyenne) | ◐ | Distance prévue / réelle dans le suivi des livraisons |
@@ -56,7 +56,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 ### 3.4 Carburant
 | Besoin | État | Remarque |
 |---|---|---|
-| Quantité, montant, date, kilométrage au plein | ✔ | Ravitaillements (facture, validation) |
+| Quantité, montant, date, kilométrage au plein | ✔ | Carburant (facture, validation) |
 | Consommation moyenne, par véhicule, par période | ✔ | Analyse de consommation, réel contre théorique |
 | Détection des consommations inhabituelles | ◐ | Anomalies détectées au plein ; pas d'alerte envoyée |
 | Coût du carburant par véhicule | ✔ | Indicateur de coût global |
@@ -73,7 +73,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 ### 3.6 Pannes et immobilisations
 | Besoin | État | Remarque |
 |---|---|---|
-| Date, véhicule concerné, début et durée | ✔ | Immobilisations ; signalement « panne » depuis le mobile |
+| Date, véhicule concerné, début et durée | ✔ | Immobilisations |
 | Nature et **cause** de la panne | ✖ | Un motif libre seulement |
 | Réparations effectuées, coût, date de remise en service | ◐ | Coût et date de fin présents ; réparations non détaillées |
 | Historique des pannes | ◐ | Via les immobilisations |
@@ -82,7 +82,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 ### 3.7 Coûts
 | Besoin | État | Remarque |
 |---|---|---|
-| Carburant, maintenance, réparations, vidange, autres frais | ✔ | Ravitaillements, vidanges, immobilisations, dépenses |
+| Carburant, maintenance, réparations, vidange, autres frais | ✔ | Carburant, vidanges, immobilisations, autres frais |
 | Pneumatiques, pièces de rechange, assurance | ✖ | À ajouter comme types de dépense |
 | Coût total par véhicule, coût au kilomètre, coût mensuel | ◐ | Coût global et coût au kilomètre ; détail par véhicule à confirmer |
 
@@ -91,7 +91,7 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 |---|---|---|
 | Identité, véhicule conduit, permis et sa validité | ✔ | Fiche chauffeur, alerte permis |
 | Nombre de sorties, historique des déplacements | ✔ | Statistiques du chauffeur |
-| Incidents et accidents | ◐ | Signalements limités à « panne » et « vidange » ; pas de type accident |
+| Incidents et accidents | ✖ | Aucun suivi (les signalements depuis le terrain ont été supprimés) |
 | Autres informations administratives | ? | À préciser avec les districts |
 
 ### 3.9 Affectation des ressources
@@ -143,14 +143,14 @@ consultation pour la NPSP-CI, la DGS, la DGCMU, les programmes et les partenaire
 
 | Besoin exprimé | État | Remarque |
 |---|---|---|
-| Saisie plus simple et plus rapide | ◐ | Mobile pour le terrain ; import Excel ; saisie au bureau par circuit |
-| Utilisation sur ordinateur, téléphone, tablette | ✔ | Back-office web et application mobile installable |
+| Saisie plus simple et plus rapide | ◐ | Import Excel ; saisie au bureau par circuit et saisie d'une tournée en une page |
+| Utilisation sur ordinateur, téléphone, tablette | ✔ | Back-office web (adapté aux petits écrans) ; plus d'application mobile |
 | Accès aux données en temps réel | ◐ | Rafraîchissement automatique des listes (30 s) ; pas de WebSocket |
 | Consultation de l'historique, recherche rapide | ◐ | Recherche par liste ; pas de recherche globale |
 | Calcul automatique des indicateurs | ✔ | 8 indicateurs DDKM |
 | Production automatique de rapports | ✔ | PDF / Excel, envois planifiés |
 | Tableaux de bord dynamiques | ✔ | Filtres PRES / région / district / dates |
-| Cartographie des sites et circuits | ✔ | Cartographie, circuits, suivi en temps réel |
+| Cartographie des sites et circuits | ✔ | Cartographie, circuits |
 | Comparaison entre périodes | ✔ | « vs mois précédent » |
 | Comparaison entre véhicules | ◐ | Répartition par véhicule |
 | **Comparaison entre districts** | ◐ | Possible au niveau national ; pas de classement |

@@ -2,14 +2,11 @@
 
 namespace App\Domain\Reports;
 
-use App\Domain\Finance\BudgetTracker;
 use App\Domain\Fleet\AlertCenter;
 use App\Domain\Fuel\FuelAnalyzer;
 use App\Domain\Indicators\IndicatorCatalog;
 use App\Domain\Indicators\IndicatorDetails;
 use App\Domain\Indicators\IndicatorService;
-use App\Models\Budget;
-use App\Models\Facture;
 use App\Models\FuelPrice;
 use App\Models\Immobilisation;
 use App\Models\SortieVehicule;
@@ -17,7 +14,7 @@ use App\Models\Vehicle;
 use App\Models\Vidange;
 use Carbon\CarbonImmutable;
 
-/** Construit le contenu des 6 rapports prédéfinis : DDKM, flotte, carburant, maintenance, financier, par bailleur. */
+/** Construit le contenu des 5 rapports prédéfinis : DDKM, flotte, carburant, maintenance, par bailleur. */
 class ReportBuilder
 {
     public const TYPES = [
@@ -25,14 +22,13 @@ class ReportBuilder
         'flotte' => 'Rapport de flotte',
         'carburant' => 'Rapport carburant',
         'maintenance' => 'Rapport maintenance',
-        'financier' => 'Rapport financier',
         'bailleur' => 'Rapport par bailleur',
     ];
 
-    /** Types de rapports proposés (le rapport financier suit le module Finance). @return array<string, string> */
+    /** Types de rapports proposés. @return array<string, string> */
     public static function types(): array
     {
-        return \App\Support\Modules::enabled('finance') ? self::TYPES : array_diff_key(self::TYPES, ['financier' => true]);
+        return self::TYPES;
     }
 
     /** Lignes maximum par tableau dans les rapports (au-delà : mention « … et N autres »). */
@@ -237,70 +233,21 @@ class ReportBuilder
         ]);
 
         return $doc->section('Alertes de maintenance', [], [$this->table('À traiter', ['Niveau', 'Alerte'],
-            AlertCenter::all($ids)->filter(fn ($a) => $a['type'] !== 'budget')->map(fn ($a) => [$a['level']->emoji().' '.$a['level']->label(), $a['message']])->all())]);
-    }
-
-    // ------------------------------------------------------------------ financier
-
-    private function buildFinancier(ReportDocument $doc, array $ids, CarbonImmutable $month): ReportDocument
-    {
-        $tracker = app(BudgetTracker::class);
-        $s = $tracker->monthSummary($ids, $month);
-
-        $postes = collect($s['postes']);
-        $doc->section('Budget et dépenses', [
-            ['label' => 'Budget alloué', 'value' => $this->fmt($s['alloue']).' FCFA'],
-            ['label' => 'Dépenses', 'value' => $this->fmt($s['depense']).' FCFA'],
-            ['label' => $s['reste'] >= 0 ? 'Reste' : 'Dépassement', 'value' => $this->fmt(abs($s['reste'])).' FCFA'],
-            ['label' => 'Prévision de fin de mois', 'value' => $this->fmt($s['prevision']).' FCFA'],
-        ], [$this->table('Par poste', ['Poste', 'Alloué', 'Dépensé', 'Consommé'],
-            $postes->map(fn ($p, $k) => [Budget::POSTES[$k], $this->fmt($p['alloue']), $this->fmt($p['depense']), $this->pct($p['depense'], $p['alloue'])])->values()->all())], [], [
-            $this->chart('Répartition des dépenses par poste (FCFA)', ChartSvg::donut($postes->keys()->map(fn ($k) => Budget::POSTES[$k])->all(), $postes->pluck('depense')->map(fn ($v) => (float) $v)->all(), 'FCFA')),
-            $this->chart('Budget alloué et dépensé par poste (FCFA)', ChartSvg::bars($postes->keys()->map(fn ($k) => Budget::POSTES[$k])->all(), [['name' => 'Alloué', 'values' => $postes->pluck('alloue')->map(fn ($v) => (float) $v)->all(), 'color' => '#94a3b8'], ['name' => 'Dépensé', 'values' => $postes->pluck('depense')->map(fn ($v) => (float) $v)->all(), 'color' => '#2563eb']], 'FCFA')),
-        ]);
-
-        $budgets = Budget::with('district:id,name')->whereIn('district_id', $ids)->whereDate('period', $month->toDateString())->orderBy('district_id')->get();
-        $doc->section('Détail des budgets', [], [$this->table('Budgets du mois', ['District', 'Poste', 'Bailleur', 'Alloué', 'Dépensé', 'Reste', 'Situation'],
-            $budgets->map(function (Budget $b) use ($tracker) {
-                $st = $tracker->status($b);
-
-                return [$b->district?->name, Budget::POSTES[$b->poste], $b->bailleur ?: 'Tous', $this->fmt($st['alloue']), $this->fmt($st['depense']), $this->fmt($st['reste']),
-                    ['depasse' => 'Dépassé', 'prevision_depassement' => 'Dépassement prévu', 'attention' => 'À surveiller', 'ok' => 'Dans le budget'][$st['niveau']]];
-            })->all())]);
-
-        $factures = Facture::whereIn('district_id', $ids)->get();
-        $doc->section('Factures', [], [$this->table('Par statut', ['Statut', 'Nombre', 'Montant (FCFA)'],
-            collect(Facture::STATUTS)->map(fn ($l, $k) => [$l, $factures->where('statut', $k)->count(), $this->fmt($factures->where('statut', $k)->sum('montant'))])->values()->all())]);
-
-        $trend = [];
-        $raw = ['labels' => [], 'alloue' => [], 'depense' => []];
-        for ($i = 5; $i >= 0; $i--) {
-            $m = $month->subMonths($i);
-            $t = $tracker->monthSummary($ids, $m);
-            $trend[] = [ucfirst($m->translatedFormat('F Y')), $this->fmt($t['alloue']), $this->fmt($t['depense']), $this->pct($t['depense'], $t['alloue'])];
-            $raw['labels'][] = ucfirst($m->translatedFormat('M y'));
-            $raw['alloue'][] = (float) $t['alloue'];
-            $raw['depense'][] = (float) $t['depense'];
-        }
-
-        return $doc->section('Tendance sur 6 mois', [], [['title' => 'Budget et dépenses', 'headers' => ['Mois', 'Alloué', 'Dépensé', 'Consommé'], 'rows' => $trend]], [], [
-            $this->chart('Budget alloué et dépenses sur 6 mois (FCFA)', ChartSvg::bars($raw['labels'], [['name' => 'Alloué', 'values' => $raw['alloue'], 'color' => '#94a3b8'], ['name' => 'Dépensé', 'values' => $raw['depense'], 'color' => '#2563eb']], 'FCFA')),
-        ]);
+            AlertCenter::all($ids)->map(fn ($a) => [$a['level']->emoji().' '.$a['level']->label(), $a['message']])->all())]);
     }
 
     // ------------------------------------------------------------------ bailleur
 
     private function buildBailleur(ReportDocument $doc, array $ids, CarbonImmutable $month): ReportDocument
     {
-        $tracker = app(BudgetTracker::class);
+        $tracker = app(CostBreakdown::class);
         $rows = $tracker->byBailleur($ids, $month);
 
         $top = collect($rows)->take(8)->values();
         $doc->section('Dépenses par bailleur', [
             ['label' => 'Bailleurs', 'value' => (string) count($rows)], ['label' => 'Total', 'value' => $this->fmt(collect($rows)->sum('total')).' FCFA'],
-        ], [$this->table('Synthèse', ['Bailleur', 'Véhicules', 'Carburant', 'Maintenance', 'Autres frais', 'Total', 'Budget alloué', 'Consommé'],
-            array_map(fn ($r) => [$r['bailleur'], $r['vehicules'], $this->fmt($r['carburant']), $this->fmt($r['maintenance']), $this->fmt($r['autres']), $this->fmt($r['total']),
-                $r['alloue'] > 0 ? $this->fmt($r['alloue']) : '—', $r['pct'] !== null ? round($r['pct']).' %' : '—'], $rows))], [], [
+        ], [$this->table('Synthèse', ['Bailleur', 'Véhicules', 'Carburant', 'Maintenance', 'Autres frais', 'Total'],
+            array_map(fn ($r) => [$r['bailleur'], $r['vehicules'], $this->fmt($r['carburant']), $this->fmt($r['maintenance']), $this->fmt($r['autres']), $this->fmt($r['total'])], $rows))], [], [
             $this->chart('Total des dépenses par bailleur (FCFA)', ChartSvg::hbars($top->map(fn ($r) => $r['bailleur'] ?: 'Sans bailleur')->all(), $top->pluck('total')->map(fn ($v) => (float) $v)->all(), 'FCFA')),
             $this->chart('Carburant, maintenance et autres frais par bailleur (FCFA)', ChartSvg::bars($top->map(fn ($r) => $r['bailleur'] ?: 'Sans bailleur')->all(), [
                 ['name' => 'Carburant', 'values' => $top->pluck('carburant')->map(fn ($v) => (float) $v)->all(), 'color' => '#2563eb'],

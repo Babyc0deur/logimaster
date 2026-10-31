@@ -7,13 +7,11 @@ use App\Domain\Reports\ReportBuilder;
 use App\Domain\Reports\ReportService;
 use App\Domain\Reports\Recommendations;
 use App\Mail\ReportMail;
-use App\Models\Budget;
 use App\Models\Chronogramme;
 use App\Models\Circuit;
 use App\Models\District;
 use App\Models\Espc;
 use App\Models\Expense;
-use App\Models\Facture;
 use App\Models\Pres;
 use App\Models\Ravitaillement;
 use App\Models\Region;
@@ -65,7 +63,7 @@ class ReportsTest extends TestCase
         return $user;
     }
 
-    /** Septembre 2026 dans ANYAMA : une sortie planifiée de 2 sites (1 livré à l'heure, 1 non livré), carburant, frais, budget, facture. */
+    /** Septembre 2026 dans ANYAMA : une sortie planifiée de 2 sites (1 livré à l'heure, 1 non livré), carburant, frais, facture. */
     private function seedData(): void
     {
         $v = Vehicle::create(['district_id' => $this->d1->id, 'immatriculation' => 'D55032', 'marque' => 'FORD', 'bailleur' => 'UCP FM', 'consommation_theorique' => 10, 'km_actuel' => 5000, 'km_vidange' => 5100]);
@@ -79,8 +77,6 @@ class ReportsTest extends TestCase
             'statut' => 'terminee', 'date_sortie' => '2026-09-07', 'circuit_respecte' => false, 'commentaires' => 'Déviation']);
         Ravitaillement::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'sortie_id' => $sortie->id, 'litres' => 30, 'prix_unitaire' => 715, 'date_ravitaillement' => '2026-09-07']);
         Expense::create(['district_id' => $this->d1->id, 'vehicle_id' => $v->id, 'type' => 'collation', 'montant' => 5000, 'date_depense' => '2026-09-07']);
-        Budget::create(['district_id' => $this->d1->id, 'period' => '2026-09-01', 'poste' => 'carburant', 'montant_alloue' => 20000]);
-        Facture::create(['district_id' => $this->d1->id, 'numero' => 'F1', 'fournisseur' => 'Total', 'date_facture' => '2026-09-08', 'categorie' => 'carburant', 'montant' => 21450, 'statut' => 'a_valider']);
     }
 
     private function xlsxSheets(string $path): array
@@ -139,17 +135,17 @@ class ReportsTest extends TestCase
         $this->assertSame(8, \App\Models\IndicatorSnapshot::where('district_id', $this->d1->id)->count());
     }
 
-    public function test_financial_and_supplier_reports_show_budget_and_bailleur_figures(): void
+    public function test_the_supplier_report_shows_the_costs_by_bailleur_and_by_vehicle(): void
     {
         $user = $this->user(User::ROLE_DISTRICT_MANAGER, [$this->d1]);
-        $fin = collect($this->xlsxSheets(Storage::disk('local')->path($this->service->generate($user, 'financier', 'xlsx', CarbonImmutable::parse('2026-09-01'))->fichier_path)))->flatten()->implode(' | ');
-        $this->assertStringContainsString('Dépassé', $fin);                              // carburant : 21 450 dépensés pour 20 000 alloués
-        $this->assertStringContainsString('21 450', $fin);
-        $this->assertStringContainsString('À valider', $fin);
 
         $bail = collect($this->xlsxSheets(Storage::disk('local')->path($this->service->generate($user, 'bailleur', 'xlsx', CarbonImmutable::parse('2026-09-01'))->fichier_path)))->flatten()->implode(' | ');
         $this->assertStringContainsString('UCP FM', $bail);
         $this->assertStringContainsString('D55032', $bail);
+        $this->assertStringNotContainsString('Budget alloué', $bail);   // plus de budgets
+
+        // le rapport financier n'existe plus
+        $this->assertArrayNotHasKey('financier', ReportBuilder::TYPES);
     }
 
     public function test_scope_is_always_limited_to_the_users_districts(): void
@@ -253,7 +249,7 @@ class ReportsTest extends TestCase
         $manager = $this->user(User::ROLE_DISTRICT_MANAGER, [$this->d1]);
         Sanctum::actingAs($manager);
 
-        $this->getJson('/api/reports/types')->assertOk()->assertJsonCount(6);
+        $this->getJson('/api/reports/types')->assertOk()->assertJsonCount(5);
         $this->postJson('/api/reports/generate', ['type' => 'ddkm', 'format' => 'pdf'])->assertStatus(422);
         $this->postJson('/api/reports/generate', ['type' => 'inconnu', 'format' => 'pdf', 'period' => '2026-09'])->assertStatus(422);
         $this->postJson('/api/reports/generate', ['type' => 'flotte', 'format' => 'pdf', 'period' => '2026-09', 'scope' => ['district_id' => $this->d2->id]])->assertForbidden();

@@ -24,9 +24,15 @@ class Cartographie extends Page
 
     protected static ?string $slug = 'suivi-temps-reel';
 
+    /** Désactivé par défaut (LOGIMASTER_LIVE_TRACKING=true pour le réactiver) : ni menu, ni page. */
     public static function canAccess(): bool
     {
-        return (bool) auth()->user()?->can('view_chronogrammes');
+        return \App\Support\Modules::enabled('suivi_temps_reel') && (bool) auth()->user()?->can('view_chronogrammes');
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
     }
 
     public function getSubheading(): ?string

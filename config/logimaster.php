@@ -3,7 +3,7 @@
 return [
 
     /*
-    | Période affichée par défaut dans les filtres (tableau de bord, indicateurs, finance, carburant) : les données réelles
+    | Période affichée par défaut dans les filtres (tableau de bord, indicateurs, carburant) : les données réelles
     | chargées vont de mai à octobre 2025. Les deux bornes restent modifiables par l'utilisateur dans les filtres.
     | Laisser vide (LOGIMASTER_PERIOD_FROM= / LOGIMASTER_PERIOD_UNTIL=) pour revenir au mois en cours.
     */
@@ -49,11 +49,11 @@ return [
     'vidange_interval_km' => (int) env('LOGIMASTER_VIDANGE_INTERVAL_KM', 5000),
 
     /*
-    | Modules optionnels. Finance = budgets, factures, tableau de bord financier, rapport financier, alertes de budget.
-    | Retiré par défaut : mettre LOGIMASTER_FINANCE=true dans .env pour le réactiver (le code et les données sont conservés).
+    | Modules optionnels. Suivi en temps réel = simulation du déplacement des véhicules sur leurs circuits.
+    | Désactivé par défaut : mettre LOGIMASTER_LIVE_TRACKING=true dans .env pour le réactiver (le code est conservé).
     */
     'modules' => [
-        'finance' => (bool) env('LOGIMASTER_FINANCE', false),
+        'suivi_temps_reel' => (bool) env('LOGIMASTER_LIVE_TRACKING', false),
     ],
 
 ];

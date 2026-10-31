@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Chronogramme;
 use App\Models\District;
 use App\Models\Driver;
-use App\Models\Facture;
+use App\Models\Expense;
 use App\Models\LivraisonEspc;
 use App\Models\Pres;
 use App\Models\Region;
@@ -59,14 +59,13 @@ class FilamentPermissionsTest extends TestCase
             $this->assertContains($this->code("/vehicles/{$this->vehicle->id}/edit"), [403, 404], "{$role} ne modifie pas un véhicule");
             $this->assertContains($this->code('/chronogrammes/create'), [403, 404], "{$role} ne planifie pas");
             $this->assertContains($this->code('/personnels/create'), [403, 404]);
-            $this->assertContains($this->code('/factures/create'), [403, 404]);
         }
     }
 
     public function test_district_manager_works_on_operations_but_not_on_administration(): void
     {
         $this->as(User::ROLE_DISTRICT_MANAGER);
-        foreach (['/vehicles', '/vehicles/create', '/drivers/create', '/chronogrammes/create', '/personnels/create', '/factures/create', '/carburant', '/calendrier-maintenance', ''] as $path) {
+        foreach (['/vehicles', '/vehicles/create', '/drivers/create', '/chronogrammes/create', '/personnels/create', '/expenses/create', '/carburant', '/calendrier-maintenance', ''] as $path) {
             $this->assertSame(200, $this->code($path), "district_manager → {$path}");
         }
         foreach (['/roles', '/users', '/audit-logs', '/seuils-alerte', '/fuel-prices', '/objectifs-indicateurs'] as $path) {
@@ -95,7 +94,7 @@ class FilamentPermissionsTest extends TestCase
 
         $manager = $this->as(User::ROLE_DISTRICT_MANAGER);
         $this->assertTrue($manager->can('update', $this->vehicle));
-        $this->assertTrue($manager->can('create', Facture::class));
+        $this->assertTrue($manager->can('create', Expense::class));
         // les livraisons suivent le chronogramme mais ne se créent ni ne se suppriment à la main
         $this->assertTrue($manager->can('viewAny', LivraisonEspc::class));
         $this->assertFalse($manager->can('create', LivraisonEspc::class));

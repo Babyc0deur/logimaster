@@ -83,11 +83,6 @@ class District extends Model implements HasCurrentTenantLabel
         return $this->hasMany(Expense::class);
     }
 
-    public function budgets()
-    {
-        return $this->hasMany(Budget::class);
-    }
-
     public function devices()
     {
         return $this->hasMany(DistrictDevice::class);
