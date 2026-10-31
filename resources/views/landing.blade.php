@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3efe6">
-    <meta name="description" content="Logimaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application convoyeur utilisable sans réseau.">
+    <meta name="description" content="Logimaster : planification des sorties, suivi des livraisons aux centres de santé et indicateurs DDKM pour les districts sanitaires. Application mobile pour les agents du bureau.">
     <title>Logimaster — Flotte et livraisons des districts sanitaires</title>
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <link rel="icon" type="image/svg+xml" href="{{ \App\Support\Brand::logo() }}">
@@ -209,17 +209,17 @@
                 <h1 class="up" style="animation-delay:.05s">Chaque sortie de véhicule, suivie <em>du planning à l'indicateur.</em></h1>
             </div>
             <div class="up" style="animation-delay:.15s">
-                <p class="lead">Du chronogramme aux livraisons, en temps réel : le bureau planifie les circuits, le chef de mission enregistre chaque site depuis son téléphone, et les indicateurs DDKM du district se calculent seuls.</p>
+                <p class="lead">Du chronogramme aux livraisons, en temps réel : le bureau planifie les circuits et enregistre chaque site, depuis l'ordinateur ou le téléphone, et les indicateurs DDKM du district se calculent seuls.</p>
                 <div class="cta">
                     @if ($adminOpen)<a class="btn dark" href="/admin">Accéder à l'administration <span class="arr">→</span></a>@endif
-                    <a class="btn line" href="#installer">Application convoyeur</a>
+                    <a class="btn line" href="#installer">Application mobile</a>
                 </div>
             </div>
         </div>
         <div class="facts up" style="animation-delay:.25s">
             <div><b>{{ $stats['districts'] }}</b><span>districts sanitaires</span></div>
             <div><b>8</b><span>indicateurs DDKM par mois</span></div>
-            <div><b>Hors réseau</b><span>saisie sur la route, envoi au retour</span></div>
+            <div><b>Ordinateur et mobile</b><span>la même saisie, au bureau ou en déplacement</span></div>
         </div>
         <figure class="up" style="animation-delay:.35s">
             <div class="shot">
@@ -233,11 +233,11 @@
 
 <section id="fonctionnement">
     <div class="wrap">
-        <div class="sh"><span class="mono">01 — Fonctionnement</span><div><h2>Une information saisie une seule fois</h2><p>La sortie planifiée au bureau est celle que le convoyeur exécute, puis celle que les indicateurs comptent. Personne ne recopie un classeur.</p></div></div>
+        <div class="sh"><span class="mono">01 — Fonctionnement</span><div><h2>Une information saisie une seule fois</h2><p>La sortie planifiée au bureau est celle que l'on suit site par site, puis celle que les indicateurs comptent. Personne ne recopie un classeur.</p></div></div>
         <ol class="steps">
             <li><span class="n">1</span><h3>Le bureau planifie</h3><p>Sorties du mois au chronogramme, véhicule, chauffeur et équipe affectés. Le superviseur valide : le planning est verrouillé.</p><span class="mono who">Gestionnaire · superviseur</span></li>
-            <li><span class="n">2</span><h3>L'équipe est prévenue</h3><p>Le chef de mission reçoit la sortie sur son téléphone, avec le circuit et les sites à livrer.</p><span class="mono who">Notification</span></li>
-            <li><span class="n">3</span><h3>Le circuit s'exécute</h3><p>Site par site : livré, en transit ou non livré avec la raison. Carburant, kilométrage et photo de la facture saisis en route.</p><span class="mono who">Chef de mission</span></li>
+            <li><span class="n">2</span><h3>La sortie est exécutée</h3><p>À la date prévue, le circuit et ses sites à livrer s'ouvrent au bureau ou sur l'application mobile.</p><span class="mono who">Gestionnaire du district</span></li>
+            <li><span class="n">3</span><h3>Le circuit est renseigné</h3><p>Site par site : livré, en transit ou non livré avec la raison. Carburant, kilométrage et photo de la facture.</p><span class="mono who">Bureau du district</span></li>
             <li><span class="n">4</span><h3>Le district est suivi</h3><p>Suivi des livraisons, indicateurs, rapports PDF et Excel, alertes de vidange et d'immobilisation.</p><span class="mono who">District · région · national</span></li>
         </ol>
     </div>
@@ -286,15 +286,15 @@
 
 <section id="terrain">
     <div class="wrap">
-        <div class="sh"><span class="mono">04 — Application terrain</span><div><h2>Pour le chef de mission, sur son téléphone</h2><p>Une application web qui s'installe depuis le navigateur, sans magasin d'applications, sur Android comme sur iPhone.</p></div></div>
+        <div class="sh"><span class="mono">04 — Application terrain</span><div><h2>Pour les agents du bureau, sur leur téléphone</h2><p>Une application web qui s'installe depuis le navigateur, sans magasin d'applications, sur Android comme sur iPhone. On s'y connecte avec son compte Logimaster.</p></div></div>
         <div class="field">
             <ul>
-                <li><b>Ses sorties validées</b><span>Le planning du jour et des jours suivants, avec l'équipe et le circuit.</span></li>
-                <li><b>Un geste par site</b><span>Livré, en transit ou non livré avec la raison ; photo du bon signé.</span></li>
+                <li><b>Les sorties validées</b><span>Le planning du district choisi, du jour et des jours suivants, avec l'équipe et le circuit.</span></li>
+                <li><b>Un geste par site</b><span>Livré, en transit ou non livré avec la raison, avec le kilométrage au compteur.</span></li>
                 <li><b>Carburant</b><span>Litres, station et photo de la facture, rattachés à la sortie.</span></li>
                 <li><b>Sans réseau</b><span>Les actions restent sur le téléphone et partent au retour du réseau, avec leur heure réelle.</span></li>
-                <li><b>Signalements</b><span>Panne, accident ou anomalie, signalés au district depuis la route.</span></li>
-                <li><b>Accès créé avec la fiche</b><span>Identifiant et code remis par le bureau ; mot de passe choisi à la première connexion.</span></li>
+                <li><b>Frais et véhicules</b><span>Autres frais de la sortie, disponibilité des véhicules, vidanges et échéances.</span></li>
+                <li><b>Votre compte</b><span>Adresse e-mail et mot de passe de l'administration ; un administrateur national choisit le district à afficher.</span></li>
             </ul>
             <div class="qrcard" id="installer">
                 <div class="qr">{!! $qr !!}</div>
@@ -332,9 +332,9 @@
     <div class="wrap">
         <div class="sh"><span class="mono">06 — Questions</span><div><h2>Questions fréquentes</h2></div></div>
         <div class="faq">
-            <details open><summary>Comment un convoyeur obtient-il son accès ?</summary><p>Tout chef de mission ou passager actif a un accès créé avec sa fiche dans le personnel. Le bureau lui remet son identifiant et un code provisoire ; il choisit son mot de passe à la première connexion.</p></details>
-            <details><summary>Et s'il n'y a pas de réseau sur la route ?</summary><p>Les livraisons, le carburant et les photos sont gardés sur le téléphone, puis envoyés au retour du réseau avec l'heure réelle de chaque action. Rien n'est perdu ni compté deux fois.</p></details>
-            <details><summary>Qui voit quoi ?</summary><p>Chaque rôle a son périmètre : le convoyeur ses sorties validées, le gestionnaire son district, le responsable sa région, le niveau national l'ensemble. Chaque modification est journalisée.</p></details>
+            <details open><summary>Comment obtient-on un accès ?</summary><p>L'administrateur crée le compte dans l'administration, avec le rôle voulu (gestionnaire de district, par exemple). La même adresse e-mail et le même mot de passe servent à l'administration et à l'application mobile.</p></details>
+            <details><summary>Et s'il n'y a pas de réseau ?</summary><p>Les livraisons, le carburant et les photos sont gardés sur le téléphone, puis envoyés au retour du réseau avec l'heure réelle de chaque action. Rien n'est perdu ni compté deux fois.</p></details>
+            <details><summary>Qui voit quoi ?</summary><p>Chaque rôle a son périmètre : le gestionnaire son district, le responsable sa région, le niveau national l'ensemble. Chaque modification est journalisée.</p></details>
             <details><summary>Peut-on reprendre nos classeurs Excel ?</summary><p>Oui. L'import lit les classeurs Logimaster existants (sites, véhicules, circuits, activité) et harmonise les noms, marques, bailleurs et circuits.</p></details>
         </div>
     </div>
@@ -345,7 +345,7 @@
         <h2>Ouvrir le tableau de bord de votre district</h2>
         <div class="cta">
             @if ($adminOpen)<a class="btn dark" href="/admin">Se connecter <span class="arr">→</span></a>@endif
-            <a class="btn line" href="/m">Application convoyeur</a>
+            <a class="btn line" href="/m">Application mobile</a>
         </div>
     </div>
 </div>
@@ -354,7 +354,7 @@
 <footer>
     <div class="wrap">
         <span>Logimaster · gestion de flotte et livraisons des districts sanitaires</span>
-        <span><a href="#fonctionnement">Fonctionnement</a><a href="/m">Application convoyeur</a><a href="/m/installer">Affiche d'installation</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
+        <span><a href="#fonctionnement">Fonctionnement</a><a href="/m">Application mobile</a><a href="/m/installer">Affiche d'installation</a>@if ($adminOpen)<a href="/admin">Administration</a>@endif</span>
     </div>
 </footer>
 

@@ -47,25 +47,29 @@ class PersonnelActionsTest extends TestCase
         $p = Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'KONE IBRAHIM', 'fonction' => 'chef_mission']);
 
         $html = Livewire::test(ListPersonnels::class)->assertOk()->assertSee('KONE IBRAHIM')->html();
-        foreach (['Fiche', 'Modifier', 'Accès mobile', 'Réinitialiser le code', 'Supprimer'] as $tooltip) {
+        foreach (['Fiche', 'Modifier', 'Supprimer'] as $tooltip) {
             $this->assertStringContainsString("tooltip", $html);
             $this->assertStringContainsString($tooltip, $html, $tooltip);
+        }
+        // l'accès mobile ne se gère plus depuis le personnel : l'application mobile est réservée aux comptes du bureau
+        foreach (['Accès mobile', 'Réinitialiser le code', 'Identifiant mobile'] as $gone) {
+            $this->assertStringNotContainsString($gone, $html, $gone);
         }
         // plus de bouton texte : les libellés ne sont que des info-bulles et des textes d'accessibilité
         $this->assertStringContainsString('fi-icon-btn', $html);
     }
 
-    public function test_deleting_a_person_removes_the_record_and_the_mobile_access(): void
+    public function test_deleting_a_person_removes_the_record_and_creating_one_adds_no_account(): void
     {
         $this->as(User::ROLE_PRES_ADMIN);
+        $accounts = User::count();
         $p = Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'BAMBA AICHA', 'fonction' => 'chef_mission']);
-        $mobileUser = $p->fresh()->user;   // le compte mobile suit la fiche d'un chef de mission
-        $this->assertNotNull($mobileUser);
+        $this->assertSame($accounts, User::count());   // plus de compte créé avec la fiche
 
         Livewire::test(ListPersonnels::class)->callTableAction(DeleteAction::class, $p)->assertHasNoTableActionErrors();
 
         $this->assertNull(Personnel::find($p->id));
-        $this->assertNull(User::find($mobileUser->id));
+        $this->assertSame($accounts, User::count());
     }
 
     public function test_a_read_only_role_does_not_get_the_delete_button(): void

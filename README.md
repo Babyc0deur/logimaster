@@ -79,36 +79,26 @@ du périmètre de l'utilisateur.
 ## Page d'accueil et application mobile
 
 - `/` : page de présentation (papier / encre / orange) : fonctionnement, **cartographie**, les 8 indicateurs, application
-  terrain, suivi en temps réel, questions, avec le QR code d'installation et l'accès à l'administration (`/admin`).
-- `/m` : **application convoyeur** installable (PWA). Le chef de mission ou le passager y reçoit les sorties validées de son
-  équipe, exécute le circuit site par site (livré / transit / non livré), déclare le carburant et termine la sortie ; le
-  bureau le voit aussitôt dans « Suivi des livraisons ». Fonctionne hors réseau (actions envoyées au retour du réseau).
+  mobile, suivi en temps réel, questions, avec le QR code d'installation et l'accès à l'administration (`/admin`).
+- `/m` : **application mobile du bureau**, installable (PWA), réservée aux comptes de l'administration qui ont la permission
+  « exécuter les circuits » (administrateur national, gestionnaire de district). On s'y connecte avec la même adresse e-mail et le
+  même mot de passe que l'administration ; un compte national ou régional choisit le district à afficher. On y voit les sorties
+  **validées** du district, on exécute le circuit site par site (livré / transit / non livré, avec le kilométrage), on déclare le
+  carburant et les autres frais et on termine la sortie ; le bureau le voit aussitôt dans « Suivi des livraisons ». Planning du
+  district et véhicules (disponibilité, vidange, échéances) en lecture. Fonctionne hors réseau (actions envoyées au retour du réseau).
+  Le jeton de connexion mobile ne donne accès qu'à `/api/mobile/*`, jamais à l'API complète.
 - `/m/installer` : affiche à imprimer avec le QR code. Le QR pointe vers `LOGIMASTER_MOBILE_URL` (HTTPS obligatoire pour
-  l'installation et les notifications ; défaut `APP_URL/m`).
-- **Partager l'application hors du réseau local** : `powershell -ExecutionPolicy Bypass -File tools\start-tunnel.ps1` ouvre un
-  tunnel HTTPS public (localhost.run, via le `ssh` de Windows, rien à installer), active le **mode tunnel**
-  (`LOGIMASTER_TUNNEL_MODE=true` : depuis l'adresse publique, seuls l'accueil, `/m` et `/api/mobile` répondent ; `/admin` et le reste
-  de l'API restent locaux, en 404 de l'extérieur) et met à jour `LOGIMASTER_MOBILE_URL` pour le QR code. L'adresse change à chaque
-  lancement ; le tunnel dure tant que le PC et `php artisan serve` tournent. En production : un vrai nom de domaine HTTPS.
-- **Accès automatique** : tout chef de mission ou passager actif est **convoyeur d'office** : son accès est créé avec sa
-  fiche (identifiant généré, ex. `kone.ibrahim`, et code d'accès provisoire de 8 caractères), sans création manuelle. Le
-  bureau lit l'identifiant et le code dans *Personnel* (action « Accès mobile ») pour les remettre ; le convoyeur choisit son
-  mot de passe à la première connexion, et le code disparaît. « Réinitialiser le code » en cas de perte. L'accès suit la
-  fiche : suspendu si la personne devient inactive ou change de fonction, réactivé ensuite, supprimé avec la fiche.
-  `php artisan mobile:sync-access` crée les accès du personnel déjà enregistré (import, saisie antérieure).
-  `LOGIMASTER_MOBILE_AUTO_ACCESS=false` désactive la création automatique. Le rôle `convoyeur` n'a aucun accès à
-  l'administration ; il voit uniquement les sorties **validées** dont il est dans l'**équipe** (champ « Équipe » du chronogramme).
+  l'installation ; défaut `APP_URL/m`).
+- **Plus de comptes de convoyeurs** : les chefs de mission et passagers n'ont plus d'accès. Ils restent dans *Personnel* comme
+  équipage d'une sortie (champ « Équipe » du chronogramme), sans compte ni mot de passe. Il n'y a ni notification push, ni mode tunnel,
+  ni position GPS relevée à la livraison, ni signalements de pannes depuis le téléphone : tout se saisit dans l'administration
+  (Immobilisations, Vidanges) ou dans l'application mobile du bureau.
 - **Photo de la facture de carburant** : dans l'onglet Carburant, « Prendre une photo de la facture ». L'image est réduite
   (1400 px, JPEG ≈ 100-200 Ko) avant l'envoi, gardée sur le téléphone (IndexedDB) tant qu'il n'y a pas de réseau, puis
   enregistrée sur le disque privé (`storage/app/private/factures`). Contrôle sur le contenu (JPEG, PNG ou WebP, 4 Mo max).
   Au bureau : *Ravitaillements* → « Voir la facture » (ou « Télécharger la facture »). Le serveur doit accepter des envois
   de quelques centaines de Ko : `.claude/launch.json` lance `php -S` (via `server.php`) avec `post_max_size=12M` ; avec
   `php artisan serve` ou Herd, vérifier `post_max_size` et le dossier temporaire de PHP.
-- **Notifications** : à la validation du chronogramme, l'équipe est prévenue dans l'application et par notification push.
-  `php artisan webpush:vapid --write` génère les clés VAPID dans `.env` (sous Windows, `WEBPUSH_OPENSSL_CONF` doit pointer
-  vers un `openssl.cnf` valide). API : `/api/mobile/*` (jeton à capacité « mobile » uniquement).
-- Compte de démonstration : identifiant `kone.ibrahim` (ou `convoyeur@logimaster.test`) / `password` (ANYAMA, sortie du jour validée).
-
 ## Organisation et géographie
 
 - **Organisation** : **10 PRES** réelles, auxquelles sont rattachées les 33 régions (`app/Domain/Organisation/PresMapping.php`, commande
@@ -122,7 +112,7 @@ du périmètre de l'utilisateur.
 `docker/start.sh` enchaîne au démarrage : migrations, restauration de la sauvegarde, installation, chargement des données,
 `organisation:pres`, `districts:geo --force`, `indicators:backfill`, puis caches (config, routes, vues, événements, Filament).
 SQLite est réglé pour la performance (WAL, `busy_timeout`, index composites) ; opcache est configuré dans le `Dockerfile`.
-Variables à définir sur Render : `APP_NAME=Logimaster`, `CACHE_STORE=file`, `VAPID_*` (notifications push), `BACKUP_S3_*`
+Variables à définir sur Render : `APP_NAME=Logimaster`, `CACHE_STORE=file`, `BACKUP_S3_*`
 (sauvegardes), `SENTRY_LARAVEL_DSN` (erreurs). Un **disque persistant** est nécessaire pour conserver la base entre deux déploiements.
 
 ## Module Finance (retiré)

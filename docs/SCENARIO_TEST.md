@@ -1,6 +1,6 @@
 # Scénario de test de bout en bout — Logimaster
 
-Durée : environ 45 minutes. Un ordinateur (administration) et un téléphone (application convoyeur).
+Durée : environ 45 minutes. Un ordinateur (administration) et un téléphone (application mobile du bureau).
 Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'écart.
 
 ## 0. Préparation
@@ -9,12 +9,11 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 |---|---|
 | Administration | `http://127.0.0.1:8085/admin` |
 | Accueil | `http://127.0.0.1:8085/` |
-| Application mobile | `/m` (adresse du tunnel + `/m` depuis le téléphone) |
-| Comptes de démo (mot de passe `password`) | `pres@logimaster.test` (national), `region@logimaster.test`, `district@logimaster.test`, `bailleur@logimaster.test`, `convoyeur@logimaster.test` |
-| Convoyeur ANYAMA | `kone.ibrahim` / `password` |
-| Convoyeurs MEAGUI | ex. `soro.tenena` / code provisoire (voir la fiche Chefs de mission & passagers) |
+| Application mobile | `/m` (adresse publique HTTPS + `/m` depuis le téléphone) |
+| Comptes de démo (mot de passe `password`) | `pres@logimaster.test` (national), `region@logimaster.test`, `district@logimaster.test`, `bailleur@logimaster.test` |
+| Compte pour l'application mobile | `district@logimaster.test` (gestionnaire d'ANYAMA) ou `pres@logimaster.test` (national : choix du district) |
 
-1. Lancer l'application (« lance l'app ») et le tunnel (`tools/start-tunnel.ps1 -Watch`) ; noter l'adresse affichée.
+1. Lancer l'application (« lance l'app ») ; noter l'adresse affichée.
 2. Sur le téléphone, mettre le Wi-Fi/données actifs (l'étape 7 coupe le réseau).
 
 ## 1. Page d'accueil
@@ -24,8 +23,7 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 3. Section mobile : ✔ le téléphone change d'écran toutes les 3 s, l'onglet du bas suit.
 4. Ouvrir/fermer la FAQ. ✔ Une seule réponse ouverte à la fois n'est pas imposée ; l'animation de la flèche fonctionne.
 5. Réduire la fenêtre à la largeur d'un téléphone. ✔ Pas de défilement horizontal, scène et boutons lisibles.
-6. Via l'adresse du tunnel : ✔ aucun lien « Administration » ; `/admin` renvoie 404.
-7. Préférence système « réduire les animations » : ✔ image finale fixe de la scène.
+6. Préférence système « réduire les animations » : ✔ image finale fixe de la scène.
 
 ## 2. Installation et connexion mobile
 
@@ -33,16 +31,16 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 2. Installer : Android « Installer l'application » ; iPhone Safari → Partager → « Sur l'écran d'accueil ». ✔ Icône sur l'écran d'accueil, ouverture plein écran.
 3. `/m/installer` ✔ affiche imprimable avec le QR.
 4. Se connecter avec un mauvais mot de passe. ✔ Message d'erreur, pas d'accès.
-5. Se connecter avec un compte à code provisoire (ex. `soro.tenena`). ✔ Obligation de choisir un nouveau mot de passe ; ensuite le code provisoire ne fonctionne plus.
-6. Se connecter avec `kone.ibrahim` / `password`. ✔ Accueil avec la sortie du jour.
-7. Accepter les notifications. ✔ Profil : « Notifications activées ».
+5. Se connecter avec `district@logimaster.test` / `password`. ✔ Accueil avec la sortie du jour du district ; aucune demande de position ni de notification.
+6. Se connecter avec `pres@logimaster.test`. ✔ Un sélecteur propose les 113 districts ; changer de district recharge les sorties, le planning et les véhicules.
+7. Se connecter avec `bailleur@logimaster.test` (lecture seule). ✔ Refus : ce compte n'a pas la permission d'exécuter les circuits.
 
-## 3. Création des accès (automatique)
+## 3. Comptes du bureau
 
-1. Admin → **Chefs de mission & passagers** → créer une personne avec rôle chef de mission. ✔ Identifiant et code générés sans création de compte manuelle.
-2. Action « Accès mobile » sur la ligne. ✔ Identifiant + code provisoire, bouton QR, bouton « Régénérer le code ».
-3. Désactiver la personne. ✔ Connexion mobile refusée.
-4. Supprimer puis recréer la même personne. ✔ Aucun doublon d'e-mail (pas d'erreur).
+1. Admin → menu utilisateur → **Utilisateurs** → créer un compte avec le rôle « Gestionnaire de district » et rattacher un district. ✔ Le compte se connecte à l'administration **et** à l'application mobile avec la même adresse e-mail.
+2. Créer une personne dans **Personnel** avec la fonction chef de mission. ✔ Aucun compte n'est créé : elle apparaît seulement dans l'équipe d'une sortie.
+3. Désactiver le compte du bureau. ✔ Connexion refusée sur l'administration et sur le mobile ; le jeton mobile existant ne fonctionne plus.
+4. Avec un jeton mobile, appeler `/api/vehicles`. ✔ Refus (403) : le jeton ne sert qu'à l'application mobile.
 
 ## 4. Planification et validation (bureau)
 
@@ -51,8 +49,8 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 3. Glisser-déposer la sortie sur un autre jour. ✔ La date change ; un conflit (même véhicule, même jour) est signalé.
 4. Se connecter en `bailleur@logimaster.test` (superviseur). ✔ Bouton **Valider** disponible ; le district ne peut pas valider lui-même.
 5. Valider la sortie. ✔ Verrouillée (non modifiable) ; statut « validé ».
-6. ✔ Sur le téléphone de l'équipe : notification push « Chronogramme validé » (toucher ouvre l'application) et sortie visible à l'accueil + onglet Alertes.
-7. Membre hors équipe : ✔ ne voit pas cette sortie.
+6. ✔ Le superviseur et les autres validateurs reçoivent la notification « Chronogramme validé » dans l'application (cloche) ; la sortie est visible à l'accueil de l'application mobile du district.
+7. Un compte d'un autre district : ✔ ne voit pas cette sortie.
 
 ## 5. Exécution du circuit (téléphone)
 
@@ -93,14 +91,13 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 | `region@logimaster.test` | uniquement sa région |
 | `district@logimaster.test` | uniquement son district, ne valide pas |
 | `bailleur@logimaster.test` | valide, lecture seule ailleurs |
-| convoyeur | aucun accès à `/admin` (refusé), mobile uniquement |
 
-Tester aussi : menu utilisateur (en haut à droite) → Paramètres (ESPC), Chefs de mission & passagers, Districts au-dessus de Déconnexion ; groupe Administration ; absence des menus Factures/Budgets.
+Tester aussi : menu utilisateur (en haut à droite) → Paramètres (ESPC), Personnel, Districts au-dessus de Déconnexion ; groupe Administration ; absence des menus Factures/Budgets.
 
 ## 9. Pages d'erreur et sécurité
 
 1. `/page-inexistante` ✔ page 404 personnalisée en français.
-2. Via le tunnel : `/admin`, `/admin/login`, `/api/vehicles` ✔ 404.
+2. Jeton mobile sur l'API complète (`/api/vehicles`) ✔ 403.
 3. Token expiré / déconnexion mobile ✔ retour à la connexion, file hors réseau conservée.
 
 ## 10. Contrôle automatique

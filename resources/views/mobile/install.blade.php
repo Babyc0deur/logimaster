@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Installer Logimaster Convoyeur</title>
+    <title>Installer Logimaster Bureau</title>
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
     <style>
         :root { --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#2563eb; }
@@ -34,32 +34,32 @@
     <div class="head">
         <img src="{{ \App\Support\Brand::logo() }}" alt="">
         <div>
-            <h1>Logimaster Convoyeur</h1>
-            <p class="sub">L'application pour exécuter vos circuits : livraisons, carburant, notifications.</p>
+            <h1>Logimaster Bureau</h1>
+            <p class="sub">L'application pour exécuter les circuits du district : livraisons, kilométrage, carburant, frais.</p>
         </div>
     </div>
 
     <div class="grid">
-        <div class="qr"><img src="/m/qr.svg" alt="QR code d'installation de Logimaster Convoyeur"></div>
+        <div class="qr"><img src="/m/qr.svg" alt="QR code d'installation de Logimaster Bureau"></div>
         <div>
             <h2>Android (Chrome)</h2>
             <ol>
                 <li>Scannez le QR code avec l'appareil photo.</li>
                 <li>Ouvrez le lien, puis touchez <strong>Installer l'application</strong> (ou menu ⋮ → <em>Installer l'application</em>).</li>
-                <li>Connectez-vous avec l'identifiant remis par votre district et autorisez les notifications.</li>
+                <li>Connectez-vous avec votre adresse e-mail et votre mot de passe Logimaster.</li>
             </ol>
             <h2>iPhone (Safari)</h2>
             <ol>
                 <li>Scannez le QR code, ouvrez le lien dans <strong>Safari</strong>.</li>
                 <li>Touchez <strong>Partager</strong> → <strong>Sur l'écran d'accueil</strong>.</li>
-                <li>Ouvrez l'application depuis l'icône pour recevoir les notifications.</li>
+                <li>Ouvrez l'application depuis l'icône, puis connectez-vous avec votre compte Logimaster.</li>
             </ol>
             <span class="url">{{ $url }}</span>
         </div>
     </div>
 
     @unless ($secure)
-        <p class="warn">Cette adresse n'est pas en HTTPS : le téléphone ne pourra pas installer l'application ni recevoir de notifications.
+        <p class="warn">Cette adresse n'est pas en HTTPS : le téléphone ne pourra pas installer l'application.
             Renseignez l'adresse publique sécurisée dans <code>LOGIMASTER_MOBILE_URL</code> (fichier .env).</p>
     @endunless
 

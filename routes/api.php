@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('auth/login', [Api\AuthController::class, 'login'])->middleware('throttle:login');
 
-// Application mobile du convoyeur (PWA) : jeton à capacité « mobile » uniquement
+// Application mobile du bureau (PWA) : comptes de l'administration, jeton à capacité « mobile » uniquement
 Route::post('mobile/login', [Api\Mobile\MobileAuthController::class, 'login'])->middleware('throttle:login');
 Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWrites::class])->group(function () {
     Route::middleware('mobile.access:allow-temporary-password')->group(function () {
@@ -16,7 +16,6 @@ Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWri
         Route::post('password', [Api\Mobile\MobileAuthController::class, 'changePassword']);
     });
     Route::middleware('mobile.access')->group(function () {
-        Route::get('config', [Api\Mobile\MobileController::class, 'config']);
         Route::get('sorties', [Api\Mobile\MobileController::class, 'sorties']);
         Route::get('sorties/{id}', [Api\Mobile\MobileController::class, 'sortie']);
         Route::post('sorties/{id}/start', [Api\Mobile\MobileController::class, 'start']);
@@ -26,12 +25,8 @@ Route::prefix('mobile')->middleware(['auth:sanctum', 'throttle:api', AuditApiWri
         Route::post('livraisons/{id}', [Api\Mobile\MobileController::class, 'livraison']);
         Route::get('planning', [Api\Mobile\FleetController::class, 'planning']);
         Route::get('vehicules', [Api\Mobile\FleetController::class, 'vehicules']);
-        Route::post('vehicules/{id}/signalements', [Api\Mobile\FleetController::class, 'signalement']);
-        Route::post('push-test', [Api\Mobile\FleetController::class, 'pushTest']);
         Route::get('notifications', [Api\Mobile\MobileController::class, 'notifications']);
         Route::post('notifications/read', [Api\Mobile\MobileController::class, 'readNotifications']);
-        Route::post('push-subscriptions', [Api\Mobile\MobileController::class, 'subscribe']);
-        Route::delete('push-subscriptions', [Api\Mobile\MobileController::class, 'unsubscribe']);
     });
 });
 

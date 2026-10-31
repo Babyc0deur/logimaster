@@ -1,4 +1,4 @@
-// Service worker Logimaster Convoyeur : coque de l'application hors réseau + notifications push.
+// Service worker Logimaster Bureau : coque de l'application hors réseau.
 // La version du cache change à chaque déploiement de l'application : les téléphones reprennent la nouvelle coque.
 const CACHE = 'lm-shell-{{ $version }}';
 @verbatim
@@ -48,26 +48,4 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-self.addEventListener('push', (event) => {
-    let data = {};
-    try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'Logimaster', body: event.data ? event.data.text() : '' }; }
-    event.waitUntil(self.registration.showNotification(data.title || 'Logimaster', {
-        body: data.body || '',
-        icon: '/pwa/icon-192.png',
-        badge: '/pwa/icon-192.png',
-        tag: data.tag || 'logimaster',
-        data: { url: data.url || '/m' },
-    }));
-});
-
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    const target = (event.notification.data && event.notification.data.url) || '/m';
-    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
-        for (const w of wins) {
-            if (w.url.includes('/m') && 'focus' in w) { w.postMessage({ type: 'refresh' }); return w.focus(); }
-        }
-        return self.clients.openWindow(target);
-    }));
-});
 @endverbatim

@@ -139,18 +139,13 @@ class LogimasterDemoSeeder extends Seeder
         }
     }
 
-    /** Compte convoyeur (application mobile) et sortie validée du jour : de quoi essayer le parcours complet. */
+    /** Sortie validée du jour : de quoi essayer le parcours complet (avec le compte district@logimaster.test sur l'application mobile). */
     private function seedMobile(District $district, $vehicles, Driver $driver, Circuit $circuit): void
     {
         $chef = Personnel::where('district_id', $district->id)->where('nom_complet', 'Koné Ibrahim')->first();
         if (! $chef) {
             return;
         }
-        // Le compte mobile est créé automatiquement avec la fiche ; pour la démonstration on lui donne un mot de passe connu.
-        $user = $chef->user ?? app(\App\Domain\Mobile\ConvoyeurAccess::class)->sync($chef);
-        $user->forceFill(['email' => 'convoyeur@logimaster.test', 'password' => 'password', 'must_change_password' => false, 'is_active' => true])->save();
-        $chef->forceFill(['code_acces' => null])->saveQuietly();
-
         $plan = Chronogramme::firstOrCreate(
             ['district_id' => $district->id, 'circuit_id' => $circuit->id, 'date_prevue' => today()->toDateString(), 'motif' => 'distribution'],
             ['vehicle_id' => $vehicles[0]->id, 'driver_id' => $driver->id, 'heure_depart' => '07:30', 'statut' => 'planifiee',

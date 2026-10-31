@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Api\ApiController;
-use App\Models\Personnel;
+use App\Models\District;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
-/** Authentification de l'application mobile du convoyeur : connexion, déconnexion, changement de mot de passe. */
+/**
+ * Authentification de l'application mobile du bureau : les comptes de l'administration (administrateur national,
+ * gestionnaire de district…) qui ont la permission « exécuter les circuits » se connectent avec leur adresse e-mail.
+ */
 class MobileAuthController extends ApiController
 {
     public const ABILITY = 'mobile';
@@ -25,13 +28,12 @@ class MobileAuthController extends ApiController
             'device_name' => ['nullable', 'string', 'max:120'],
         ]);
 
-        // L'identifiant (« kone.ibrahim ») est généré avec la fiche personnel ; une adresse e-mail reste acceptée.
-        $login = Str::lower(trim((string) ($data['identifiant'] ?? $data['email'])));
-        $user = str_contains($login, '@') ? User::where('email', $login)->first() : Personnel::where('identifiant', $login)->first()?->user;
-        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->is_active || ! $user->can('execute_circuits') || ! $user->personnel_id) {
+        $login = Str::lower(trim((string) ($data['email'] ?? $data['identifiant'])));
+        $user = User::where('email', $login)->first();
+        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->is_active || ! $user->can('execute_circuits')) {
             // Même message dans tous les cas : on ne révèle pas si le compte existe.
             \App\Support\AdminAudit::failedLogin($login, 'mobile', $user?->getKey());
-            throw ValidationException::withMessages(['identifiant' => ['Identifiant ou code d\'accès invalide.']]);
+            throw ValidationException::withMessages(['identifiant' => ['Adresse e-mail ou mot de passe invalide.']]);
         }
 
         $user->forceFill(['last_mobile_login_at' => now()])->save();
@@ -46,10 +48,6 @@ class MobileAuthController extends ApiController
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        // Les téléphones se désabonnent explicitement des notifications avant (DELETE push-subscriptions) ; on retire aussi celui-ci.
-        if ($endpoint = $request->input('endpoint')) {
-            $request->user()->pushSubscriptions()->where('endpoint_hash', \App\Models\PushSubscription::hashEndpoint((string) $endpoint))->delete();
-        }
 
         return response()->json(null, 204);
     }
@@ -75,7 +73,6 @@ class MobileAuthController extends ApiController
         }
 
         $user->forceFill(['password' => $data['password'], 'must_change_password' => false])->save();
-        $user->personnel?->forceFill(['code_acces' => null])->saveQuietly();   // le code provisoire n'est plus affiché au bureau
         $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->delete();
 
         return ['must_change_password' => false];
@@ -84,16 +81,16 @@ class MobileAuthController extends ApiController
     /** @return array<string, mixed> */
     private function profile(User $user): array
     {
-        $user->loadMissing('personnel.district');
+        $ids = $user->accessibleDistrictIds();
 
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'identifiant' => $user->personnel?->identifiant,
-            'fonction' => $user->personnel?->fonction,
-            'fonction_label' => \App\Models\Personnel::FONCTIONS[$user->personnel?->fonction] ?? null,
-            'district' => $user->personnel?->district?->name,
+            'fonction_label' => \App\Support\PermissionCatalog::roleLabel((string) $user->roles->first()?->name),
+            // districts que l'utilisateur peut choisir dans l'application (national : tous)
+            'districts' => District::query()->when($ids !== null, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get(['id', 'name'])
+                ->map(fn ($d) => ['id' => $d->id, 'name' => $d->name])->values(),
         ];
     }
 }

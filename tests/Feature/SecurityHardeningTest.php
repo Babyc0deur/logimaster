@@ -65,7 +65,7 @@ class SecurityHardeningTest extends TestCase
         User::factory()->create(['email' => 'agent@exemple.org', 'is_active' => true]);
 
         $this->postJson('/api/auth/login', ['email' => 'agent@exemple.org', 'password' => 'mauvais'])->assertStatus(422);
-        $this->postJson('/api/mobile/login', ['identifiant' => 'inconnu.agent', 'password' => 'mauvais'])->assertStatus(422);
+        $this->postJson('/api/mobile/login', ['email' => 'inconnu.agent@exemple.org', 'password' => 'mauvais'])->assertStatus(422);
 
         $logs = AuditLog::where('action', 'connexion refusée')->get();
         $this->assertCount(2, $logs);

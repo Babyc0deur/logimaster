@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Domain\Chronogramme\ChronogrammeWorkflow;
-use App\Domain\Mobile\WebPushSender;
 use App\Models\Chronogramme;
 use App\Models\Circuit;
 use App\Models\District;
@@ -13,26 +12,25 @@ use App\Models\FuelPrice;
 use App\Models\LivraisonEspc;
 use App\Models\Personnel;
 use App\Models\Pres;
-use App\Models\PushSubscription;
 use App\Models\Ravitaillement;
 use App\Models\Region;
 use App\Models\SortieVehicule;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Notifications\PlanningValidated;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LogimasterRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/** Application mobile du convoyeur : authentification, sorties de l'équipe, livraisons, carburant, notifications. */
+/** Application mobile du bureau : authentification des comptes de l'administration, sorties du district, livraisons, carburant. */
 class MobileAppTest extends TestCase
 {
     use RefreshDatabase;
 
     private District $district;
+
+    private District $otherDistrict;
 
     private Vehicle $vehicle;
 
@@ -40,10 +38,10 @@ class MobileAppTest extends TestCase
 
     private Personnel $chef;
 
-    private Personnel $other;
+    /** Gestionnaire du district MEAGUI : utilise l'application mobile. */
+    private User $manager;
 
-    private User $convoyeur;
-
+    /** Gestionnaire d'un autre district : ne doit rien voir de MEAGUI. */
     private User $stranger;
 
     protected function setUp(): void
@@ -53,6 +51,7 @@ class MobileAppTest extends TestCase
         $this->travelTo(CarbonImmutable::parse('2026-10-14 08:00'));
         $region = Region::create(['pres_id' => Pres::create(['name' => 'PRES'])->id, 'name' => 'R']);
         $this->district = District::create(['region_id' => $region->id, 'name' => 'MEAGUI', 'sync_id' => 'M', 'sync_password_hash' => 'x']);
+        $this->otherDistrict = District::create(['region_id' => $region->id, 'name' => 'SOUBRE', 'sync_id' => 'S', 'sync_password_hash' => 'x']);
         $this->vehicle = Vehicle::create(['district_id' => $this->district->id, 'immatriculation' => 'D55031', 'km_actuel' => 42000, 'type_carburant' => 'diesel']);
         FuelPrice::query()->delete();
         FuelPrice::create(['type_carburant' => 'diesel', 'prix' => 715, 'date_effet' => '2026-01-01']);
@@ -67,18 +66,17 @@ class MobileAppTest extends TestCase
             'date_prevue' => '2026-10-14', 'heure_depart' => '07:30',
         ]);
         $this->chef = Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'KONE IBRAHIM', 'fonction' => 'chef_mission']);
-        $this->other = Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'YAO MARIE', 'fonction' => 'passager']);
         $this->plan->personnels()->attach([$this->chef->id]);
 
-        $this->convoyeur = $this->account($this->chef, 'ibrahim@exemple.org');
-        $this->stranger = $this->account($this->other, 'marie@exemple.org');
+        $this->manager = $this->account('gestionnaire@exemple.org', User::ROLE_DISTRICT_MANAGER, $this->district);
+        $this->stranger = $this->account('autre@exemple.org', User::ROLE_DISTRICT_MANAGER, $this->otherDistrict);
     }
 
-    /** Le compte mobile existe déjà (créé avec la fiche) : on lui donne un mot de passe connu pour les tests. */
-    private function account(Personnel $personnel, string $email, bool $temporary = false): User
+    private function account(string $email, string $role, ?District $district = null, bool $temporary = false): User
     {
-        $u = $personnel->fresh()->user;
-        $u->forceFill(['email' => $email, 'password' => 'Secret123', 'must_change_password' => $temporary, 'is_active' => true])->save();
+        $u = User::factory()->create(['email' => $email, 'password' => 'Secret123', 'is_active' => true, 'must_change_password' => $temporary]);
+        $u->assignRole($role);
+        $district && $u->districts()->attach($district->id);
 
         return $u;
     }
@@ -108,13 +106,14 @@ class MobileAppTest extends TestCase
 
     public function test_login_returns_a_mobile_only_token_and_rejects_bad_credentials(): void
     {
-        $this->postJson('/api/mobile/login', ['email' => $this->convoyeur->email, 'password' => 'faux'])->assertStatus(422)->assertJsonValidationErrors('identifiant');
+        $this->postJson('/api/mobile/login', ['email' => $this->manager->email, 'password' => 'faux'])->assertStatus(422)->assertJsonValidationErrors('identifiant');
         $this->postJson('/api/mobile/login', ['email' => 'inconnu@exemple.org', 'password' => 'Secret123'])->assertStatus(422);
 
-        $r = $this->postJson('/api/mobile/login', ['email' => $this->convoyeur->email, 'password' => 'Secret123', 'device_name' => 'Tecno'])->assertOk();
-        $r->assertJsonPath('user.fonction', 'chef_mission')->assertJsonPath('user.district', 'MEAGUI')->assertJsonPath('must_change_password', false);
+        $r = $this->postJson('/api/mobile/login', ['email' => $this->manager->email, 'password' => 'Secret123', 'device_name' => 'Tecno'])->assertOk();
+        $r->assertJsonPath('user.fonction_label', 'Gestionnaire de district')->assertJsonPath('must_change_password', false)
+            ->assertJsonCount(1, 'user.districts')->assertJsonPath('user.districts.0.name', 'MEAGUI');
         $this->assertNotEmpty($r->json('token'));
-        $this->assertNotNull($this->convoyeur->fresh()->last_mobile_login_at);
+        $this->assertNotNull($this->manager->fresh()->last_mobile_login_at);
 
         // ce jeton ne donne accès à rien d'autre que l'application mobile
         $headers = ['Authorization' => 'Bearer '.$r->json('token')];
@@ -122,23 +121,27 @@ class MobileAppTest extends TestCase
         $this->getJson('/api/mobile/sorties', $headers)->assertOk();
     }
 
-    public function test_only_active_convoyeurs_linked_to_a_person_can_log_in(): void
+    public function test_only_active_office_accounts_with_the_permission_can_log_in(): void
     {
-        $this->convoyeur->update(['is_active' => false]);
-        $this->postJson('/api/mobile/login', ['email' => $this->convoyeur->email, 'password' => 'Secret123'])->assertStatus(422);
+        $this->manager->update(['is_active' => false]);
+        $this->postJson('/api/mobile/login', ['email' => $this->manager->email, 'password' => 'Secret123'])->assertStatus(422);
 
-        $admin = User::factory()->create(['is_active' => true, 'password' => 'Secret123']);
-        $admin->assignRole(User::ROLE_PRES_ADMIN);
-        $this->postJson('/api/mobile/login', ['email' => $admin->email, 'password' => 'Secret123'])->assertStatus(422); // pas de fiche personnel
+        // lecture seule (superviseur bailleur, responsable de région) : pas de saisie sur le terrain
+        $viewer = $this->account('bailleur@exemple.org', User::ROLE_SUPERVISEUR, $this->district);
+        $this->postJson('/api/mobile/login', ['email' => $viewer->email, 'password' => 'Secret123'])->assertStatus(422);
 
-        // un jeton « classique » n'ouvre pas non plus l'application mobile
+        // l'administrateur national peut se connecter
+        $admin = $this->account('national@exemple.org', User::ROLE_PRES_ADMIN);
+        $this->postJson('/api/mobile/login', ['email' => $admin->email, 'password' => 'Secret123'])->assertOk();
+
+        // un jeton « classique » n'ouvre pas l'application mobile
         $classic = $this->postJson('/api/auth/login', ['email' => $admin->email, 'password' => 'Secret123'])->json('token');
         $this->getJson('/api/mobile/sorties', ['Authorization' => 'Bearer '.$classic])->assertForbidden();
     }
 
     public function test_temporary_password_must_be_changed_before_anything_else(): void
     {
-        $u = $this->account(Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'NOUVEAU', 'fonction' => 'passager']), 'nouveau@exemple.org', true);
+        $u = $this->account('nouveau@exemple.org', User::ROLE_DISTRICT_MANAGER, $this->district, true);
         $login = $this->postJson('/api/mobile/login', ['email' => $u->email, 'password' => 'Secret123'])->assertOk()->assertJsonPath('must_change_password', true);
         $h = ['Authorization' => 'Bearer '.$login->json('token')];
 
@@ -155,22 +158,29 @@ class MobileAppTest extends TestCase
         $this->postJson('/api/mobile/login', ['email' => $u->email, 'password' => 'NouveauCode2026'])->assertOk()->assertJsonPath('must_change_password', false);
     }
 
-    public function test_logout_revokes_the_token_and_the_phone_subscription(): void
+    public function test_logout_revokes_the_token(): void
     {
-        $h = $this->auth($this->convoyeur);
-        $this->postJson('/api/mobile/push-subscriptions', ['endpoint' => 'https://push.example/abc', 'keys' => ['p256dh' => 'k', 'auth' => 'a']], $h)->assertNoContent();
-        $this->assertSame(1, PushSubscription::count());
+        $h = $this->auth($this->manager);
+        $this->assertSame(1, $this->manager->tokens()->count());
 
-        $this->postJson('/api/mobile/logout', ['endpoint' => 'https://push.example/abc'], $h)->assertNoContent();
-        $this->assertSame(0, PushSubscription::count());
-        $this->assertSame(0, $this->convoyeur->tokens()->count());
+        $this->postJson('/api/mobile/logout', [], $h)->assertNoContent();
+        $this->assertSame(0, $this->manager->tokens()->count());
     }
 
-    // ---------------------------------------------------------------- sorties de l'équipe
-
-    public function test_only_validated_plans_of_my_team_are_visible(): void
+    public function test_the_mobile_app_has_no_push_notification_endpoints_any_more(): void
     {
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
+        $this->getJson('/api/mobile/config', $h)->assertNotFound();
+        $this->postJson('/api/mobile/push-subscriptions', [], $h)->assertNotFound();
+        $this->postJson('/api/mobile/push-test', [], $h)->assertNotFound();
+        $this->postJson('/api/mobile/vehicules/x/signalements', [], $h)->assertNotFound();
+    }
+
+    // ---------------------------------------------------------------- sorties du district
+
+    public function test_only_validated_plans_of_my_district_are_visible(): void
+    {
+        $h = $this->auth($this->manager);
         $this->getJson('/api/mobile/sorties', $h)->assertOk()->assertJsonCount(0, 'data');   // pas encore validée
 
         $this->validated();
@@ -179,18 +189,30 @@ class MobileAppTest extends TestCase
         $this->getJson("/api/mobile/sorties/{$this->plan->id}", $h)->assertOk()
             ->assertJsonPath('depart', 'DDS MEAGUI')->assertJsonPath('stops.1.distance_km', 14)->assertJsonPath('equipe.0.nom', 'KONE IBRAHIM');
 
-        // quelqu'un qui n'est pas dans l'équipe ne voit rien, même en devinant l'identifiant
+        // le gestionnaire d'un autre district ne voit rien, même en devinant l'identifiant
         $other = $this->auth($this->stranger);
         $this->getJson('/api/mobile/sorties', $other)->assertJsonCount(0, 'data');
         $this->getJson("/api/mobile/sorties/{$this->plan->id}", $other)->assertNotFound();
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $other)->assertNotFound();
+        $this->getJson("/api/mobile/sorties?district_id={$this->district->id}", $other)->assertForbidden();   // district hors de son périmètre
+    }
+
+    public function test_the_national_administrator_chooses_the_district(): void
+    {
+        $this->validated();
+        $admin = $this->auth($this->account('national@exemple.org', User::ROLE_PRES_ADMIN));
+
+        $this->getJson("/api/mobile/sorties?district_id={$this->district->id}", $admin)->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson("/api/mobile/sorties?district_id={$this->otherDistrict->id}", $admin)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/mobile/sorties/{$this->plan->id}", $admin)->assertOk();   // une sortie reste accessible sans repréciser le district
+        $this->getJson('/api/mobile/me', $admin)->assertJsonCount(2, 'user.districts');
     }
 
     public function test_cancelled_plans_are_hidden(): void
     {
         $this->validated();
         $this->plan->update(['statut' => 'annulee']);
-        $this->getJson('/api/mobile/sorties', $this->auth($this->convoyeur))->assertJsonCount(0, 'data');
+        $this->getJson('/api/mobile/sorties', $this->auth($this->manager))->assertJsonCount(0, 'data');
     }
 
     // ---------------------------------------------------------------- exécution du circuit
@@ -198,7 +220,7 @@ class MobileAppTest extends TestCase
     public function test_full_run_start_deliver_fuel_finish_and_it_shows_on_the_web(): void
     {
         $this->validated();
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
         [$a, $b, $c] = LivraisonEspc::orderBy('ordre')->get()->all();
 
         // on ne livre pas avant d'avoir démarré
@@ -210,7 +232,7 @@ class MobileAppTest extends TestCase
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();   // rejouable
         $this->assertSame(1, SortieVehicule::count());
 
-        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre', 'lat' => 5.36, 'lon' => -6.4], $h)->assertOk()->assertJsonPath('stops.0.etat', 'livre')->assertJsonPath('traites', 1);
+        $this->postJson("/api/mobile/livraisons/{$a->id}", ['statut' => 'livre'], $h)->assertOk()->assertJsonPath('stops.0.etat', 'livre')->assertJsonPath('traites', 1);
         $this->postJson("/api/mobile/livraisons/{$b->id}", ['statut' => 'transit', 'commentaire' => 'centre fermé, remis à la mairie'], $h)->assertOk()->assertJsonPath('stops.1.etat', 'transit');
         $this->postJson("/api/mobile/livraisons/{$c->id}", ['statut' => 'non_livre'], $h)->assertStatus(422);   // raison obligatoire
         $this->postJson("/api/mobile/livraisons/{$c->id}", ['statut' => 'non_livre', 'raison' => 'Route coupée'], $h)->assertOk()->assertJsonPath('stops.2.raison', 'Route coupée');
@@ -218,8 +240,8 @@ class MobileAppTest extends TestCase
         $fresh = $a->fresh();
         $this->assertSame('livre', $fresh->statut);
         $this->assertSame('site', $fresh->lieu_livraison);
-        $this->assertSame($this->convoyeur->id, $fresh->saisi_par);
-        $this->assertEquals(5.36, (float) $fresh->lat);
+        $this->assertSame($this->manager->id, $fresh->saisi_par);
+        $this->assertNull($fresh->lat);   // aucune position GPS n'est relevée
         $this->assertSame('transit', $b->fresh()->lieu_livraison);
 
         // carburant pris pendant la sortie (rejouable grâce à client_ref)
@@ -230,7 +252,7 @@ class MobileAppTest extends TestCase
         $r = Ravitaillement::first();
         $this->assertSame(SortieVehicule::first()->id, $r->sortie_id);
         $this->assertSame($this->vehicle->id, $r->vehicle_id);
-        $this->assertSame($this->convoyeur->id, $r->saisi_par);
+        $this->assertSame($this->manager->id, $r->saisi_par);
 
         // clôture : le kilométrage ne peut pas reculer
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/finish", ['km_arrivee' => 42000], $h)->assertStatus(422);
@@ -244,7 +266,7 @@ class MobileAppTest extends TestCase
     public function test_finishing_does_not_mark_untreated_sites_as_delivered(): void
     {
         $this->validated();
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
         $first = LivraisonEspc::orderBy('ordre')->first();
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();
         $this->postJson("/api/mobile/livraisons/{$first->id}", ['statut' => 'livre'], $h)->assertOk();
@@ -256,7 +278,7 @@ class MobileAppTest extends TestCase
     public function test_offline_actions_keep_their_real_time_and_can_be_replayed(): void
     {
         $this->validated();
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
         $first = LivraisonEspc::orderBy('ordre')->first();
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();
 
@@ -273,7 +295,7 @@ class MobileAppTest extends TestCase
     public function test_fuel_requires_a_started_run_and_a_price(): void
     {
         $this->validated();
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'a', 'litres' => 10], $h)->assertStatus(409);
 
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();
@@ -286,10 +308,10 @@ class MobileAppTest extends TestCase
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/ravitaillements", ['client_ref' => 'b', 'litres' => 0], $h)->assertStatus(422);
     }
 
-    public function test_a_convoyeur_cannot_touch_another_teams_deliveries(): void
+    public function test_another_district_cannot_touch_these_deliveries(): void
     {
         $this->validated();
-        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->auth($this->convoyeur))->assertOk();
+        $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $this->auth($this->manager))->assertOk();
         $first = LivraisonEspc::orderBy('ordre')->first();
         $this->postJson("/api/mobile/livraisons/{$first->id}", ['statut' => 'livre'], $this->auth($this->stranger))->assertNotFound();
         $this->assertSame('planifie', $first->fresh()->statut);
@@ -302,7 +324,7 @@ class MobileAppTest extends TestCase
     private function startedRun(): array
     {
         $this->validated();
-        $h = $this->auth($this->convoyeur);
+        $h = $this->auth($this->manager);
         $this->postJson("/api/mobile/sorties/{$this->plan->id}/start", [], $h)->assertOk();
 
         return $h;
@@ -378,82 +400,23 @@ class MobileAppTest extends TestCase
         $this->assertStringContainsString('data:image/png;base64,', $html);
     }
 
-    // ---------------------------------------------------------------- notifications
+    // ---------------------------------------------------------------- notifications dans l'application
 
-    public function test_validating_the_planning_notifies_the_team_in_app_and_on_the_phone(): void
+    public function test_in_app_notifications_can_be_read_and_marked_as_read(): void
     {
-        $sent = [];
-        $this->app->instance(WebPushSender::class, new class($sent) extends WebPushSender
-        {
-            public function __construct(public array &$sent)
-            {
-            }
-
-            public function send(PushSubscription $subscription, array $payload): bool
-            {
-                $this->sent[] = [$subscription->endpoint, $payload];
-
-                return true;
-            }
-        });
-        $h = $this->auth($this->convoyeur);
-        $this->postJson('/api/mobile/push-subscriptions', ['endpoint' => 'https://push.example/phone1', 'keys' => ['p256dh' => 'k', 'auth' => 'a']], $h)->assertNoContent();
-        // un second abonnement du même téléphone ne crée pas de doublon
-        $this->postJson('/api/mobile/push-subscriptions', ['endpoint' => 'https://push.example/phone1', 'keys' => ['p256dh' => 'k2', 'auth' => 'a2']], $h)->assertNoContent();
-        $this->assertSame(1, PushSubscription::count());
-
-        $this->validated();
-
-        $this->assertCount(1, $sent);
-        $this->assertSame('https://push.example/phone1', $sent[0][0]);
-        $this->assertSame('Chronogramme validé', $sent[0][1]['title']);
-        $this->assertStringContainsString('MEAGUI', $sent[0][1]['body']);
+        $h = $this->auth($this->manager);
+        \Filament\Notifications\Notification::make()->title('Chronogramme à valider')->body('3 sorties de octobre 2026')->sendToDatabase($this->manager);
 
         $n = $this->getJson('/api/mobile/notifications', $h)->assertOk()->assertJsonPath('unread', 1);
-        $this->assertSame('Chronogramme validé', $n->json('data.0.title'));
+        $this->assertSame('Chronogramme à valider', $n->json('data.0.title'));
         $this->postJson('/api/mobile/notifications/read', [], $h)->assertNoContent();
         $this->getJson('/api/mobile/notifications', $h)->assertJsonPath('unread', 0);
-
-        // quelqu'un qui n'est pas dans l'équipe n'est pas prévenu
-        $this->assertSame(0, $this->stranger->notifications()->count());
     }
 
-    public function test_notification_content_for_several_dates(): void
+    public function test_office_accounts_keep_their_access_to_the_admin_panel(): void
     {
-        $n = new PlanningValidated(['2026-10-20', '2026-10-14'], 'MEAGUI');
-        $this->assertStringContainsString('2 sorties validées', $n->body());
-        $this->assertStringContainsString('14 octobre', $n->body());
-        $this->assertSame(['database', 'webpush'], $n->via($this->convoyeur));
-    }
-
-    public function test_push_failure_never_blocks_the_validation(): void
-    {
-        $this->app->instance(WebPushSender::class, new class extends WebPushSender
-        {
-            public function send(PushSubscription $subscription, array $payload): bool
-            {
-                throw new \RuntimeException('service push indisponible');
-            }
-        });
-        $this->postJson('/api/mobile/push-subscriptions', ['endpoint' => 'https://push.example/x', 'keys' => ['p256dh' => 'k', 'auth' => 'a']], $this->auth($this->convoyeur))->assertNoContent();
-
-        $this->validated();
-        $this->assertSame('valide', $this->plan->fresh()->validation_statut);
-        $this->assertSame(1, $this->convoyeur->notifications()->count());
-    }
-
-    public function test_config_exposes_the_vapid_public_key_only(): void
-    {
-        config(['webpush.public_key' => 'PUB', 'webpush.private_key' => 'PRIV']);
-        $r = $this->getJson('/api/mobile/config', $this->auth($this->convoyeur))->assertOk()->assertJsonPath('vapid_public_key', 'PUB')->assertJsonPath('push', true);
-        $this->assertStringNotContainsString('PRIV', $r->getContent());
-    }
-
-    public function test_convoyeur_has_no_access_to_the_admin_panel(): void
-    {
-        $this->assertTrue($this->convoyeur->isConvoyeurOnly());
-        $this->actingAs($this->convoyeur, 'web');
-        $this->assertContains($this->get('/admin')->getStatusCode(), [302, 403, 404]);
-        $this->assertFalse($this->convoyeur->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')));
+        $this->assertTrue($this->manager->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')));
+        $this->manager->update(['is_active' => false]);
+        $this->assertFalse($this->manager->fresh()->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')));
     }
 }

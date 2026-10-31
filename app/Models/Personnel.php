@@ -12,33 +12,20 @@ class Personnel extends Model
     protected $table = 'personnels';
 
     protected $fillable = [
-        'district_id', 'nom_complet', 'fonction', 'telephone', 'statut', 'email', 'identifiant', 'code_acces',
+        'district_id', 'nom_complet', 'fonction', 'telephone', 'statut', 'email',
         // chauffeur : informations de conduite (recopiées sur la fiche chauffeur liée)
         'matricule', 'categorie_permis', 'numero_permis', 'permis_expiration', 'date_obtention_permis', 'vehicule_principal_id',
     ];
 
-    protected $hidden = ['code_acces'];
-
     protected function casts(): array
     {
-        return ['code_acces' => 'encrypted', 'permis_expiration' => 'date', 'date_obtention_permis' => 'date'];
+        return ['permis_expiration' => 'date', 'date_obtention_permis' => 'date'];
     }
 
-    /** Chef de mission ou passager actif = convoyeur d'office : le compte mobile suit la fiche (création, désactivation, réactivation). */
     protected static function booted(): void
     {
         static::saved(function (Personnel $personnel) {
             \App\Domain\Personnel\DriverLink::fromPersonnel($personnel);   // chauffeur : sa fiche chauffeur suit la personne
-            \App\Domain\Mobile\ConvoyeurAccess::enabled() && app(\App\Domain\Mobile\ConvoyeurAccess::class)->sync($personnel);
-        });
-
-        // Fiche supprimée : son accès mobile (compte, appareils, notifications) disparaît avec elle.
-        static::deleting(function (Personnel $personnel) {
-            if ($user = $personnel->user()->first()) {
-                $user->tokens()->delete();
-                $user->pushSubscriptions()->delete();
-                $user->delete();
-            }
         });
     }
 
@@ -47,12 +34,6 @@ class Personnel extends Model
     public function district()
     {
         return $this->belongsTo(District::class);
-    }
-
-    /** Compte mobile de cette personne (s'il existe). */
-    public function user()
-    {
-        return $this->hasOne(User::class);
     }
 
     /** Fiche chauffeur liée (sorties conduites, chronogramme, alertes de permis). */

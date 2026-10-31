@@ -34,21 +34,10 @@ return [
 
     /*
     | Adresse que le téléphone ouvre pour installer l'application mobile (QR code). Doit être joignable depuis le téléphone
-    | et en HTTPS (installation + notifications). Défaut : APP_URL/m.
+    | et en HTTPS (installation de l'application). Défaut : APP_URL/m.
     */
     'mobile_url' => env('LOGIMASTER_MOBILE_URL'),
 
-    /*
-    | Mode tunnel : l'application est exposée sur Internet (tunnel HTTPS) pour installer la PWA sur les téléphones. Depuis
-    | une adresse publique, seuls l'accueil, l'application mobile (/m) et son API (/api/mobile) répondent ; l'administration
-    | reste réservée au réseau local. À activer avec LOGIMASTER_TUNNEL_MODE=true.
-    */
-    'tunnel_mode' => (bool) env('LOGIMASTER_TUNNEL_MODE', false),
-
-    /*
-    | Application mobile : tout chef de mission ou passager actif reçoit automatiquement un accès (identifiant + code
-    | provisoire). Mettre LOGIMASTER_MOBILE_AUTO_ACCESS=false pour désactiver la création automatique.
-    */
     /*
     | Sauvegardes : base de données + photos (factures, compteurs, bons de livraison) dans une archive zip, envoyée chaque nuit
     | vers le disque « backups » (stockage externe S3) s'il est configuré, sinon dans storage/app/backups (même serveur : à éviter).
@@ -64,13 +53,6 @@ return [
 
     // Vidange déclarée sans prochain kilométrage : échéance suivante = km de la vidange + cet intervalle
     'vidange_interval_km' => (int) env('LOGIMASTER_VIDANGE_INTERVAL_KM', 5000),
-
-    'mobile' => [
-        'auto_access' => (bool) env('LOGIMASTER_MOBILE_AUTO_ACCESS', true),
-        // Position d'un centre relevée à la livraison : précision GPS maximale acceptée (m), écart signalé (m)
-        'gps_precision_max' => (int) env('LOGIMASTER_GPS_PRECISION_MAX', 150),
-        'gps_ecart_alerte' => (int) env('LOGIMASTER_GPS_ECART_ALERTE', 1000),
-    ],
 
     /*
     | Modules optionnels. Finance = budgets, factures, tableau de bord financier, rapport financier, alertes de budget.

@@ -18,7 +18,6 @@ class AdminAudit
     private const IGNORED = [
         AuditLog::class,
         \App\Models\IndicatorSnapshot::class,
-        \App\Models\PushSubscription::class,
         \Illuminate\Notifications\DatabaseNotification::class,
     ];
 

@@ -92,14 +92,6 @@ class LivraisonResource extends Resource
                     ->color(fn (LivraisonEspc $l) => $l->retard_jours > 0 ? 'danger' : null),
                 TextColumn::make('raison_non_livraison')->label('Raison / commentaire')->placeholder('—')->wrap()->limit(60),
                 TextColumn::make('km_compteur')->label('Compteur')->numeric()->suffix(' km')->placeholder('—')->toggleable(),
-                TextColumn::make('gps_ecart_m')->label('Position')->toggleable()
-                    ->state(fn (LivraisonEspc $l) => match (true) {
-                        $l->gps_ecart_m !== null => $l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m du centre' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km du centre',
-                        $l->lat !== null => 'Relevée',
-                        default => null,
-                    })
-                    ->placeholder('—')->badge()
-                    ->color(fn (LivraisonEspc $l) => \App\Domain\Mobile\SiteGeolocation::isSuspicious($l) ? 'danger' : 'gray'),
             ])
             ->filters([
                 SelectFilter::make('statut')->options(LivraisonEspc::STATUTS)->multiple(),

@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Api\ApiController;
-use App\Domain\Mobile\SiteGeolocation;
 use App\Filament\Resources\Sorties\Schemas\SortieForm;
 use App\Models\Chronogramme;
+use App\Models\District;
 use App\Models\Expense;
 use App\Models\FuelPrice;
 use App\Models\LivraisonEspc;
-use App\Models\PushSubscription;
 use App\Models\Ravitaillement;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,15 +19,15 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
- * API de l'application mobile du convoyeur (chef de mission ou passager). Il ne voit que les sorties validées dont il fait
- * partie de l'équipe, exécute le circuit site par site, déclare le carburant pris et clôture la sortie. Tout est visible
+ * API de l'application mobile du bureau. L'utilisateur choisit un district parmi ceux auxquels il a accès : il y voit les sorties
+ * validées, exécute le circuit site par site, déclare le carburant et les frais et clôture la sortie. Tout est visible
  * immédiatement dans « Suivi des livraisons » sur le web.
  */
 class MobileController extends ApiController
 {
     // ------------------------------------------------------------------ sorties
 
-    /** Sorties validées de l'équipe : de 14 jours en arrière à 60 jours en avant (le téléphone les garde pour le mode hors réseau). */
+    /** Sorties validées du district choisi : de 14 jours en arrière à 60 jours en avant (le téléphone les garde pour le mode hors réseau). */
     public function sorties(Request $request)
     {
         $today = CarbonImmutable::today();
@@ -104,9 +103,6 @@ class MobileController extends ApiController
             'raison' => ['nullable', 'string', 'max:500'],
             'commentaire' => ['nullable', 'string', 'max:500'],
             'done_at' => ['nullable', 'date', 'before_or_equal:now +1 day'],
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lon' => ['nullable', 'numeric', 'between:-180,180'],
-            'precision' => ['nullable', 'numeric', 'min:0', 'max:100000'],    // précision du GPS du téléphone, en mètres
             'km_compteur' => ['nullable', 'integer', 'min:0', 'max:9999999'],  // kilométrage au compteur au moment de la livraison
         ]);
         $when = isset($data['done_at']) ? CarbonImmutable::parse($data['done_at']) : CarbonImmutable::now();
@@ -127,11 +123,9 @@ class MobileController extends ApiController
         $kmDepart = $plan->sortie?->km_depart;
         abort_if($km !== null && $kmDepart && $km < (int) $kmDepart, 422, 'Le kilométrage est inférieur au kilométrage de départ ('.(int) $kmDepart.' km).');
         $livraison->update($update + [
-            'lat' => $data['lat'] ?? null, 'lon' => $data['lon'] ?? null,
             'saisi_par' => $request->user()->getKey(), 'saisi_at' => $when,
             'km_compteur' => $km,
         ]);
-        app(SiteGeolocation::class)->record($livraison->fresh('espc'), $data['lat'] ?? null, $data['lon'] ?? null, isset($data['precision']) ? (float) $data['precision'] : null);
 
         return $this->detail($plan->fresh());
     }
@@ -182,7 +176,7 @@ class MobileController extends ApiController
         return response()->json($this->fuel($fuel), 201);
     }
 
-    // ------------------------------------------------------------------ notifications et appareils
+    // ------------------------------------------------------------------ frais
 
     /** Autre frais de la sortie (péage, collation, chargement…). `client_ref` (généré par le téléphone) évite les doublons si l'envoi est rejoué. */
     public function frais(Request $request, string $id): JsonResponse
@@ -245,52 +239,40 @@ class MobileController extends ApiController
         return response()->json(null, 204);
     }
 
-    /** Clé publique VAPID pour abonner le téléphone aux notifications. */
-    public function config()
-    {
-        return ['vapid_public_key' => config('webpush.public_key'), 'push' => filled(config('webpush.public_key')) && filled(config('webpush.private_key'))];
-    }
-
-    public function subscribe(Request $request)
-    {
-        $data = $request->validate([
-            'endpoint' => ['required', 'url', 'max:2000'],
-            'keys.p256dh' => ['required', 'string', 'max:255'],
-            'keys.auth' => ['required', 'string', 'max:255'],
-        ]);
-        PushSubscription::updateOrCreate(['endpoint_hash' => PushSubscription::hashEndpoint($data['endpoint'])], [
-            'user_id' => $request->user()->getKey(), 'endpoint' => $data['endpoint'], 'p256dh' => $data['keys']['p256dh'], 'auth' => $data['keys']['auth'],
-            'user_agent' => substr((string) $request->userAgent(), 0, 250),
-        ]);
-
-        return response()->json(null, 204);
-    }
-
-    public function unsubscribe(Request $request)
-    {
-        $request->validate(['endpoint' => ['required', 'url']]);
-        $request->user()->pushSubscriptions()->where('endpoint_hash', PushSubscription::hashEndpoint($request->input('endpoint')))->delete();
-
-        return response()->json(null, 204);
-    }
-
     // ------------------------------------------------------------------ outils
 
-    /** Sorties validées, non annulées, dont l'utilisateur fait partie de l'équipe ou qu'il conduit (chauffeur). */
-    private function mine(Request $request): Builder
+    /** Districts auxquels l'utilisateur a accès (national : tous). @return array<int, string> */
+    protected function accessibleIds(Request $request): array
     {
-        $personnelId = $request->user()->personnel_id;
-        $driverId = $personnelId ? \App\Models\Personnel::whereKey($personnelId)->value('driver_id') : null;
-
-        return Chronogramme::query()
-            ->where('validation_statut', 'valide')->where('statut', '!=', 'annulee')
-            ->where(fn ($q) => $q->whereHas('personnels', fn ($t) => $t->whereKey($personnelId))
-                ->when($driverId, fn ($q) => $q->orWhere('driver_id', $driverId)));
+        return $request->user()->accessibleDistrictIds() ?? District::pluck('id')->all();
     }
 
+    /** District choisi dans l'application (`district_id`), à défaut le premier district accessible par ordre alphabétique. */
+    protected function districtId(Request $request): string
+    {
+        $ids = $this->accessibleIds($request);
+        if ($wanted = $request->query('district_id')) {
+            abort_unless(in_array($wanted, $ids, true), 403, 'Ce district ne fait pas partie de votre périmètre.');
+
+            return $wanted;
+        }
+
+        return (string) (District::whereIn('id', $ids)->orderBy('name')->value('id') ?? abort(403, 'Aucun district accessible.'));
+    }
+
+    /** Sorties validées et non annulées du district choisi. */
+    private function mine(Request $request): Builder
+    {
+        return Chronogramme::query()->where('district_id', $this->districtId($request))
+            ->where('validation_statut', 'valide')->where('statut', '!=', 'annulee');
+    }
+
+    /** Une sortie validée de n'importe quel district accessible (le district choisi n'a pas à être renvoyé à chaque action). */
     private function plan(Request $request, string $id): Chronogramme
     {
-        return $this->mine($request)->with(['circuit:id,nom,point_depart', 'vehicle', 'driver:id,nom_complet', 'district:id,name', 'personnels', 'livraisons.espc', 'sortie'])->findOrFail($id);
+        return Chronogramme::query()->whereIn('district_id', $this->accessibleIds($request))
+            ->where('validation_statut', 'valide')->where('statut', '!=', 'annulee')
+            ->with(['circuit:id,nom,point_depart', 'vehicle', 'driver:id,nom_complet', 'district:id,name', 'personnels', 'livraisons.espc', 'sortie'])->findOrFail($id);
     }
 
     private function chefMissionId(Chronogramme $plan): ?string
@@ -331,7 +313,7 @@ class MobileController extends ApiController
             },
             'date_livraison' => $l->date_livraison?->toDateString(), 'raison' => $l->raison_non_livraison, 'distance_km' => $distances->get($l->espc_id),
             'saisi_at' => $l->saisi_at?->toIso8601String(),
-            'km' => $l->km_compteur, 'position' => $l->lat !== null, 'lat' => $l->lat, 'lon' => $l->lon,
+            'km' => $l->km_compteur,
         ]);
         $sortie = $p->sortie;
 

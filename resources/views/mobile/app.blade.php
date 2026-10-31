@@ -12,7 +12,7 @@
     <link rel="manifest" href="/m/manifest.webmanifest">
     <link rel="apple-touch-icon" href="{{ \App\Support\Brand::url('pwa/apple-touch-icon.png') }}">
     <link rel="icon" href="{{ \App\Support\Brand::favicon() }}">
-    <title>Logimaster Convoyeur</title>
+    <title>Logimaster Bureau</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -126,8 +126,8 @@
 (function () {
 'use strict';
 var CFG = window.LM_CONFIG;
-var KEY = 'lm_state_v1';
-var DEFAULTS = { token: null, user: null, mustChange: false, sorties: [], today: null, details: {}, queue: [], notifs: { unread: 0, data: [] }, syncedAt: null, push: false, recv: {}, planning: {}, vehicules: null, vehiculesAt: null };
+var KEY = 'lm_state_v2';
+var DEFAULTS = { token: null, user: null, mustChange: false, sorties: [], today: null, details: {}, queue: [], notifs: { unread: 0, data: [] }, syncedAt: null, district: null, recv: {}, planning: {}, vehicules: null, vehiculesAt: null };
 var S = load();
 var deferredInstall = null, flushing = false, refreshing = false, openStop = null, errorMsg = '';
 var fuelDraft = {}, fuelPhoto = null, expDraft = {}, fuelTab = 'fuel';   // saisie en cours : conservée si l'écran se rafraîchit pendant la frappe
@@ -181,6 +181,12 @@ function onAuthError(e) {
     return false;
 }
 function isOnline() { return navigator.onLine !== false; }
+// district choisi (un compte national ou régional en a plusieurs) : joint aux lectures du planning, des sorties et des véhicules
+function dq() { return 'district_id=' + encodeURIComponent(S.district || ''); }
+function districts() { return (S.user && S.user.districts) || []; }
+function districtName() { var d = districts().filter(function (x) { return x.id === S.district; })[0]; return d ? d.name : ''; }
+function pickDistrict() { var l = districts(); if (!l.some(function (x) { return x.id === S.district; })) S.district = l.length ? l[0].id : null; }
+function setDistrict(id) { if (id === S.district) return; S.district = id; S.sorties = []; S.details = {}; S.planning = {}; S.vehicules = null; save(); render(); refresh(); }
 
 // ------------------------------------------------------------------ actions en file d'attente (mode hors réseau)
 function enqueue(op) { op.id = op.id || uid(); op.at = new Date().toISOString(); S.queue.push(op); applyLocal(op); save(); render(); flush(); }
@@ -188,20 +194,19 @@ function recount(p) { p.restants = p.stops.filter(function (s) { return s.etat =
 function applyLocal(op) {
     var p = op.plan ? S.details[op.plan] : null; if (!p) return;
     if (op.type === 'start') { p.demarree = true; p.sortie = p.sortie || { id: null, statut: 'en_cours', km_depart: (op.body && op.body.km_depart) || null, km_arrivee: null }; p.sortie.photo_depart = !!op.photo; }
-    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { var ok = op.body.statut === 'livre' || op.body.statut === 'transit'; st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = op.body.statut !== 'planifie' && op.body.km_compteur != null ? op.body.km_compteur : null; st.position = ok && op.body.lat != null; } recount(p); }
+    if (op.type === 'livraison') { var st = p.stops.filter(function (s) { return s.id === op.target; })[0]; if (st) { st.etat = op.body.statut; st.raison = op.body.raison || null; st.km = op.body.statut !== 'planifie' && op.body.km_compteur != null ? op.body.km_compteur : null; } recount(p); }
     if (op.type === 'finish') { p.terminee = true; if (p.sortie) { p.sortie.statut = 'terminee'; p.sortie.km_arrivee = op.body.km_arrivee; p.sortie.photo_arrivee = !!op.photo; } }
     if (op.type === 'fuel') { p.ravitaillements.unshift({ facture: !!op.photo, client_ref: op.body.client_ref, litres: +op.body.litres, prix_unitaire: +op.body.prix_unitaire || null, montant: null, km_compteur: op.body.km_compteur || null, station: op.body.station || null, date: op.at.slice(0, 10), pending: true }); }
     if (op.type === 'expense') { p.frais = p.frais || []; p.frais.unshift({ client_ref: op.body.client_ref, type: op.body.type, libelle: EXPENSE_TYPES[op.body.type] || op.body.type, montant: +op.body.montant, beneficiaire: op.body.beneficiaire || null, commentaire: op.body.commentaire || null, date: op.at.slice(0, 10), pending: true }); }
     S.sorties.forEach(function (s) { if (s.id === op.plan) { s.demarree = p.demarree; s.terminee = p.terminee; s.traites = p.traites; s.livres = p.livres; } });
 }
 var EXPENSE_TYPES = { collation: 'Collation', hebergement: 'Hébergement', chargement: 'Chargement', dechargement: 'Déchargement', peage: 'Péage', autre: 'Autre' };
-var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur', signal: 'photo' };
+var PHOTO_FIELD = { fuel: 'facture_photo', start: 'photo_compteur', finish: 'photo_compteur' };
 function send(op) {
     return (op.photo ? photoGet(op.id) : Promise.resolve(null)).then(function (photo) {
         var body = Object.assign({}, op.body);
-        if (op.type === 'livraison' || op.type === 'fuel' || op.type === 'expense' || op.type === 'signal') body.done_at = op.at;
+        if (op.type === 'livraison' || op.type === 'fuel' || op.type === 'expense') body.done_at = op.at;
         if (photo) body[PHOTO_FIELD[op.type]] = photo;
-        if (op.type === 'signal') return api('POST', '/vehicules/' + op.target + '/signalements', body);
         if (op.type === 'start') return api('POST', '/sorties/' + op.plan + '/start', body);
         if (op.type === 'finish') return api('POST', '/sorties/' + op.plan + '/finish', body);
         if (op.type === 'livraison') return api('POST', '/livraisons/' + op.target, body);
@@ -242,7 +247,8 @@ function queued(plan) { return S.queue.some(function (o) { return o.plan && o.pl
 function refresh() {
     if (!S.token || S.mustChange || !isOnline() || refreshing) return Promise.resolve();
     refreshing = true;
-    return flush().then(function () { return api('GET', '/sorties'); }).then(function (l) {
+    pickDistrict();
+    return flush().then(function () { return api('GET', '/sorties?' + dq()); }).then(function (l) {
         S.sorties = l.data; S.today = l.today;
         var recent = new Date(Date.now() - 4 * 864e5).toISOString().slice(0, 10);
         var ids = l.data.filter(function (p) { return !p.terminee || p.date_prevue >= recent; }).slice(0, 20).map(function (p) { return p.id; });
@@ -312,30 +318,29 @@ function render() {
 
 // ---- connexion
 function loginView() {
-    return '<div class="center"><img class="logo" src="' + esc(CFG.logo || '/logo.svg') + '" alt=""><div class="brandline"><span>Logimaster · convoyeur</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Vos circuits, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous pour voir vos sorties validées.</p>' +
-        '<form id="login"><label for="em">Identifiant</label><input id="em" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex. kone.ibrahim" required>' +
-        '<label for="pw">Code d\'accès ou mot de passe</label><input id="pw" type="password" autocomplete="current-password" required>' +
-        '<p class="muted" style="margin:8px 2px 0">Identifiant et code provisoire remis par votre district.</p>' +
+    return '<div class="center"><img class="logo" src="' + esc(CFG.logo || '/logo.svg') + '" alt=""><div class="brandline"><span>Logimaster · bureau</span><span>District sanitaire</span></div><h1 style="margin:0 0 8px">Les circuits du district, site par site.</h1><p class="muted" style="margin:0 0 10px;font-size:15px">Connectez-vous avec votre compte Logimaster.</p>' +
+        '<form id="login"><label for="em">Adresse e-mail</label><input id="em" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="vous@exemple.ci" required>' +
+        '<label for="pw">Mot de passe</label><input id="pw" type="password" autocomplete="current-password" required>' +
         '<p class="err" id="err">' + esc(errorMsg) + '</p><button class="btn" id="go" type="submit" style="margin-top:8px">Se connecter</button></form>' +
         (deferredInstall ? '<button class="btn sec" id="inst" style="margin-top:12px">Installer l\'application</button>' : '') + '</div>';
 }
 function bindLogin() {
     $('login').onsubmit = function (ev) {
         ev.preventDefault(); errorMsg = ''; $('go').disabled = true; $('go').textContent = 'Connexion…';
-        api('POST', '/login', { identifiant: $('em').value.trim(), password: $('pw').value, device_name: (navigator.userAgent || 'mobile').slice(0, 100) }).then(function (d) {
-            S.token = d.token; S.user = d.user; S.mustChange = d.must_change_password; save(); render();
-            if (!S.mustChange) { refresh(); maybeResumePush(); }
-        }, function (e) { errorMsg = e.offline ? 'Pas de réseau : connexion impossible.' : (e.message || 'Identifiant ou code invalide.'); render(); });
+        api('POST', '/login', { email: $('em').value.trim(), password: $('pw').value, device_name: (navigator.userAgent || 'mobile').slice(0, 100) }).then(function (d) {
+            S.token = d.token; S.user = d.user; S.mustChange = d.must_change_password; S.district = null; pickDistrict(); save(); render();
+            if (!S.mustChange) refresh();
+        }, function (e) { errorMsg = e.offline ? 'Pas de réseau : connexion impossible.' : (e.message || 'Adresse e-mail ou mot de passe invalide.'); render(); });
     };
     if ($('inst')) $('inst').onclick = installApp;
 }
 // ---- mot de passe
 function passwordView(forced) {
     return '<div class="center"><h1 style="margin:0 0 4px">' + (forced ? 'Choisissez votre mot de passe' : 'Changer le mot de passe') + '</h1>' +
-        '<p class="muted" style="margin:0 0 14px">' + (forced ? 'Le mot de passe provisoire remis par votre district doit être remplacé avant de continuer.' : '8 caractères minimum, avec lettres et chiffres.') + '</p>' +
+        '<p class="muted" style="margin:0 0 14px">' + (forced ? 'Le mot de passe provisoire doit être remplacé avant de continuer.' : '12 caractères minimum, avec lettres et chiffres.') + '</p>' +
         '<form id="pwf"><label for="cur">Mot de passe actuel</label><input id="cur" type="password" autocomplete="current-password" required>' +
-        '<label for="n1">Nouveau mot de passe</label><input id="n1" type="password" autocomplete="new-password" minlength="8" required>' +
-        '<label for="n2">Confirmer</label><input id="n2" type="password" autocomplete="new-password" minlength="8" required>' +
+        '<label for="n1">Nouveau mot de passe</label><input id="n1" type="password" autocomplete="new-password" minlength="12" required>' +
+        '<label for="n2">Confirmer</label><input id="n2" type="password" autocomplete="new-password" minlength="12" required>' +
         '<p class="err" id="err"></p><button class="btn" type="submit" style="margin-top:8px">Enregistrer</button>' +
         (forced ? '<button class="btn sec" type="button" id="out" style="margin-top:10px">Se déconnecter</button>' : '<a class="btn sec" href="#/profile" style="margin-top:10px">Annuler</a>') + '</form></div>';
 }
@@ -344,7 +349,7 @@ function bindPassword(forced) {
         ev.preventDefault();
         if ($('n1').value !== $('n2').value) { $('err').textContent = 'Les deux mots de passe ne sont pas identiques.'; return; }
         api('POST', '/password', { current_password: $('cur').value, password: $('n1').value, password_confirmation: $('n2').value }).then(function () {
-            S.mustChange = false; save(); toast('Mot de passe modifié'); nav('#/'); render(); refresh(); maybeResumePush();
+            S.mustChange = false; save(); toast('Mot de passe modifié'); nav('#/'); render(); refresh();
         }, function (e) { $('err').textContent = e.offline ? 'Pas de réseau.' : e.message; });
     };
     if (forced && $('out')) $('out').onclick = function () { logout(); };
@@ -360,8 +365,9 @@ function homeView() {
             '<h2>' + esc(cp.circuit) + '</h2><small>' + esc(cp.district || '') + (cp.vehicule ? ' · ' + esc(cp.vehicule) : '') + ' · ' + cp.sites + ' site' + (cp.sites > 1 ? 's' : '') + (started ? ' · ' + cp.traites + '/' + cp.sites + ' traités' : '') + '</small>' +
             '<a class="btn" href="#/circuit">' + (started ? 'Reprendre le circuit' : 'Démarrer le circuit') + '</a></div>';
     } else {
-        hero = '<div class="card empty" style="padding:22px 16px">Aucune sortie validée pour le moment.<br>Vous serez notifié dès que le chronogramme est validé.</div>';
+        hero = '<div class="card empty" style="padding:22px 16px">Aucune sortie validée pour ce district.<br>Elles apparaissent ici dès que le chronogramme est validé.</div>';
     }
+    var picker = districts().length > 1 ? '<div class="card"><label for="dist" style="margin-top:0">District</label><select id="dist">' + districts().map(function (d) { return '<option value="' + esc(d.id) + '"' + (d.id === S.district ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join('') + '</select></div>' : '';
     var upcoming = S.sorties.filter(function (p) { return !p.terminee && (!cp || p.id !== cp.id); }).length;
     var fuelPlan = cp && cp.demarree ? cp : null, fuelCount = fuelPlan ? (fuelPlan.ravitaillements || []).length : 0;
     function tile(href, icon, title, sub, badge, cls) {
@@ -375,10 +381,10 @@ function homeView() {
         tile('#/planning', ICON.cal, 'Planning', 'Sorties du district', '') +
         tile('#/vehicules', ICON.truck, 'Véhicules', vehSummary(), vehAlerts() || '') +
         tile('#/alerts', ICON.bell, 'Alertes', S.notifs.unread ? S.notifs.unread + ' non lue' + (S.notifs.unread > 1 ? 's' : '') : 'Notifications', S.notifs.unread || '') +
-        tile('#/profile', ICON.user, 'Profil', 'Compte, notifications', '') +
+        tile('#/profile', ICON.user, 'Profil', 'Compte, mot de passe', '') +
         '<a class="tile wide ' + (S.queue.length ? 'warn' : 'ok') + '" href="#/" id="synctile"><span class="ti">' + ICON.sync + '</span><span><b>Synchroniser</b><small>' + esc(S.queue.length ? S.queue.length + ' en attente d\'envoi' : (isOnline() ? 'Tout est envoyé' : 'Hors réseau')) + '</small></span></a>' +
         '</div>';
-    return shell('Bonjour ' + first, hero + tiles +
+    return shell('Bonjour ' + first, picker + hero + tiles +
         '<p class="muted" style="text-align:center;margin:18px 0 0">' + (S.syncedAt ? 'Dernière mise à jour ' + new Date(S.syncedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '') + '</p>');
 }
 
@@ -388,7 +394,7 @@ function iso(x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padSta
 function addDays(d, n) { var x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + n); return iso(x); }
 function loadPlanning(start) {
     if (!isOnline()) return;
-    api('GET', '/planning?debut=' + start + '&jours=7').then(function (r) { S.planning[start] = r.data; save(); if (route().name === 'planning') render(); }, function (e) { onAuthError(e); });
+    api('GET', '/planning?debut=' + start + '&jours=7&' + dq()).then(function (r) { S.planning[start] = r.data; save(); if (route().name === 'planning') render(); }, function (e) { onAuthError(e); });
 }
 function planningView() {
     weekStart = weekStart || monday(S.today || iso(new Date()));
@@ -403,7 +409,7 @@ function planningView() {
         list.forEach(function (p) {
             if (p.date !== day) { day = p.date; body += '<h3 class="section">' + esc(fmtDate(day)) + (day === S.today ? ' · aujourd\'hui' : '') + '</h3>'; }
             var e = ETAT[p.etat] || ETAT.prevue;
-            body += '<div class="card"><div class="row"><div class="grow"><b>' + esc(p.circuit) + '</b>' + (p.moi ? '<span class="tag" style="background:var(--accent-soft);color:var(--accent-text)">Vous</span>' : '') +
+            body += '<div class="card"><div class="row"><div class="grow"><b>' + esc(p.circuit) + '</b>' +
                 '<div class="muted">' + (p.heure ? esc(p.heure) + ' · ' : '') + esc(p.vehicule || 'véhicule ?') + ' · ' + p.sites + ' site' + (p.sites > 1 ? 's' : '') + '</div></div>' + (p.etat !== 'prevue' ? '<span class="pill ' + (e[0] === 'w' ? 'off' : '') + '">' + e[1] + '</span>' : '') + '</div>' +
                 '<div class="muted" style="margin-top:4px">' + (p.chauffeur ? 'Chauffeur : ' + esc(p.chauffeur) : 'Chauffeur non désigné') + (p.chef ? ' · Chef : ' + esc(p.chef) : '') + '</div></div>';
         });
@@ -411,11 +417,11 @@ function planningView() {
     return shell('Planning', body);
 }
 
-// ---- véhicules du district : disponibilité, vidange, échéances, signalements
+// ---- véhicules du district : disponibilité, vidange, échéances
 var DISPO = { disponible: ['g', 'Disponible'], reserve: ['b', 'Réservé aujourd\'hui'], en_mission: ['w', 'En mission'], immobilise: ['r', 'Immobilisé'], hors_service: ['r', 'Hors service'] };
 function loadVehicules() {
     if (!isOnline()) return Promise.resolve();
-    return api('GET', '/vehicules').then(function (r) { S.vehicules = r.data; S.vehiculesAt = new Date().toISOString(); save(); if (route().name === 'vehicules' || route().name === 'home') render(); }, function (e) { onAuthError(e); });
+    return api('GET', '/vehicules?' + dq()).then(function (r) { S.vehicules = r.data; S.vehiculesAt = new Date().toISOString(); save(); if (route().name === 'vehicules' || route().name === 'home') render(); }, function (e) { onAuthError(e); });
 }
 function vehSummary() { if (!S.vehicules) return 'Disponibilité, vidanges'; var n = S.vehicules.filter(function (v) { return v.disponibilite === 'disponible'; }).length; return n + ' disponible' + (n > 1 ? 's' : '') + ' sur ' + S.vehicules.length; }
 function vehAlerts() { return (S.vehicules || []).filter(function (v) { return vehWarn(v).length; }).length; }
@@ -435,7 +441,7 @@ function vehiculesView() {
         var d = DISPO[v.disponibilite] || DISPO.disponible, warn = vehWarn(v);
         body += '<div class="card" data-veh="' + esc(v.id) + '" style="cursor:pointer"><div class="row"><div class="grow"><b>' + esc(v.immatriculation) + '</b><div class="muted">' + esc(v.modele || '') + (v.km_actuel != null ? ' · ' + Number(v.km_actuel).toLocaleString('fr-FR') + ' km' : '') + '</div></div><span class="chip ' + d[0] + '" style="margin:0">' + d[1] + '</span></div>' +
             (v.immobilisation ? '<div class="muted" style="margin-top:4px">' + esc(v.immobilisation.motif) + ' depuis le ' + esc(fmtDate(v.immobilisation.depuis, true)) + '</div>' : '') +
-            (warn.length || v.signalements_en_attente ? '<div>' + warn.map(function (x) { return '<span class="chip ' + (/dépassée|expiré/.test(x) ? 'r' : 'w') + '">' + esc(x) + '</span>'; }).join('') + (v.signalements_en_attente ? '<span class="chip b">' + v.signalements_en_attente + ' signalement' + (v.signalements_en_attente > 1 ? 's' : '') + ' en attente</span>' : '') + '</div>' : '') + '</div>';
+            (warn.length ? '<div>' + warn.map(function (x) { return '<span class="chip ' + (/dépassée|expiré/.test(x) ? 'r' : 'w') + '">' + esc(x) + '</span>'; }).join('') + '</div>' : '') + '</div>';
     });
     body += '<p class="muted" style="text-align:center">' + (S.vehiculesAt ? 'Mis à jour à ' + new Date(S.vehiculesAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '') + '</p>';
     return shell('Véhicules', body);
@@ -449,37 +455,8 @@ function sheetVehicule(v) {
         row('Dernière vidange', v.derniere_vidange ? esc(fmtDate(v.derniere_vidange.date, true)) + (v.derniere_vidange.km ? ' · ' + Number(v.derniere_vidange.km).toLocaleString('fr-FR') + ' km' : '') : '—') +
         row('Assurance', v.assurance ? esc(fmtDate(v.assurance, true)) + j(v.assurance_jours) : '—') +
         row('Contrôle technique', v.ct ? esc(fmtDate(v.ct, true)) + j(v.ct_jours) : '—') +
-        '<button class="btn" id="sv-vid" style="margin-top:16px">Déclarer une vidange faite</button><button class="btn bad" id="sv-pan" style="margin-top:10px">Signaler une panne</button><button class="btn sec" data-close style="margin-top:10px">Fermer</button>', function () {
-        $('sv-vid').onclick = function () { sheetSignal(v, 'vidange'); };
-        $('sv-pan').onclick = function () { sheetSignal(v, 'panne'); };
-    });
+        '<button class="btn sec" data-close style="margin-top:16px">Fermer</button>');
 }
-function sheetSignal(v, type) {
-    var vid = type === 'vidange';
-    sheet('<h3>' + (vid ? 'Vidange faite' : 'Panne') + ' : ' + esc(v.immatriculation) + '</h3><p class="muted">Le bureau du district validera ce signalement.</p>' +
-        '<label for="sk">Kilométrage au compteur</label><input id="sk" type="number" inputmode="numeric" min="0" value="' + esc(v.km_actuel || '') + '">' +
-        (vid ? '<label for="st">Type de vidange</label><select id="st" style="width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:14px;font-size:16px"><option value="simple">Simple</option><option value="complete">Complète</option><option value="revision">Révision</option></select>' +
-            '<label for="sm">Montant payé (FCFA, facultatif)</label><input id="sm" type="number" inputmode="numeric" min="0"><label for="sp">Garage (facultatif)</label><input id="sp" type="text" maxlength="120">'
-            : '<label for="so">Nature</label><select id="so" style="width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:14px;font-size:16px"><option value="panne">Panne mécanique</option><option value="accident">Accident</option><option value="carrosserie">Carrosserie</option><option value="depannage">Dépannage / remorquage</option><option value="incident">Incident (vol, incendie…)</option><option value="autre">Autre</option></select>') +
-        '<label for="sd">' + (vid ? 'Remarque (facultatif)' : 'Que se passe-t-il ? (obligatoire)') + '</label><textarea id="sd" rows="3"></textarea>' +
-        photoField(vid ? 'Photo de la facture (facultatif)' : 'Photo (facultatif)', vid ? 'Photographier la facture' : 'Photographier') +
-        '<p class="err" id="err"></p><button class="btn ' + (vid ? '' : 'bad') + '" id="ok" style="margin-top:8px">Envoyer au bureau</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
-        bindPhotoField();
-        $('ok').onclick = function () {
-            var desc = $('sd').value.trim();
-            if (!vid && !desc) { $('err').textContent = 'Décrivez la panne.'; return; }
-            var body = { client_ref: uid(), type: type };
-            if ($('sk').value) body.km = parseInt($('sk').value, 10);
-            if (desc) body.description = desc;
-            if (vid) { body.type_vidange = $('st').value; if ($('sm').value) body.montant = parseFloat($('sm').value); if ($('sp').value.trim()) body.prestataire = $('sp').value.trim(); }
-            else body.motif = $('so').value;
-            var photo = sheetPhoto; closeSheet();
-            v.signalements_en_attente = (v.signalements_en_attente || 0) + 1; save();
-            enqueueWithPhoto({ type: 'signal', plan: null, target: v.id, body: body }, photo, vid ? 'Vidange envoyée au bureau' : 'Panne signalée au bureau');
-        };
-    });
-}
-
 // ---- mes sorties : à venir et terminées
 function sortiesView() {
     var cp = currentPlan();
@@ -514,7 +491,7 @@ function circuitView(id) {
         var d = DOT[s.etat] || DOT.planifie, can = p.demarree && !p.terminee, active = can && (s === next || openStop === s.id);
         body += '<div class="stop"><div class="dot ' + d[0] + '">' + d[1] + '</div><h4>' + esc(s.espc) + (s.type ? '<span class="tag n" style="background:var(--soft);color:var(--muted)">' + esc(String(s.type).replace(/_/g, ' ')) + '</span>' : '') + '</h4>' +
             '<div class="muted">' + LABEL[s.etat] + (s.raison ? ' · ' + esc(s.raison) : '') + '</div>' +
-            (s.km != null || s.position ? '<div class="muted">' + [s.position ? '📍 position relevée' : '', s.km != null ? Number(s.km).toLocaleString('fr-FR') + ' km' : ''].filter(Boolean).join(' · ') + '</div>' : '');
+            (s.km != null ? '<div class="muted">' + Number(s.km).toLocaleString('fr-FR') + ' km</div>' : '');
         if (can && s.etat !== 'planifie' && openStop !== s.id) body += '<button class="muted" data-edit="' + s.id + '" style="background:none;border:none;padding:4px 0;text-decoration:underline;font-size:13px;color:var(--accent)">Modifier</button>';
         if (active) body += '<div class="acts"><button class="btn ok" data-do="livre" data-id="' + s.id + '">Livré</button><button class="btn warn" data-do="transit" data-id="' + s.id + '">Transit</button><button class="btn bad" data-do="non_livre" data-id="' + s.id + '">Non livré</button></div>';
         body += '</div>';
@@ -541,23 +518,7 @@ function bindCommon() {
     if (route().name === 'fuel') { bindFuelTabs(); bindFuel(); bindExpense(); }
     if (route().name === 'alerts') bindAlerts();
     if (route().name === 'profile') bindProfile();
-}
-var geoError = null;
-function getPos(wait) {
-    wait = wait || 2500; geoError = null;
-    return new Promise(function (resolve) {
-        if (!navigator.geolocation) { geoError = 'absent'; return resolve(null); }
-        var done = false, t = setTimeout(function () { done = true; geoError = 'delai'; resolve(null); }, wait);
-        navigator.geolocation.getCurrentPosition(function (g) {
-            if (!done) { clearTimeout(t); resolve({ lat: +g.coords.latitude.toFixed(6), lon: +g.coords.longitude.toFixed(6), precision: Math.round(g.coords.accuracy || 0) || null }); }
-        }, function (e) { if (!done) { clearTimeout(t); geoError = e && e.code === 1 ? 'refuse' : 'indispo'; resolve(null); } }, { enableHighAccuracy: true, maximumAge: 30000, timeout: wait - 100 });
-    });
-}
-function geoMessage(g) {
-    if (g) return '📍 Position du véhicule relevée' + (g.precision ? ' (précision ' + g.precision + ' m)' : '');
-    return geoError === 'refuse' ? '📍 Localisation refusée : autorisez-la dans les réglages du navigateur pour ce site, puis réessayez.'
-        : geoError === 'delai' ? '📍 Position non reçue à temps : sortez à découvert et réessayez.'
-        : '📍 Position indisponible sur cet appareil.';
+    el = $('dist'); if (el) el.onchange = function () { setDistrict(el.value); };
 }
 function stopAction(p, stopId, statut) {
     if (statut === 'non_livre') return sheetReason(p, stopId);
@@ -622,38 +583,18 @@ function sheetFinish(p) {
 }
 function sheetDeliver(p, stopId, statut) {
     var st = p.stops.filter(function (s) { return s.id === stopId; })[0] || {};
-    var pos = null, posDone = false;
     // dernier kilométrage connu : site précédent, sinon départ de la sortie
     var last = p.stops.reduce(function (m, s) { return s.km != null && s.km > m ? s.km : m; }, (p.sortie && p.sortie.km_depart) || 0);
     sheet('<h3>' + (statut === 'transit' ? 'Livré en transit' : 'Livré') + ' : ' + esc(st.espc || '') + '</h3>' +
-        '<button class="btn sec" id="locate" type="button">📍 Relever la position du véhicule</button>' +
-        '<div class="muted" id="gps" style="margin-top:6px">' + (navigator.onLine ? 'La position est demandée quand vous appuyez sur le bouton.' : 'Hors réseau : le GPS fonctionne quand même, la livraison sera envoyée au retour du réseau.') + '</div>' +
         '<label for="kms">Kilométrage au compteur</label><input id="kms" type="number" inputmode="numeric" min="' + esc(last || 0) + '" placeholder="' + (last ? 'au moins ' + esc(last) : 'ex. 42350') + '" required>' +
         '<p class="err" id="err"></p><button class="btn ok" id="ok" style="margin-top:8px">Confirmer la livraison</button><button class="btn sec" data-close style="margin-top:8px">Annuler</button>', function () {
         $('kms').oninput = function () { $('err').textContent = ''; };
-        function locate() {
-            var b = $('locate'); if (b) { b.disabled = true; b.textContent = '📍 Recherche de la position…'; }
-            return getPos(10000).then(function (g) {
-                pos = g; posDone = true;
-                var el = $('gps'); if (el) el.textContent = geoMessage(g);
-                if (b) { b.disabled = false; b.textContent = g ? '📍 Relever à nouveau' : '📍 Réessayer'; }
-                return g;
-            });
-        }
-        $('locate').onclick = locate;
         $('ok').onclick = function () {
             var v = parseInt($('kms').value, 10);
             if (isNaN(v)) { $('err').textContent = 'Indiquez le kilométrage au compteur.'; return; }
             if (last && v < last) { $('err').textContent = 'Inférieur au dernier kilométrage relevé (' + last + ' km).'; return; }
-            var go = function () {
-                var body = { statut: statut, km_compteur: v };
-                if (pos) Object.assign(body, pos);
-                closeSheet(); openStop = null;
-                if (!pos) toast('Livraison enregistrée sans position GPS');
-                enqueue({ type: 'livraison', plan: p.id, target: stopId, body: body });
-            };
-            if (pos || posDone) return go();
-            $('ok').disabled = true; locate().then(function () { go(); });   // l'appui sur « Confirmer » est l'action qui déclenche la demande
+            closeSheet(); openStop = null;
+            enqueue({ type: 'livraison', plan: p.id, target: stopId, body: { statut: statut, km_compteur: v } });
         };
     });
 }
@@ -667,7 +608,7 @@ function sheetReason(p, stopId) {
             var v = $('rs').value.trim(); if (!v) { $('err').textContent = 'La raison est obligatoire.'; return; }
             var km = $('kmr').value ? parseInt($('kmr').value, 10) : null;
             if (km != null && (isNaN(km) || (last && km < last))) { $('err').textContent = 'Inférieur au dernier kilométrage relevé (' + last + ' km).'; return; }
-            closeSheet(); openStop = null; getPos().then(function (pos) { if (!pos && geoError === 'refuse') toast('Localisation refusée : site enregistré sans position'); var body = Object.assign({ statut: 'non_livre', raison: v }, pos || {}); if (km != null) body.km_compteur = km; enqueue({ type: 'livraison', plan: p.id, target: stopId, body: body }); });
+            closeSheet(); openStop = null; var body = { statut: 'non_livre', raison: v }; if (km != null) body.km_compteur = km; enqueue({ type: 'livraison', plan: p.id, target: stopId, body: body });
         };
     });
 }
@@ -784,7 +725,7 @@ function alertsView() {
     var l = S.notifs.data || [];
     return shell('Alertes', l.length ? '<button class="btn sec small" id="readall" style="margin-bottom:12px">Tout marquer comme lu</button>' + l.map(function (n) {
         return '<div class="card row"><div class="dot ' + (n.read ? 'n' : 'w') + '">' + (n.read ? '✓' : '!') + '</div><div class="grow"><b>' + esc(n.title) + '</b><div class="muted">' + esc(n.body) + '</div><div class="muted" style="margin-top:2px">' + esc(new Date(n.at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</div></div></div>';
-    }).join('') : '<div class="card empty">Aucune notification.<br>Vous serez prévenu quand un chronogramme est validé.</div>');
+    }).join('') : '<div class="card empty">Aucune notification.</div>');
 }
 function bindAlerts() {
     var b = $('readall');
@@ -795,36 +736,23 @@ function bindAlerts() {
 
 // ---- profil
 function profileView() {
-    var u = S.user || {}, perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+    var u = S.user || {};
     var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     return shell('Profil',
-        '<div class="card row"><div class="dot b" style="width:46px;height:46px;font-size:16px">' + esc((u.name || '?').split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('')) + '</div><div class="grow"><b>' + esc(u.name) + '</b><div class="muted">' + esc(u.fonction_label || '') + (u.district ? ' · ' + esc(u.district) : '') + '</div></div></div>' +
+        '<div class="card row"><div class="dot b" style="width:46px;height:46px;font-size:16px">' + esc((u.name || '?').split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('')) + '</div><div class="grow"><b>' + esc(u.name) + '</b><div class="muted">' + esc(u.fonction_label || '') + '</div><div class="muted">' + esc(u.email || '') + '</div></div></div>' +
+        (districts().length > 1 ? '<div class="card"><label for="dist" style="margin-top:0">District affiché</label><select id="dist">' + districts().map(function (d) { return '<option value="' + esc(d.id) + '"' + (d.id === S.district ? ' selected' : '') + '>' + esc(d.name) + '</option>'; }).join('') + '</select></div>'
+            : (districtName() ? '<div class="card row"><span class="grow">District</span><b>' + esc(districtName()) + '</b></div>' : '')) +
         '<div class="card"><div class="row"><span class="grow">Actions en attente d\'envoi</span><b>' + S.queue.length + '</b></div><div class="muted">Envoyées automatiquement au retour du réseau.</div></div>' +
-        '<div class="card row"><span class="grow">Notifications</span>' + (perm === 'granted' && S.push ? '<span class="pill">Activées</span><button class="btn sec small" id="pushoff" style="width:auto;padding:8px 12px">Désactiver</button>' : (perm === 'denied' ? '<span class="pill bad">Bloquées</span>' : '<button class="btn small" id="pushon" style="width:auto;padding:10px 14px">Activer</button>')) + '</div>' +
-        (perm === 'denied' ? '<p class="muted">Autorisez les notifications dans les réglages du navigateur pour ce site.</p>' : '') +
         (!standalone && deferredInstall ? '<button class="btn sec" id="inst" style="margin-bottom:12px">Installer l\'application</button>' : '') +
-        (!standalone && ios ? '<div class="card muted">iPhone : touchez <b>Partager</b> puis <b>Sur l\'écran d\'accueil</b> pour installer l\'application et recevoir les notifications.</div>' : '') +
-        '<button class="btn sec" id="pushtest" style="margin-bottom:12px">Recevoir une notification de test</button>' +
+        (!standalone && ios ? '<div class="card muted">iPhone : touchez <b>Partager</b> puis <b>Sur l\'écran d\'accueil</b> pour installer l\'application.</div>' : '') +
         '<a class="btn sec" href="#/password" style="margin-bottom:10px">Changer le mot de passe</a><button class="btn sec" id="sync" style="margin-bottom:10px">Synchroniser maintenant</button><button class="btn bad" id="out">Se déconnecter</button>' +
-        '<p class="muted" style="text-align:center;margin-top:16px">Logimaster Convoyeur</p>');
+        '<p class="muted" style="text-align:center;margin-top:16px">Logimaster Bureau</p>');
 }
 function bindProfile() {
     var e;
     if ((e = $('out'))) e.onclick = logout;
     if ((e = $('sync'))) e.onclick = function () { toast(isOnline() ? 'Synchronisation…' : 'Pas de réseau'); refresh(); };
-    if ((e = $('pushon'))) e.onclick = registerPush;
-    if ((e = $('pushoff'))) e.onclick = unregisterPush;
-    if ((e = $('pushtest'))) e.onclick = function () {
-        if (!isOnline()) return toast('Pas de réseau');
-        var perm = ('Notification' in window) ? Notification.permission : 'unsupported';
-        if (perm === 'unsupported' || !('serviceWorker' in navigator)) return sheetInfo('Notifications non prises en charge', /iphone|ipad|ipod/i.test(navigator.userAgent) ? 'Sur iPhone, installez d\'abord l\'application sur l\'écran d\'accueil (Partager → Sur l\'écran d\'accueil), ouvrez-la depuis l\'icône, puis activez les notifications.' : 'Ce navigateur ne gère pas les notifications. Utilisez Chrome sur Android.');
-        if (perm === 'denied') return sheetInfo('Notifications bloquées', 'Elles ont été refusées pour ce site : autorisez-les dans les réglages du navigateur (Paramètres du site → Notifications), puis réessayez.');
-        if (perm !== 'granted' || !S.push) return sheetInfo('Notifications pas encore activées', 'Touchez « Activer » ci-dessus et acceptez, puis relancez le test.');
-        e.disabled = true; e.textContent = 'Envoi…';
-        api('POST', '/push-test').then(function (r) { e.disabled = false; e.textContent = 'Recevoir une notification de test'; r.ok ? toast(r.message) : sheetInfo('Test non envoyé', r.message); },
-            function (x) { e.disabled = false; e.textContent = 'Recevoir une notification de test'; toast(x.offline ? 'Pas de réseau' : x.message); });
-    };
     if ((e = $('inst'))) e.onclick = installApp;
 }
 
@@ -833,33 +761,9 @@ function logoutLocal() { S = Object.assign({}, DEFAULTS); save(); errorMsg = '';
 function logout() {
     var done = function () { logoutLocal(); };
     if (!isOnline()) return done();
-    pushEndpoint().then(function (endpoint) { return api('POST', '/logout', endpoint ? { endpoint: endpoint } : {}); }).then(done, done);
+    api('POST', '/logout').then(done, done);
 }
 function installApp() { if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function () { deferredInstall = null; render(); }); }
-
-// ------------------------------------------------------------------ notifications push
-function urlB64(s) { var p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b), o = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
-function pushEndpoint() { if (!('serviceWorker' in navigator)) return Promise.resolve(null); return navigator.serviceWorker.getRegistration('/m').then(function (reg) { return reg && reg.pushManager.getSubscription(); }).then(function (s) { return s ? s.endpoint : null; }).catch(function () { return null; }); }
-function registerPush() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return toast('Notifications non prises en charge sur cet appareil');
-    Notification.requestPermission().then(function (perm) {
-        if (perm !== 'granted') { toast('Notifications refusées'); render(); return; }
-        return navigator.serviceWorker.getRegistration('/m').then(function (reg) { return reg || navigator.serviceWorker.ready; }).then(function (reg) {
-            return api('GET', '/config').then(function (cfg) {
-                if (!cfg.push || !cfg.vapid_public_key) { toast('Notifications non configurées sur le serveur'); return; }
-                return reg.pushManager.getSubscription().then(function (sub) { return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(cfg.vapid_public_key) }); }).then(function (sub) {
-                    var j = sub.toJSON(); return api('POST', '/push-subscriptions', { endpoint: j.endpoint, keys: j.keys }).then(function () { S.push = true; save(); render(); toast('Notifications activées'); });
-                });
-            });
-        });
-    }).catch(function (e) { toast(e.offline ? 'Pas de réseau' : 'Activation impossible'); });
-}
-function unregisterPush() {
-    navigator.serviceWorker.getRegistration('/m').then(function (reg) { return reg && reg.pushManager.getSubscription(); }).then(function (sub) {
-        if (!sub) return; var ep = sub.endpoint; return sub.unsubscribe().then(function () { return api('DELETE', '/push-subscriptions', { endpoint: ep }); });
-    }).then(function () { S.push = false; save(); render(); toast('Notifications désactivées'); }, function () {});
-}
-function maybeResumePush() { if (('Notification' in window) && Notification.permission === 'granted' && !S.push) registerPush(); }
 
 // ------------------------------------------------------------------ démarrage
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; render(); });

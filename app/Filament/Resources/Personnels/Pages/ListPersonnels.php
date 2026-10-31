@@ -12,6 +12,6 @@ class ListPersonnels extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [\App\Filament\Support\MobileAccessActions::qr(), CreateAction::make()];
+        return [CreateAction::make()];
     }
 }

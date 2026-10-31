@@ -158,14 +158,9 @@
                                         Livrée le {{ $l->date_livraison?->format('d/m/Y') }} · {{ \App\Models\LivraisonEspc::LIEUX[$l->lieu_livraison] ?? 'sur site' }}
                                         @if ($l->retard_jours > 0) · <span style="color:#d97706">+{{ $l->retard_jours }} j de retard</span>@endif
                                     </div>
-                                    @if ($l->saisiPar)<div style="font-size:.75rem;opacity:.65">saisi par {{ $l->saisiPar->name }} depuis le téléphone</div>@endif
+                                    @if ($l->saisiPar)<div style="font-size:.75rem;opacity:.65">saisi par {{ $l->saisiPar->name }} depuis l'application mobile</div>@endif
                                     @if ($l->km_compteur !== null)
                                         <div style="font-size:.85rem;margin-top:3px">Compteur : <strong>{{ number_format($l->km_compteur, 0, ',', ' ') }} km</strong>@if ($delta !== null) <span style="opacity:.7">· +{{ $fmtKm($delta) }} km</span>@endif</div>
-                                    @endif
-                                    @if ($l->gps_ecart_m !== null && \App\Domain\Mobile\SiteGeolocation::isSuspicious($l))
-                                        <div style="font-size:.8rem;margin-top:3px;color:#dc2626">⚠ Position du téléphone à {{ number_format($l->gps_ecart_m / 1000, 1, ',', ' ') }} km du centre au moment de la livraison</div>
-                                    @elseif ($l->lat !== null)
-                                        <div style="font-size:.78rem;margin-top:3px;opacity:.7">📍 <a href="https://www.openstreetmap.org/?mlat={{ $l->lat }}&mlon={{ $l->lon }}#map=16/{{ $l->lat }}/{{ $l->lon }}" target="_blank" rel="noopener" x-on:click.stop style="text-decoration:underline">Position du véhicule relevée</a>{{ $l->gps_precision_m ? ' (précision '.$l->gps_precision_m.' m)' : '' }}{{ $l->gps_ecart_m !== null ? ' · '.($l->gps_ecart_m < 1000 ? $l->gps_ecart_m.' m' : number_format($l->gps_ecart_m / 1000, 1, ',', ' ').' km').' du centre' : '' }}</div>
                                     @endif
                                 @endif
                                 @if ($l->statut === 'non_livre' && $l->km_compteur !== null)

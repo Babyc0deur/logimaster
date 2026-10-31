@@ -26,9 +26,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public const ROLE_DISTRICT_MANAGER = 'district_manager';
     public const ROLE_SUPERVISEUR = 'superviseur_bailleur';
 
-    /** Chef de mission ou passager qui exécute les circuits depuis l'application mobile. */
-    public const ROLE_CONVOYEUR = 'convoyeur';
-
     protected $fillable = [
         'name',
         'email',
@@ -36,7 +33,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         'is_active',
         'two_factor_enabled',
         'region_id',
-        'personnel_id',
     ];
 
     protected $hidden = [
@@ -97,23 +93,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->belongsTo(Region::class);
     }
 
-    /** Fiche personnel (chef de mission ou passager) du convoyeur. */
-    public function personnel()
-    {
-        return $this->belongsTo(Personnel::class);
-    }
-
-    public function pushSubscriptions()
-    {
-        return $this->hasMany(PushSubscription::class);
-    }
-
-    /** Compte réservé à l'application mobile : aucun accès à l'interface d'administration. */
-    public function isConvoyeurOnly(): bool
-    {
-        return $this->hasRole(self::ROLE_CONVOYEUR) && $this->roles->count() === 1;
-    }
-
     public function isNational(): bool
     {
         return $this->hasRole(self::ROLE_PRES_ADMIN);
@@ -169,6 +148,6 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return (bool) $this->is_active && ! $this->isConvoyeurOnly();
+        return (bool) $this->is_active;
     }
 }

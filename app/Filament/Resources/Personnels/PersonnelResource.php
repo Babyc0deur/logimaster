@@ -31,8 +31,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Personnel du district, en une seule liste : chauffeurs, chefs de mission et passagers. Chacun a son accès mobile
- * automatique ; un chauffeur a en plus ses informations de permis (fiche chauffeur liée, tenue à jour d'ici).
+ * Personnel du district, en une seule liste : chauffeurs, chefs de mission et passagers. Un chauffeur a en plus ses
+ * informations de permis (fiche chauffeur liée, tenue à jour d'ici).
  */
 class PersonnelResource extends Resource
 {
@@ -113,23 +113,12 @@ class PersonnelResource extends Resource
     {
         return $table
             ->defaultSort('nom_complet')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('user:id,personnel_id,email,is_active,must_change_password,last_mobile_login_at'))
             ->recordUrl(fn (Personnel $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('nom_complet')->label('Nom complet')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('fonction')->badge()->formatStateUsing(fn ($state) => Personnel::FONCTIONS[$state] ?? $state)->sortable()
                     ->color(fn ($state) => match ($state) { 'chauffeur' => 'info', 'chef_mission' => 'primary', default => 'gray' }),
                 TextColumn::make('telephone')->label('Téléphone')->placeholder('—'),
-                TextColumn::make('identifiant')->label('Identifiant mobile')->copyable()->placeholder('—')->toggleable(),
-                TextColumn::make('acces_mobile')->label('Accès mobile')->badge()
-                    ->state(fn (Personnel $p) => match (true) {
-                        ! $p->user => 'Aucun',
-                        ! $p->user->is_active => 'Suspendu',
-                        $p->user->must_change_password => 'Code à remettre',
-                        default => 'Actif',
-                    })
-                    ->color(fn ($state) => match ($state) { 'Actif' => 'success', 'Code à remettre' => 'warning', 'Suspendu' => 'danger', default => 'gray' })
-                    ->tooltip(fn (Personnel $p) => $p->user?->last_mobile_login_at ? 'Dernière connexion : '.$p->user->last_mobile_login_at->format('d/m/Y H:i') : null),
                 TextColumn::make('statut')->badge()->color(fn ($state) => $state === 'actif' ? 'success' : 'gray'),
             ])
             ->filters([
@@ -140,11 +129,9 @@ class PersonnelResource extends Resource
                 // boutons sans libellé : l'icône suffit, le nom s'affiche au survol
                 ViewAction::make()->label('Fiche')->iconButton()->tooltip('Fiche'),
                 EditAction::make()->iconButton()->tooltip('Modifier'),
-                \App\Filament\Support\MobileAccessActions::credentials()->iconButton()->tooltip('Accès mobile'),
-                \App\Filament\Support\MobileAccessActions::resetCode()->iconButton()->tooltip('Réinitialiser le code'),
                 DeleteAction::make()->iconButton()->tooltip('Supprimer')
                     ->modalHeading('Supprimer cette fiche ?')
-                    ->modalDescription('La fiche est supprimée, ainsi que son accès à l’application mobile (compte, appareils et notifications).')
+                    ->modalDescription('La fiche est supprimée ; les sorties déjà réalisées sont conservées.')
                     ->modalSubmitActionLabel('Supprimer'),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);

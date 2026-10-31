@@ -20,7 +20,7 @@ class LandingController extends Controller
             'url' => MobileAppController::appUrl(),
             'qr' => MobileAppController::qrSvg(null, 200),
             'stats' => ['districts' => $districts ?: 113],
-            'adminOpen' => ! \App\Http\Middleware\RestrictPublicExposure::restricted($request),
+            'adminOpen' => true,
         ]);
     }
 }

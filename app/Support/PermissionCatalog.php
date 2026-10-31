@@ -17,7 +17,7 @@ final class PermissionCatalog
         'circuits' => ['Circuits', 'Itinéraires et centres desservis'],
         'sorties' => ['Sorties véhicules', 'Missions réalisées, kilométrage'],
         'livraisons' => ['Suivi des livraisons', 'Livraisons site par site'],
-        'vehicles' => ['Véhicules', 'Parc, échéances, signalements terrain'],
+        'vehicles' => ['Véhicules', 'Parc, échéances'],
         'drivers' => ['Chauffeurs', 'Fiches chauffeur (permis, statistiques)'],
         'personnels' => ['Personnel', 'Chauffeurs, chefs de mission, passagers'],
         'espc' => ['Centres de santé', 'Sites livrés'],
@@ -32,7 +32,7 @@ final class PermissionCatalog
         'organisation' => ['Organisation', 'PRES, régions, districts'],
         'users' => ['Utilisateurs', 'Comptes du bureau'],
         'administration' => ['Administration', 'Journal d\'audit, paramètres'],
-        'mobile' => ['Application convoyeur', 'Exécution des circuits sur téléphone'],
+        'mobile' => ['Application mobile', 'Exécution des circuits sur téléphone (agents du bureau)'],
         'autres' => ['Autres', 'Permissions non classées'],
     ];
 
@@ -102,7 +102,7 @@ final class PermissionCatalog
     {
         return [
             'pres_admin' => 'Administrateur national', 'region_manager' => 'Responsable de région', 'district_manager' => 'Gestionnaire de district',
-            'superviseur_bailleur' => 'Superviseur bailleur', 'convoyeur' => 'Convoyeur (application mobile)',
+            'superviseur_bailleur' => 'Superviseur bailleur',
         ][$name] ?? $name;
     }
 }

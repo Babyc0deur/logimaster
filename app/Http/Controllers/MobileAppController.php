@@ -8,7 +8,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Http\Response;
 
-/** Application mobile installable (PWA) du convoyeur : page, manifeste, service worker, QR code d'installation. */
+/** Application mobile installable (PWA) du bureau : page, manifeste, service worker, QR code d'installation. */
 class MobileAppController extends Controller
 {
     /** Adresse à ouvrir sur le téléphone (doit être joignable depuis le téléphone, en HTTPS pour l'installation). */
@@ -22,7 +22,6 @@ class MobileAppController extends Controller
         return view('mobile.app', ['config' => [
             'api' => '/api/mobile',
             'logo' => \App\Support\Brand::logo(),
-            'vapidKey' => config('webpush.public_key'),
         ]]);
     }
 
@@ -47,9 +46,9 @@ class MobileAppController extends Controller
     public function manifest(): Response
     {
         return response(json_encode([
-            'name' => 'Logimaster Convoyeur',
+            'name' => 'Logimaster Bureau',
             'short_name' => 'Logimaster',
-            'description' => 'Exécutez vos circuits : livraisons, carburant, notifications.',
+            'description' => 'Exécutez les circuits du district : livraisons, kilométrage, carburant, frais.',
             'lang' => 'fr',
             'start_url' => '/m?source=pwa',
             'scope' => '/m',

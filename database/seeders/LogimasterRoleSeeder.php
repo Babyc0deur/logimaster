@@ -51,10 +51,7 @@ class LogimasterRoleSeeder extends Seeder
 
         // Gestion complète de son district
         Role::firstOrCreate(['name' => User::ROLE_DISTRICT_MANAGER, 'guard_name' => 'web'])
-            ->syncPermissions([...$operational, ...$reporting, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'validate_factures', 'pay_factures', 'view_reports', 'create_reports']);
-
-        // Chef de mission / passager : exécute ses circuits depuis l'application mobile, rien d'autre
-        Role::firstOrCreate(['name' => User::ROLE_CONVOYEUR, 'guard_name' => 'web'])->syncPermissions($mobile);
+            ->syncPermissions([...$operational, ...$reporting, ...$mobile, 'view_districts', 'validate_sorties', 'validate_ravitaillements', 'validate_factures', 'pay_factures', 'view_reports', 'create_reports']);
 
         // Lecture seule multi-district (bailleurs)
         Role::firstOrCreate(['name' => User::ROLE_SUPERVISEUR, 'guard_name' => 'web'])

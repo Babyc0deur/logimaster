@@ -11,12 +11,10 @@ use App\Models\Pres;
 use App\Models\Region;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Notifications\PlanningValidated;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LogimasterRoleSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 /** Une seule liste « Personnel » : chauffeurs, chefs de mission et passagers ; la fiche chauffeur suit la personne. */
@@ -39,7 +37,7 @@ class PersonnelUnifiedTest extends TestCase
         return Personnel::create(['district_id' => $this->district->id, 'nom_complet' => 'KOUAME YAO', 'fonction' => 'chauffeur', 'telephone' => '0700000000'] + $extra);
     }
 
-    public function test_a_driver_entered_in_personnel_gets_a_driver_record_and_mobile_access(): void
+    public function test_a_driver_entered_in_personnel_gets_a_driver_record_and_no_account(): void
     {
         $p = $this->chauffeur(['categorie_permis' => 'C', 'permis_expiration' => '2027-03-01']);
 
@@ -50,7 +48,7 @@ class PersonnelUnifiedTest extends TestCase
         $this->assertSame('2027-03-01', $d->permis_expiration->toDateString());
         $this->assertMatchesRegularExpression('/^CH-[A-Z0-9]{6}$/', $d->matricule);
         $this->assertSame($d->matricule, $p->fresh()->matricule);
-        $this->assertNotNull($p->fresh()->user);   // convoyeur d'office
+        $this->assertSame(0, User::count());   // aucun compte n'est créé avec la fiche
 
         $p->update(['nom_complet' => 'KOUAME YAO ALAIN', 'categorie_permis' => 'D']);
         $this->assertSame(['KOUAME YAO ALAIN', 'D'], [$d->fresh()->nom_complet, $d->fresh()->categorie_permis]);
@@ -64,7 +62,6 @@ class PersonnelUnifiedTest extends TestCase
         $p = Personnel::where('driver_id', $d->id)->first();
         $this->assertNotNull($p);
         $this->assertSame(['chauffeur', 'CH-001', 'B'], [$p->fonction, $p->matricule, $p->categorie_permis]);
-        $this->assertNotNull($p->user);
         $this->assertSame(1, Personnel::count());
 
         $d->update(['nom_complet' => 'BAMBA SEKOU II']);
@@ -93,28 +90,24 @@ class PersonnelUnifiedTest extends TestCase
         $this->assertSame('inactif', $p->fresh()->driver->statut);
     }
 
-    public function test_the_driver_sees_the_runs_he_drives_and_is_notified_on_validation(): void
+    public function test_validating_the_planning_does_not_create_or_notify_crew_accounts(): void
     {
-        Notification::fake();
         $p = $this->chauffeur();
         $vehicle = Vehicle::create(['district_id' => $this->district->id, 'immatriculation' => 'D1']);
-        $plan = Chronogramme::create(['district_id' => $this->district->id, 'vehicle_id' => $vehicle->id, 'driver_id' => $p->fresh()->driver_id,
+        Chronogramme::create(['district_id' => $this->district->id, 'vehicle_id' => $vehicle->id, 'driver_id' => $p->fresh()->driver_id,
             'date_prevue' => '2026-10-14', 'validation_statut' => 'soumis']);
-        app(ChronogrammeWorkflow::class)->validate($this->district->id, CarbonImmutable::parse('2026-10-01'), User::factory()->create(['is_active' => true]));
+        $validator = User::factory()->create(['is_active' => true]);
+        $accounts = User::count();
 
-        $user = $p->fresh()->user;
-        Notification::assertSentTo($user, PlanningValidated::class);
+        $this->assertSame(1, app(ChronogrammeWorkflow::class)->validate($this->district->id, CarbonImmutable::parse('2026-10-01'), $validator));
 
-        $user->forceFill(['password' => 'Secret123', 'must_change_password' => false])->save();
-        $this->travelTo(CarbonImmutable::parse('2026-10-14 07:00'));
-        $token = $this->postJson('/api/mobile/login', ['identifiant' => $p->fresh()->identifiant, 'password' => 'Secret123'])->assertOk()->json('token');
-        $this->app['auth']->forgetGuards();
-        $this->getJson('/api/mobile/sorties', ['Authorization' => "Bearer $token"])->assertOk()->assertJsonPath('data.0.id', $plan->id);
+        $this->assertSame($accounts, User::count());
+        $this->assertSame(0, \Illuminate\Notifications\DatabaseNotification::count());   // personne d'autre n'a la permission de validation dans ce test
     }
 
-    public function test_users_list_shows_office_accounts_only(): void
+    public function test_users_list_shows_accounts_and_personnel_list_shows_the_people(): void
     {
-        $this->chauffeur();   // crée un compte mobile
+        $this->chauffeur();
         $office = User::factory()->create(['is_active' => true, 'name' => 'Gestionnaire Bureau']);
         $office->assignRole(User::ROLE_PRES_ADMIN);
         $this->actingAs($office, 'web');

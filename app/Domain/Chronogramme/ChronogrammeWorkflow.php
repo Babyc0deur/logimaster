@@ -4,7 +4,6 @@ namespace App\Domain\Chronogramme;
 
 use App\Models\Chronogramme;
 use App\Models\User;
-use App\Notifications\PlanningValidated;
 use Carbon\CarbonImmutable;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -48,7 +47,6 @@ class ChronogrammeWorkflow
         }
         $plans->isNotEmpty() && $this->notify('update_chronogrammes', $districtId, $by, 'Chronogramme validé',
             "{$plans->count()} sortie(s) de ".$month->translatedFormat('F Y').' validée(s) par '.$by->name.'.', 'success');
-        $plans->isNotEmpty() && $this->notifyCrews($plans);
 
         return $plans->count();
     }
@@ -78,24 +76,6 @@ class ChronogrammeWorkflow
             "La validation de {$plans->count()} sortie(s) de ".$month->translatedFormat('F Y').' a été levée par '.$by->name.'.', 'warning');
 
         return $plans->count();
-    }
-
-    /** Prévient chaque convoyeur (chauffeur, chef de mission, passager) des sorties validées : dans l'application et sur son téléphone. */
-    private function notifyCrews(Collection $plans): void
-    {
-        $byPersonnel = [];
-        foreach ($plans->load('personnels:id', 'district:id,name', 'driver.personnel:id,driver_id') as $plan) {
-            foreach ($plan->personnels->push($plan->driver?->personnel)->filter()->unique('id') as $personnel) {
-                $byPersonnel[$personnel->getKey()]['dates'][] = $plan->date_prevue->toDateString();
-                $byPersonnel[$personnel->getKey()]['district'] = $plan->district?->name ?? '';
-            }
-        }
-        if ($byPersonnel === []) {
-            return;
-        }
-        User::whereIn('personnel_id', array_keys($byPersonnel))->where('is_active', true)->get()->each(
-            fn (User $user) => $user->notify(new PlanningValidated($byPersonnel[$user->personnel_id]['dates'], $byPersonnel[$user->personnel_id]['district']))
-        );
     }
 
     /** Notifie (in-app) les utilisateurs actifs ayant la permission et l'accès au district, sauf l'auteur de l'action. */
