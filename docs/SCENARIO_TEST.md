@@ -49,7 +49,7 @@ Chaque étape donne l'action puis le résultat attendu (✔). Cochez ou notez l'
 
 1. Admin → **Sorties véhicules** → **Saisir une tournée** (ou le lien « Saisir toute la tournée » du suivi des livraisons). ✔ La sortie du jour est choisie, le compteur de départ prérempli avec celui du véhicule.
 2. Site 1 → **Livrée sur site** avec son compteur. ✔ Les champs date et note apparaissent.
-3. Site 2 → **Livrée en transit**. ✔ Enregistrée comme livrée au point de transit.
+3. Site 2 → **Livrée par transit**. ✔ Enregistrée comme livrée au point de transit.
 4. Site 3 → **Non livrée** sans raison, puis enregistrer. ✔ Refus, message sur le champ « Raison » ; rien n'est enregistré.
 5. Saisir un compteur inférieur à celui du site précédent. ✔ Refus, message sur le champ du compteur.
 6. Section **Plein de carburant** : litres, prix modifié. ✔ Une confirmation du prix est demandée ; facture ajoutable depuis *Carburant*.

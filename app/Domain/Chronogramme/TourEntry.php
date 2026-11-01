@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
  */
 class TourEntry
 {
-    public const STATUTS = ['planifie' => 'À livrer', 'livre' => 'Livrée sur site', 'transit' => 'Livrée en transit', 'non_livre' => 'Non livrée'];
+    public const STATUTS = ['planifie' => 'À livrer', 'livre' => 'Livrée sur site', 'transit' => 'Livrée par transit', 'non_livre' => 'Non livrée'];
 
     /**
      * @param  array{km_depart?: mixed, km_arrivee?: mixed, sites?: array<string, array<string, mixed>>, ravitaillement?: array<string, mixed>|null, frais?: array<int, array<string, mixed>>}  $data

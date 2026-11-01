@@ -172,7 +172,10 @@ class SaisieTourneeTest extends TestCase
             ->set("data.sites.{$key(1)}.statut", 'livre')->set("data.sites.{$key(1)}.km", 50020)
             ->set("data.sites.{$key(2)}.statut", 'non_livre')
             ->call('save')
-            ->assertHasErrors(["data.sites.{$key(1)}.km", "data.sites.{$key(2)}.raison"]);
+            ->assertHasErrors(["data.sites.{$key(2)}.raison"])     // la raison est obligatoire pour un site non livré
+            ->set("data.sites.{$key(2)}.raison", 'Route coupée')
+            ->call('save')
+            ->assertHasErrors(["data.sites.{$key(1)}.km"]);        // puis le kilométrage qui recule est rattaché à la bonne ligne
 
         $this->assertSame(3, LivraisonEspc::where('statut', 'planifie')->count());   // rien n'est enregistré sur un refus
     }

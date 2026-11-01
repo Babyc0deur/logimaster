@@ -231,7 +231,7 @@ class SaisieTournee extends Page
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                     TimePicker::make('h_depart')->label('Départ du site')->seconds(false)
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
-                    TextInput::make('raison')->label(fn (Get $get) => $get('statut') === 'non_livre' ? 'Raison (obligatoire)' : 'Note')->maxLength(500)
+                    TextInput::make('raison')->label(fn (Get $get) => $get('statut') === 'non_livre' ? 'Raison' : 'Note')->required(fn (Get $get) => $get('statut') === 'non_livre')->maxLength(500)
                         ->visible(fn (Get $get) => $get('statut') !== 'planifie'),
                 ]),
             ]),
