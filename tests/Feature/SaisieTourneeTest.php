@@ -129,6 +129,21 @@ class SaisieTourneeTest extends TestCase
         $this->assertSame([1, 1], [Ravitaillement::count(), Expense::count()]);
     }
 
+    public function test_the_page_lists_the_runs_with_search_and_opens_one(): void
+    {
+        $this->as(User::ROLE_DISTRICT_MANAGER);
+        $old = Chronogramme::create(['district_id' => $this->district->id, 'vehicle_id' => $this->plan->vehicle_id, 'circuit_id' => $this->plan->circuit_id, 'date_prevue' => '2025-07-03', 'validation_statut' => 'valide']);
+
+        $page = Livewire::test(SaisieTournee::class)
+            ->assertSee('Liste des tournées')->assertSee('14/10/2026')->assertSee('03/07/2025')->assertSee('CIRCUIT 5')
+            ->set('search', '03/07/2025')->assertSee('03/07/2025')->assertDontSee('14/10/2026')
+            ->set('search', 'introuvable')->assertSee('Aucune tournée trouvée.')
+            ->set('search', '')->call('openTour', $old->id);
+
+        $page->assertSet('data.plan_id', $old->id);
+        $this->assertCount(3, $page->get('data.sites'));
+    }
+
     public function test_one_date_at_the_top_applies_to_every_delivered_site(): void
     {
         $this->as(User::ROLE_DISTRICT_MANAGER);

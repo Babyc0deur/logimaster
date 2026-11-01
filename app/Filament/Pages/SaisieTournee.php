@@ -52,6 +52,11 @@ class SaisieTournee extends Page
 
     public ?array $data = [];
 
+    /** Recherche et longueur de la liste des tournées. */
+    public string $search = '';
+
+    public int $limit = 15;
+
     public static function canAccess(): bool
     {
         return (bool) auth()->user()?->can('update_chronogrammes');
@@ -77,8 +82,8 @@ class SaisieTournee extends Page
         return $p->date_prevue->format('d/m/Y').' · '.($p->circuit?->nom ?? ($p->destination ?: 'Sortie')).' · '.($p->vehicle?->immatriculation ?? 'sans véhicule');
     }
 
-    /** Sorties les plus récentes (toutes dates, jusqu'à une semaine à venir), ou celles qui correspondent à la recherche (circuit, véhicule, date). @return array<string, string> */
-    private function planOptions(?string $search = null): array
+    /** Sorties jusqu'à une semaine à venir, filtrées par la recherche (circuit, véhicule, destination, date « jj/mm/aaaa »). */
+    private function plansMatching(?string $search = null)
     {
         $query = $this->plans()->whereDate('date_prevue', '<=', today()->addDays(7)->toDateString());
         if (filled($search)) {
@@ -94,8 +99,44 @@ class SaisieTournee extends Page
                 ->orWhere('date_prevue', 'like', "%{$iso}%"));
         }
 
-        return $query->orderByDesc('date_prevue')->orderBy('heure_depart')->limit(100)->get()
-            ->mapWithKeys(fn (Chronogramme $p) => [$p->id => $this->planLabel($p)])->all();
+        return $query->orderByDesc('date_prevue')->orderBy('heure_depart');
+    }
+
+    /** @return array<string, string> */
+    private function planOptions(?string $search = null): array
+    {
+        return $this->plansMatching($search)->limit(100)->get()->mapWithKeys(fn (Chronogramme $p) => [$p->id => $this->planLabel($p)])->all();
+    }
+
+    /** Liste des tournées affichée sous le formulaire : les plus récentes d'abord, filtrées par la recherche. */
+    public function tours(): \Illuminate\Support\Collection
+    {
+        return $this->plansMatching($this->search)
+            ->withCount(['livraisons', 'livraisons as livrees_count' => fn ($q) => $q->where('statut', 'livre')])
+            ->limit($this->limit)->get();
+    }
+
+    public function toursTotal(): int
+    {
+        return $this->plansMatching($this->search)->count();
+    }
+
+    public function moreTours(): void
+    {
+        $this->limit += 15;
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->limit = 15;
+    }
+
+    /** Ouvre une tournée de la liste dans le formulaire. */
+    public function openTour(string $id): void
+    {
+        $plan = $this->plans()->findOrFail($id);
+        $this->fillFrom($plan);
+        $this->dispatch('scroll-top');
     }
 
     private function current(): ?Chronogramme
