@@ -39,7 +39,8 @@ class VehiclesTable
                     ->color(fn (string $state) => match ($state) {
                         'disponible' => 'success', 'en_mission' => 'warning', 'en_maintenance' => 'danger', default => 'gray',
                     })->sortable(),
-                TextColumn::make('district.name')->label("District d'affectation")->sortable(),
+                TextColumn::make('district.name')->label("District d'affectation")->sortable()
+                    ->description(fn (Vehicle $r) => (string) $r->district_id !== (string) \Filament\Facades\Filament::getTenant()?->getKey() ? 'Prêté à votre district' : null),
                 TextColumn::make('appartenance')->label('Appartenance')
                     ->formatStateUsing(fn ($state) => Vehicle::APPARTENANCES[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('km_actuel')->label('Kilométrage')->numeric(thousandsSeparator: ' ')->suffix(' km')->sortable(),

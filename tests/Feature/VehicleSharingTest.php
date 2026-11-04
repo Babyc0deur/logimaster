@@ -5,6 +5,9 @@ namespace Tests\Feature;
 use App\Domain\Fleet\VehicleSharing;
 use App\Filament\Resources\Mutualisations\Pages\CreateMutualisation;
 use App\Filament\Resources\Mutualisations\Pages\ListMutualisations;
+use App\Filament\Resources\Chronogrammes\Pages\CreateChronogramme;
+use App\Filament\Resources\Vehicles\VehicleResource;
+use App\Models\Chronogramme;
 use App\Models\District;
 use App\Models\Expense;
 use App\Models\Immobilisation;
@@ -82,6 +85,71 @@ class VehicleSharingTest extends TestCase
     private function activity(User $u, string $from = '2026-09-01', string $to = '2026-10-31'): array
     {
         return app(VehicleSharing::class)->activity($u, $this->shared->fresh(), CarbonImmutable::parse($from), CarbonImmutable::parse($to));
+    }
+
+    private function asTenant(User $u, District $d): void
+    {
+        $this->actingAs($u, 'web');
+        Filament::setTenant($d);
+    }
+
+    public function test_the_borrowing_district_has_the_vehicle_in_its_list_and_choices(): void
+    {
+        $this->asTenant($this->userB, $this->b);
+
+        $this->assertSame(['D55031'], Vehicle::usableBy($this->b->id)->pluck('immatriculation')->all());   // le prêté, pas les autres véhicules du propriétaire
+        // portée appliquée par Filament aux requêtes du district affiché (VehicleResource)
+        $scoped = fn (District $d) => VehicleResource::scopeEloquentQueryToTenant(Vehicle::withoutGlobalScopes(), $d)->orderBy('immatriculation')->pluck('immatriculation')->all();
+        $this->assertSame(['D55031'], $scoped($this->b));
+
+        $this->asTenant($this->userC, $this->c);
+        $this->assertSame([], $scoped($this->c));          // un tiers ne voit rien
+
+        $this->asTenant($this->userA, $this->a);
+        $this->assertSame(['D55031', 'D55041'], $scoped($this->a));                                     // le propriétaire garde les siens
+    }
+
+    public function test_the_borrowed_vehicle_is_read_only_for_the_borrower(): void
+    {
+        $this->asTenant($this->userB, $this->b);
+        $this->assertTrue($this->userB->can('view', $this->shared));
+        $this->assertFalse($this->userB->can('update', $this->shared));
+        $this->assertFalse($this->userB->can('delete', $this->shared));
+
+        $this->asTenant($this->userA, $this->a);
+        $this->assertTrue($this->userA->can('update', $this->shared));
+    }
+
+    public function test_a_run_can_be_planned_with_the_borrowed_vehicle_only_during_the_loan(): void
+    {
+        $this->asTenant($this->userB, $this->b);
+        Chronogramme::creating(fn (Chronogramme $c) => $c->district_id ??= $this->b->id);
+
+        Livewire::test(CreateChronogramme::class)
+            ->fillForm(['date_prevue' => '2026-10-20', 'vehicle_id' => $this->shared->id, 'motif' => 'distribution'])
+            ->call('create')->assertHasNoFormErrors();
+        $plan = Chronogramme::withoutGlobalScopes()->where('vehicle_id', $this->shared->id)->firstOrFail();
+        $this->assertSame($this->b->id, $plan->district_id);          // la sortie reste au district qui l'utilise
+        $this->assertSame('D55031', $plan->vehicle->immatriculation);  // et le véhicule prêté reste lisible
+
+        Livewire::test(CreateChronogramme::class)
+            ->fillForm(['date_prevue' => '2026-10-05', 'vehicle_id' => $this->shared->id, 'motif' => 'distribution'])   // avant le début du prêt
+            ->call('create')->assertHasFormErrors(['vehicle_id']);
+
+        $this->assertTrue(app(VehicleSharing::class)->usableOn($this->b->id, $this->shared, '2026-10-20'));
+        $this->assertFalse(app(VehicleSharing::class)->usableOn($this->b->id, $this->shared, '2026-10-05'));
+        $this->assertFalse(app(VehicleSharing::class)->usableOn($this->c->id, $this->shared, '2026-10-20'));
+    }
+
+    public function test_an_ended_loan_no_longer_offers_the_vehicle_but_keeps_past_runs_readable(): void
+    {
+        $this->loan->update(['date_fin' => '2026-10-20']);
+        $this->day($this->b, '2026-10-15', 40);
+        $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00'));
+
+        $this->asTenant($this->userB, $this->b);
+        $this->assertSame([], Vehicle::usableBy($this->b->id)->pluck('immatriculation')->all());
+        $this->assertSame('D55031', SortieVehicule::withoutGlobalScopes()->firstOrFail()->vehicle->immatriculation);
     }
 
     public function test_who_can_see_the_vehicle(): void

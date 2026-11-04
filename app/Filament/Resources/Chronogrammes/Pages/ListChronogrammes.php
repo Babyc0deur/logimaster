@@ -46,7 +46,7 @@ class ListChronogrammes extends ListRecords
                         ])->all())
                         ->default(now()->format('Y-m')),
                     Select::make('vehicle_id')->label('Véhicule')->required()
-                        ->options(fn () => Vehicle::where('district_id', Filament::getTenant()->getKey())->pluck('immatriculation', 'id')),
+                        ->options(fn () => Vehicle::usableBy((string) Filament::getTenant()->getKey())->pluck('immatriculation', 'id')),
                     Select::make('driver_id')->label('Chauffeur')
                         ->options(fn () => Driver::where('district_id', Filament::getTenant()->getKey())->pluck('nom_complet', 'id')),
                     Select::make('jour')->label('Jour de livraison')->required()->default(1)

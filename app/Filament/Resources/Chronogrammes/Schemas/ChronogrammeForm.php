@@ -25,10 +25,14 @@ class ChronogrammeForm
             TimePicker::make('heure_depart')->label('Heure de départ')->seconds(false),
             Select::make('vehicle_id')
                 ->label('Véhicule')
-                ->relationship('vehicle', 'immatriculation')
+                ->relationship('vehicle', 'immatriculation', modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->usableBy((string) \Filament\Facades\Filament::getTenant()?->getKey()))
+                ->getOptionLabelFromRecordUsing(fn ($record) => $record->immatriculation.((string) $record->district_id !== (string) \Filament\Facades\Filament::getTenant()?->getKey() ? ' (prêté)' : ''))
                 ->searchable()->preload()->live()
-                ->helperText('Facultatif : peut être affecté plus tard, au démarrage de la sortie.')
-                ->rules([fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('vehicle_id', $get, $record, 'Ce véhicule a déjà une sortie à la même heure ce jour-là.')]),
+                ->helperText('Facultatif : peut être affecté plus tard, au démarrage de la sortie. Les véhicules prêtés par un autre district sont proposés pendant la mise à disposition.')
+                ->rules([
+                    fn (Get $get, ?Model $record): Closure => self::noDoubleBooking('vehicle_id', $get, $record, 'Ce véhicule a déjà une sortie à la même heure ce jour-là.'),
+                    fn (Get $get): Closure => \App\Domain\Fleet\VehicleSharing::rule((string) \Filament\Facades\Filament::getTenant()?->getKey(), fn () => $get('date_prevue')),
+                ]),
             Select::make('driver_id')
                 ->label('Chauffeur')
                 ->relationship('driver', 'nom_complet')

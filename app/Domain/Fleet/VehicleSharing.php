@@ -29,6 +29,36 @@ class VehicleSharing
         return $user->canAccessDistrict($vehicle->district_id);
     }
 
+    /** Le district peut-il utiliser ce véhicule à cette date ? Le sien : toujours ; un véhicule prêté : pendant la mise à disposition seulement. */
+    public function usableOn(string $districtId, Vehicle|string $vehicle, string $date): bool
+    {
+        $vehicle = $vehicle instanceof Vehicle ? $vehicle : Vehicle::withoutGlobalScopes()->find($vehicle);
+        if ($vehicle === null) {
+            return false;
+        }
+        if ((string) $vehicle->district_id === $districtId) {
+            return true;
+        }
+
+        return VehicleMutualisation::withoutGlobalScopes()->where('vehicle_id', $vehicle->id)->where('district_id', $districtId)
+            ->where('statut', '!=', 'terminee')->whereDate('date_debut', '<=', $date)
+            ->where(fn ($q) => $q->whereNull('date_fin')->orWhereDate('date_fin', '>=', $date))->exists();
+    }
+
+    /** Règle de validation d'un formulaire : le véhicule choisi doit être utilisable par le district affiché à la date de la sortie. */
+    public static function rule(?string $districtId, callable $date): \Closure
+    {
+        return function (string $attribute, $value, \Closure $fail) use ($districtId, $date) {
+            $day = $date();
+            if (! $value || ! $districtId || ! $day) {
+                return;
+            }
+            if (! app(self::class)->usableOn($districtId, (string) $value, \Carbon\Carbon::parse($day)->toDateString())) {
+                $fail("Ce véhicule est prêté par un autre district : la date doit être comprise dans la période de mise à disposition.");
+            }
+        };
+    }
+
     /** Mises à disposition de ce véhicule au profit des districts de l'utilisateur. @return Collection<int, VehicleMutualisation> */
     public function borrowed(User $user, Vehicle $vehicle): Collection
     {

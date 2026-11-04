@@ -17,6 +17,20 @@ class Vehicle extends Model
         'mutualisation' => 'Mutualisation',
     ];
 
+    /**
+     * Véhicules qu'un district peut utiliser : les siens, et ceux qui lui sont prêtés (mise à disposition non terminée).
+     * La période exacte se vérifie à la date de l'utilisation (VehicleSharing::usableOn).
+     */
+    public function scopeUsableBy(\Illuminate\Database\Eloquent\Builder $query, string $districtId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(fn ($q) => $q
+            ->where($this->qualifyColumn('district_id'), $districtId)
+            ->orWhereIn($this->qualifyColumn('id'), VehicleMutualisation::withoutGlobalScopes()
+                ->where('district_id', $districtId)->where('statut', '!=', 'terminee')
+                ->where(fn ($m) => $m->whereNull('date_fin')->orWhereDate('date_fin', '>=', today()->toDateString()))
+                ->select('vehicle_id')));
+    }
+
     protected $fillable = [
         'district_id', 'immatriculation', 'marque', 'modele',
         'type_vehicule', 'type_carburant', 'consommation_theorique',

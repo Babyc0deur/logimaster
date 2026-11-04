@@ -39,7 +39,10 @@ class SortieForm
             Section::make('Informations générales')->columns(2)->schema([
                 DatePicker::make('date_sortie')->label('Date')->native(false)->displayFormat('d/m/Y')->default(now())->required(),
                 Select::make('vehicle_id')->label('Véhicule')
-                    ->relationship('vehicle', 'immatriculation')->searchable()->preload()->required()->live()
+                    ->relationship('vehicle', 'immatriculation', modifyQueryUsing: fn (Builder $query) => $query->usableBy((string) Filament::getTenant()?->getKey()))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->immatriculation.((string) $record->district_id !== (string) Filament::getTenant()?->getKey() ? ' (prêté)' : ''))
+                    ->rules([fn (Get $get): \Closure => \App\Domain\Fleet\VehicleSharing::rule((string) Filament::getTenant()?->getKey(), fn () => $get('date_sortie'))])
+                    ->searchable()->preload()->required()->live()
                     ->afterStateUpdated(function (Set $set, $state, ?SortieVehicule $record) {
                         $vehicle = Vehicle::find($state);
                         if ($vehicle && ! $record) {

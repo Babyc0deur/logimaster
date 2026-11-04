@@ -35,6 +35,14 @@ class VehicleResource extends Resource
 
     protected static ?string $pluralModelLabel = 'véhicules';
 
+    /** Le district voit ses véhicules et ceux qui lui sont prêtés (visibles aussi dans les listes de choix des sorties et plannings). */
+    public static function scopeEloquentQueryToTenant(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Database\Eloquent\Model $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        $tenant ??= \Filament\Facades\Filament::getTenant();
+
+        return $query->usableBy((string) $tenant->getKey());
+    }
+
     public static function form(Schema $schema): Schema
     {
         return VehicleForm::configure($schema);

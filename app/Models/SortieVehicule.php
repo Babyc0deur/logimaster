@@ -37,7 +37,7 @@ class SortieVehicule extends Model
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(Vehicle::class)->withoutGlobalScopes();   // un véhicule prêté reste lisible, même après la fin du prêt
     }
 
     public function driver()

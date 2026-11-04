@@ -110,7 +110,7 @@ class ChronogrammeWeekGrid extends Widget
 
             return;
         }
-        if ($newVehicle && ! Vehicle::where('district_id', $plan->district_id)->whereKey($newVehicle)->exists()) {
+        if ($newVehicle && ! Vehicle::usableBy((string) $plan->district_id)->whereKey($newVehicle)->exists()) {
             return;
         }
 
@@ -156,7 +156,7 @@ class ChronogrammeWeekGrid extends Widget
             'month' => $month,
             'plansByVehicleDay' => $plans->groupBy(fn ($p) => ($p->vehicle_id ?? 'none').'|'.$p->date_prevue->toDateString()),
             'plansByDay' => $plans->groupBy(fn ($p) => $p->date_prevue->toDateString()),
-            'vehicles' => Vehicle::where('district_id', $districtId)->orderBy('immatriculation')->get(['id', 'immatriculation'])
+            'vehicles' => Vehicle::usableBy((string) $districtId)->orderBy('immatriculation')->get(['id', 'immatriculation'])
                 ->push((object) ['id' => 'none', 'immatriculation' => 'Sans véhicule']),
             'colors' => self::MOTIF_COLORS,
             'canEdit' => auth()->user()->can('update_chronogrammes'),
